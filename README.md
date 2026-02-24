@@ -65,9 +65,24 @@ The app follows clean architecture principles:
 
 The project uses GitHub Actions for:
 
-- **Continuous Integration**: Runs on every push/PR to main branch
+- **Continuous Integration**: Runs on every push to main branch and PRs to main/release
 - **Automated Testing**: Unit tests and instrumented tests
-- **Release Builds**: Automated APK generation and signing on tag pushes
+- **Release Builds**: Automated APK generation when PR to release branch is merged
+
+### Release Process
+
+1. **Development**: All work happens on feature branches, merged to `main` via PR
+2. **Testing**: CI runs automatically on all PRs to `main`
+3. **Release Preparation**:
+   - Create a PR from `main` to `release` branch
+   - Include version bump and release notes in the PR
+   - Get required approvals
+4. **Release Build**: When PR is merged, release workflow automatically:
+   - Builds signed release APK
+   - Uploads APK as workflow artifact
+   - Available for download from GitHub Actions
+
+**Important**: The `release` branch is PR-only - no direct pushes allowed!
 
 ## Contributing
 
