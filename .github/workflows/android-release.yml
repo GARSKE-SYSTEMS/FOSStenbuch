@@ -35,7 +35,7 @@ jobs:
       run: ./gradlew assembleRelease
 
     - name: Upload APK
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: release-apk
         path: app/build/outputs/apk/release/app-release-unsigned.apk
@@ -57,7 +57,7 @@ jobs:
 
     - name: Upload Release APK as artifact
       if: github.event.pull_request.merged == true
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: FOSStenbuch-release-apk
         path: FOSStenbuch-release.apk

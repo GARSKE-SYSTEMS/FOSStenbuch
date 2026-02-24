@@ -120,7 +120,13 @@ For questions, issues, or feature requests:
 
 ## About Garske Systems
 
-FOSStenbuch is developed and maintained by [Garske Systems](https://garske-systems.de), a software development company specializing in mobile applications and open-source solutions.
+FOSStenbuch is developed and maintained by [Garske Systems](https://garske-systems.de), an IT consulting company specializing in custom software solutions, mobile applications, and open-source development. Our expertise includes:
+
+- IT consulting and digital transformation
+- Custom software development
+- Mobile application development (Android & iOS)
+- Open-source solutions and contributions
+- Enterprise IT infrastructure
 
 ## Contributing
 
@@ -131,8 +137,16 @@ We welcome contributions from the community! If you'd like to contribute:
 - Submit a Pull Request
 - Report bugs or suggest features via GitHub Issues
 
-## Professional Support
+## Professional Services
 
-For professional support, customization, or enterprise features, please contact [Garske Systems](https://garske-systems.de) for consulting services.
+As an IT consulting company, Garske Systems offers professional services for FOSStenbuch:
+
+- **Customization and Integration**: Tailor FOSStenbuch to your business needs
+- **Enterprise Deployment**: Large-scale rollout and management
+- **Support Contracts**: Priority support and maintenance
+- **Training**: User and administrator training
+- **IT Consulting**: Digital transformation strategies
+
+Contact us at [https://garske-systems.de](https://garske-systems.de) for consulting inquiries.
 
 Thank you for using FOSStenbuch! 🚗💨
