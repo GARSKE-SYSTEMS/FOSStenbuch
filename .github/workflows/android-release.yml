@@ -1,9 +1,11 @@
 name: Android Release
 
 on:
-  push:
+  pull_request:
     branches:
       - release
+    types:
+      - closed
 
 jobs:
   build:
@@ -24,7 +26,12 @@ jobs:
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
 
+    - name: Check if PR was merged
+      if: github.event.pull_request.merged == true
+      run: echo "PR was merged, proceeding with release build"
+
     - name: Build release APK
+      if: github.event.pull_request.merged == true
       run: ./gradlew assembleRelease
 
     - name: Upload APK
@@ -34,6 +41,7 @@ jobs:
         path: app/build/outputs/apk/release/app-release-unsigned.apk
 
     - name: Sign APK
+      if: github.event.pull_request.merged == true
       run: |
         echo "${{ secrets.ANDROID_KEYSTORE_FILE }}" | base64 --decode > keystore.jks
         jarsigner -verbose -sigalg SHA256withRSA -digestalg SHA-256 \
@@ -44,9 +52,11 @@ jobs:
           ${{ secrets.ANDROID_KEY_ALIAS }}
 
     - name: Align APK
+      if: github.event.pull_request.merged == true
       run: ${ANDROID_HOME}/build-tools/*/zipalign -v 4 app/build/outputs/apk/release/app-release-unsigned.apk FOSStenbuch-release.apk
 
     - name: Upload Release APK as artifact
+      if: github.event.pull_request.merged == true
       uses: actions/upload-artifact@v3
       with:
         name: FOSStenbuch-release-apk
