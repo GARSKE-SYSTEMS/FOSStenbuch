@@ -1,0 +1,6 @@
+<resources>
+    <string name="app_name">FOSStenbuch</string>
+    <string name="title_trips">Trips</string>
+    <string name="title_stats">Statistics</string>
+    <string name="title_settings">Settings</string>
+</resources>

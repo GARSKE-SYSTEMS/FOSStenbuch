@@ -1,0 +1,18 @@
+package de.fosstenbuch.data.repository
+
+import de.fosstenbuch.data.model.Trip
+import kotlinx.coroutines.flow.Flow
+
+interface TripRepository {
+    fun getAllTrips(): Flow<List<Trip>>
+    fun getTripById(id: Long): Flow<Trip?>
+    fun getBusinessTrips(): Flow<List<Trip>>
+    fun getPrivateTrips(): Flow<List<Trip>>
+    fun getTripsByDateRange(startDate: Long, endDate: Long): Flow<List<Trip>>
+    suspend fun insertTrip(trip: Trip): Long
+    suspend fun updateTrip(trip: Trip)
+    suspend fun deleteTrip(trip: Trip)
+    suspend fun deleteAllTrips()
+    fun getTotalBusinessDistance(): Flow<Double?>
+    fun getTotalPrivateDistance(): Flow<Double?>
+}
