@@ -73,8 +73,8 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-common-java8:2.7.0")
 
     // Navigation
-    implementation("androidx.navigation:navigation-fragment-ktx:2.7.7")
-    implementation("androidx.navigation:navigation-ui-ktx:2.7.7")
+    implementation("androidx.navigation:navigation-fragment-ktx:2.6.0")
+    implementation("androidx.navigation:navigation-ui-ktx:2.6.0")
 
     // Hilt for Dependency Injection
     implementation("com.google.dagger:hilt-android:2.48")
