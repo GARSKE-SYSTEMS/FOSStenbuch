@@ -1,5 +1,6 @@
 package de.fosstenbuch.data.repository
 
+import de.fosstenbuch.data.local.MonthlyDistance
 import de.fosstenbuch.data.local.TripDao
 import de.fosstenbuch.data.model.Trip
 import kotlinx.coroutines.flow.Flow
@@ -20,4 +21,9 @@ class TripRepositoryImpl @Inject constructor(
     override suspend fun deleteAllTrips() = tripDao.deleteAllTrips()
     override fun getTotalBusinessDistance(): Flow<Double?> = tripDao.getTotalBusinessDistance()
     override fun getTotalPrivateDistance(): Flow<Double?> = tripDao.getTotalPrivateDistance()
+    override fun getTotalDistance(): Flow<Double?> = tripDao.getTotalDistance()
+    override fun getTripCountByDateRange(startDate: Long, endDate: Long): Flow<Int> =
+        tripDao.getTripCountByDateRange(startDate, endDate)
+    override fun getMonthlyDistanceSummary(year: Int): Flow<List<MonthlyDistance>> =
+        tripDao.getMonthlyDistanceSummary(year)
 }

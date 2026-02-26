@@ -43,4 +43,25 @@ interface TripDao {
 
     @Query("SELECT SUM(distanceKm) FROM trips WHERE businessTrip = 0")
     fun getTotalPrivateDistance(): Flow<Double?>
+
+    @Query("SELECT SUM(distanceKm) FROM trips")
+    fun getTotalDistance(): Flow<Double?>
+
+    @Query("SELECT COUNT(*) FROM trips WHERE date BETWEEN :startDate AND :endDate")
+    fun getTripCountByDateRange(startDate: Long, endDate: Long): Flow<Int>
+
+    @Query("""
+        SELECT CAST(strftime('%m', date / 1000, 'unixepoch') AS INTEGER) as month,
+               SUM(distanceKm) as totalDistance
+        FROM trips
+        WHERE CAST(strftime('%Y', date / 1000, 'unixepoch') AS INTEGER) = :year
+        GROUP BY month
+        ORDER BY month
+    """)
+    fun getMonthlyDistanceSummary(year: Int): Flow<List<MonthlyDistance>>
 }
+
+data class MonthlyDistance(
+    val month: Int,
+    val totalDistance: Double
+)

@@ -11,13 +11,14 @@ jobs:
   build:
     name: Build Release APK
     runs-on: ubuntu-latest
+    if: github.event.pull_request.merged == true
 
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
 
     - name: Set up JDK 17
-      uses: actions/setup-java@v3
+      uses: actions/setup-java@v4
       with:
         java-version: '17'
         distribution: 'temurin'
@@ -26,37 +27,39 @@ jobs:
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
 
-    - name: Check if PR was merged
-      if: github.event.pull_request.merged == true
-      run: echo "PR was merged, proceeding with release build"
+    - name: Run unit tests
+      run: ./gradlew test
 
     - name: Build release APK
-      if: github.event.pull_request.merged == true
       run: ./gradlew assembleRelease
 
-    - name: Upload APK
-      uses: actions/upload-artifact@v4
-      with:
-        name: release-apk
-        path: app/build/outputs/apk/release/app-release-unsigned.apk
-
-    - name: Sign APK
-      if: github.event.pull_request.merged == true
+    - name: Sign and align APK
       run: |
         echo "${{ secrets.ANDROID_KEYSTORE_FILE }}" | base64 --decode > keystore.jks
-        jarsigner -verbose -sigalg SHA256withRSA -digestalg SHA-256 \
-          -keystore keystore.jks \
-          -storepass ${{ secrets.ANDROID_KEYSTORE_PASSWORD }} \
-          -keypass ${{ secrets.ANDROID_KEY_PASSWORD }} \
+        
+        # Find the latest build-tools version
+        BUILD_TOOLS_DIR=$(ls -d ${ANDROID_HOME}/build-tools/*/ | sort -V | tail -1)
+        
+        # Zipalign first (required before apksigner)
+        ${BUILD_TOOLS_DIR}zipalign -v 4 \
           app/build/outputs/apk/release/app-release-unsigned.apk \
-          ${{ secrets.ANDROID_KEY_ALIAS }}
+          FOSStenbuch-release.apk
+        
+        # Sign with apksigner (v2/v3 signing)
+        ${BUILD_TOOLS_DIR}apksigner sign \
+          --ks keystore.jks \
+          --ks-pass pass:${{ secrets.ANDROID_KEYSTORE_PASSWORD }} \
+          --ks-key-alias ${{ secrets.ANDROID_KEY_ALIAS }} \
+          --key-pass pass:${{ secrets.ANDROID_KEY_PASSWORD }} \
+          FOSStenbuch-release.apk
+        
+        # Verify signature
+        ${BUILD_TOOLS_DIR}apksigner verify --verbose FOSStenbuch-release.apk
+        
+        # Clean up keystore
+        rm keystore.jks
 
-    - name: Align APK
-      if: github.event.pull_request.merged == true
-      run: ${ANDROID_HOME}/build-tools/*/zipalign -v 4 app/build/outputs/apk/release/app-release-unsigned.apk FOSStenbuch-release.apk
-
-    - name: Upload Release APK as artifact
-      if: github.event.pull_request.merged == true
+    - name: Upload Release APK
       uses: actions/upload-artifact@v4
       with:
         name: FOSStenbuch-release-apk

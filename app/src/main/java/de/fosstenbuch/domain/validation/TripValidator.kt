@@ -1,0 +1,75 @@
+package de.fosstenbuch.domain.validation
+
+import de.fosstenbuch.data.model.Trip
+import java.util.Date
+import javax.inject.Inject
+
+/**
+ * Validates Trip data before insert/update operations.
+ * Checks required fields, value ranges, and logical consistency.
+ */
+class TripValidator @Inject constructor() {
+
+    companion object {
+        const val FIELD_START_LOCATION = "startLocation"
+        const val FIELD_END_LOCATION = "endLocation"
+        const val FIELD_DISTANCE = "distanceKm"
+        const val FIELD_PURPOSE = "purpose"
+        const val FIELD_DATE = "date"
+        const val FIELD_ODOMETER = "odometer"
+
+        private const val MAX_DISTANCE_KM = 99_999.0
+        private const val MAX_LOCATION_LENGTH = 200
+        private const val MAX_PURPOSE_LENGTH = 200
+    }
+
+    fun validate(trip: Trip): ValidationResult {
+        val errors = mutableMapOf<String, String>()
+
+        // Start location
+        if (trip.startLocation.isBlank()) {
+            errors[FIELD_START_LOCATION] = "Startort darf nicht leer sein"
+        } else if (trip.startLocation.length > MAX_LOCATION_LENGTH) {
+            errors[FIELD_START_LOCATION] = "Startort darf maximal $MAX_LOCATION_LENGTH Zeichen lang sein"
+        }
+
+        // End location
+        if (trip.endLocation.isBlank()) {
+            errors[FIELD_END_LOCATION] = "Zielort darf nicht leer sein"
+        } else if (trip.endLocation.length > MAX_LOCATION_LENGTH) {
+            errors[FIELD_END_LOCATION] = "Zielort darf maximal $MAX_LOCATION_LENGTH Zeichen lang sein"
+        }
+
+        // Distance
+        if (trip.distanceKm <= 0) {
+            errors[FIELD_DISTANCE] = "Distanz muss größer als 0 sein"
+        } else if (trip.distanceKm > MAX_DISTANCE_KM) {
+            errors[FIELD_DISTANCE] = "Distanz darf maximal $MAX_DISTANCE_KM km betragen"
+        }
+
+        // Purpose
+        if (trip.purpose.isBlank()) {
+            errors[FIELD_PURPOSE] = "Zweck darf nicht leer sein"
+        } else if (trip.purpose.length > MAX_PURPOSE_LENGTH) {
+            errors[FIELD_PURPOSE] = "Zweck darf maximal $MAX_PURPOSE_LENGTH Zeichen lang sein"
+        }
+
+        // Date (not in the future)
+        if (trip.date.after(Date())) {
+            errors[FIELD_DATE] = "Datum darf nicht in der Zukunft liegen"
+        }
+
+        // Odometer consistency
+        val start = trip.startOdometer
+        val end = trip.endOdometer
+        if (start != null && end != null) {
+            if (end <= start) {
+                errors[FIELD_ODOMETER] = "Endkilometerstand muss größer als Startkilometerstand sein"
+            }
+        } else if ((start == null) != (end == null)) {
+            errors[FIELD_ODOMETER] = "Start- und Endkilometerstand müssen beide angegeben werden oder beide leer sein"
+        }
+
+        return ValidationResult(errors)
+    }
+}

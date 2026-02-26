@@ -1,5 +1,6 @@
 package de.fosstenbuch.data.repository
 
+import de.fosstenbuch.data.local.MonthlyDistance
 import de.fosstenbuch.data.model.Trip
 import kotlinx.coroutines.flow.Flow
 
@@ -15,4 +16,7 @@ interface TripRepository {
     suspend fun deleteAllTrips()
     fun getTotalBusinessDistance(): Flow<Double?>
     fun getTotalPrivateDistance(): Flow<Double?>
+    fun getTotalDistance(): Flow<Double?>
+    fun getTripCountByDateRange(startDate: Long, endDate: Long): Flow<Int>
+    fun getMonthlyDistanceSummary(year: Int): Flow<List<MonthlyDistance>>
 }
