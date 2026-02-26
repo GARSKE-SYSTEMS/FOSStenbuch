@@ -415,7 +415,7 @@ res/layout/
 
 ---
 
-## Phase 6: Datenexport
+## Phase 6: Datenexport ✅
 
 **Ziel:** Fahrtenbuch in exportierbarem Format
 
@@ -470,7 +470,7 @@ res/layout/
 
 ---
 
-## Phase 7: Einstellungen
+## Phase 7: Einstellungen ✅
 
 **Ziel:** App-Konfiguration
 

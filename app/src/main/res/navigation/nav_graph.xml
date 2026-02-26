@@ -54,6 +54,10 @@
             android:id="@+id/action_settings_to_purposes"
             app:destination="@id/navigation_purposes" />
 
+        <action
+            android:id="@+id/action_settings_to_export"
+            app:destination="@id/navigation_export" />
+
     </fragment>
 
     <fragment
@@ -132,5 +136,12 @@
             android:defaultValue="0L" />
 
     </fragment>
+
+    <!-- Export -->
+    <fragment
+        android:id="@+id/navigation_export"
+        android:name="de.fosstenbuch.ui.export.ExportFragment"
+        android:label="@string/title_export"
+        tools:layout="@layout/fragment_export" />
 
 </navigation>

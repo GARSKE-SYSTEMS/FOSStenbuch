@@ -142,6 +142,56 @@
         <item>Distanz (kleinste zuerst)</item>
     </string-array>
 
+    <!-- Export -->
+    <string name="title_export">Datenexport</string>
+    <string name="export_date_range">Zeitraum</string>
+    <string name="export_from">Von</string>
+    <string name="export_to">Bis</string>
+    <string name="export_purpose_filter">Kategorien filtern</string>
+    <string name="export_purpose_filter_hint">Alle Kategorien ausgewählt</string>
+    <string name="export_vehicle_filter">Fahrzeug filtern</string>
+    <string name="export_all_vehicles">Alle Fahrzeuge</string>
+    <string name="export_format">Format</string>
+    <string name="export_format_csv">CSV (Excel)</string>
+    <string name="export_format_pdf">PDF</string>
+    <string name="export_include_audit_log">Änderungsprotokoll einschließen</string>
+    <string name="export_trip_count_preview">%d Fahrten im ausgewählten Zeitraum</string>
+    <string name="export_button">Exportieren</string>
+    <string name="export_share_subject">FOSStenbuch Export</string>
+    <string name="export_share_title">Export teilen</string>
+    <string name="export_no_trips">Keine Fahrten im ausgewählten Zeitraum</string>
+    <string name="export_success">Export erfolgreich erstellt</string>
+    <string name="export_error">Fehler beim Exportieren: %s</string>
+    <string name="settings_export">Daten exportieren</string>
+    <string name="settings_export_subtitle">Fahrten als CSV oder PDF exportieren</string>
+
+    <!-- Settings Phase 7 -->
+    <string name="settings_appearance">Darstellung</string>
+    <string name="settings_dark_mode">Dunkelmodus</string>
+    <string name="dark_mode_system">System</string>
+    <string name="dark_mode_light">Hell</string>
+    <string name="dark_mode_dark">Dunkel</string>
+    <string name="settings_general">Allgemein</string>
+    <string name="settings_distance_unit">Entfernungseinheit</string>
+    <string name="settings_default_purpose">Standard-Kategorie</string>
+    <string name="settings_default_vehicle">Standard-Fahrzeug</string>
+    <string name="no_default">Kein Standard</string>
+    <string name="settings_data_management">Datenverwaltung</string>
+    <string name="settings_backup">Backup erstellen</string>
+    <string name="settings_backup_subtitle">Alle Daten als JSON sichern</string>
+    <string name="settings_restore">Backup wiederherstellen</string>
+    <string name="settings_restore_subtitle">Daten aus JSON-Backup laden</string>
+    <string name="settings_delete_all">Alle Daten löschen</string>
+    <string name="settings_delete_all_title">Alle Daten löschen?</string>
+    <string name="settings_delete_all_message">Möchten Sie wirklich alle Daten unwiderruflich löschen? Es werden alle Fahrten, Fahrzeuge, Standorte und Kategorien entfernt.\n\nDiese Aktion kann nicht rückgängig gemacht werden!</string>
+    <string name="backup_success">Backup erfolgreich erstellt</string>
+    <string name="restore_success">Daten erfolgreich wiederhergestellt</string>
+    <string name="restore_warning_title">Backup wiederherstellen?</string>
+    <string name="restore_warning_message">Alle vorhandenen Daten werden durch die Backup-Daten ersetzt.\n\nMöchten Sie fortfahren?</string>
+    <string name="delete_all_success">Alle Daten wurden gelöscht</string>
+    <string name="backup_error">Fehler beim Backup: %s</string>
+    <string name="restore_error">Fehler beim Wiederherstellen: %s</string>
+
     <!-- Fuel types -->
     <string-array name="fuel_types">
         <item>Benzin</item>
@@ -152,5 +202,18 @@
         <item>Erdgas (CNG)</item>
         <item>Autogas (LPG)</item>
         <item>Wasserstoff</item>
+    </string-array>
+
+    <!-- Dark mode options -->
+    <string-array name="dark_mode_options">
+        <item>System</item>
+        <item>Hell</item>
+        <item>Dunkel</item>
+    </string-array>
+
+    <!-- Distance unit options -->
+    <string-array name="distance_unit_options">
+        <item>Kilometer</item>
+        <item>Meilen</item>
     </string-array>
 </resources>

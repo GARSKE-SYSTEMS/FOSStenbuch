@@ -85,6 +85,18 @@ object AppModule {
 
     @Provides
     @Singleton
+    fun provideTripDao(database: AppDatabase): de.fosstenbuch.data.local.TripDao {
+        return database.tripDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideVehicleDao(database: AppDatabase): de.fosstenbuch.data.local.VehicleDao {
+        return database.vehicleDao()
+    }
+
+    @Provides
+    @Singleton
     fun provideSavedLocationRepository(database: AppDatabase): SavedLocationRepository {
         return SavedLocationRepositoryImpl(database.savedLocationDao())
     }
