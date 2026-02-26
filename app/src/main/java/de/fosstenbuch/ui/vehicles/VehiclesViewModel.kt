@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import de.fosstenbuch.data.model.Vehicle
+import de.fosstenbuch.data.repository.TripRepository
 import de.fosstenbuch.domain.usecase.vehicle.DeleteVehicleUseCase
 import de.fosstenbuch.domain.usecase.vehicle.GetAllVehiclesUseCase
 import de.fosstenbuch.domain.usecase.vehicle.SetPrimaryVehicleUseCase
@@ -20,7 +21,8 @@ import javax.inject.Inject
 class VehiclesViewModel @Inject constructor(
     private val getAllVehiclesUseCase: GetAllVehiclesUseCase,
     private val deleteVehicleUseCase: DeleteVehicleUseCase,
-    private val setPrimaryVehicleUseCase: SetPrimaryVehicleUseCase
+    private val setPrimaryVehicleUseCase: SetPrimaryVehicleUseCase,
+    private val tripRepository: TripRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(VehiclesUiState())
@@ -33,6 +35,17 @@ class VehiclesViewModel @Inject constructor(
     fun deleteVehicle(vehicle: Vehicle) {
         viewModelScope.launch {
             try {
+                // Audit-protected vehicles cannot be deleted if they have trips
+                if (vehicle.auditProtected) {
+                    val tripCount = tripRepository.getTripCountForVehicle(vehicle.id)
+                    if (tripCount > 0) {
+                        _uiState.update {
+                            it.copy(error = "Änderungssicher geschütztes Fahrzeug kann nicht gelöscht werden, " +
+                                "solange Fahrten zugeordnet sind ($tripCount Fahrten)")
+                        }
+                        return@launch
+                    }
+                }
                 deleteVehicleUseCase(vehicle)
             } catch (e: Exception) {
                 Timber.e(e, "Failed to delete vehicle")

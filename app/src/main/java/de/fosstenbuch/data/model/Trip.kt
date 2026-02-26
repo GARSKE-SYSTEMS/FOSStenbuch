@@ -1,10 +1,29 @@
 package de.fosstenbuch.data.model
 
 import androidx.room.Entity
+import androidx.room.ForeignKey
+import androidx.room.Index
 import androidx.room.PrimaryKey
 import java.util.Date
 
-@Entity(tableName = "trips")
+@Entity(
+    tableName = "trips",
+    foreignKeys = [
+        ForeignKey(
+            entity = TripPurpose::class,
+            parentColumns = ["id"],
+            childColumns = ["purposeId"],
+            onDelete = ForeignKey.SET_NULL
+        ),
+        ForeignKey(
+            entity = Vehicle::class,
+            parentColumns = ["id"],
+            childColumns = ["vehicleId"],
+            onDelete = ForeignKey.SET_NULL
+        )
+    ],
+    indices = [Index("purposeId"), Index("vehicleId")]
+)
 data class Trip(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val date: Date,
@@ -12,8 +31,11 @@ data class Trip(
     val endLocation: String,
     val distanceKm: Double,
     val purpose: String,
-    val businessTrip: Boolean,
+    val purposeId: Long? = null,
     val notes: String? = null,
     val startOdometer: Int? = null,
-    val endOdometer: Int? = null
+    val endOdometer: Int? = null,
+    val vehicleId: Long? = null,
+    val isCancelled: Boolean = false,
+    val cancellationReason: String? = null
 )

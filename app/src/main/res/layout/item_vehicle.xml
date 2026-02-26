@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginHorizontal="16dp"
+    android:layout_marginVertical="4dp"
+    app:cardCornerRadius="8dp"
+    app:cardElevation="2dp">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="16dp">
+
+        <!-- Audit lock icon -->
+        <ImageView
+            android:id="@+id/icon_audit_protected"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:contentDescription="@string/audit_protected"
+            android:src="@drawable/ic_lock"
+            android:visibility="gone"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:tint="?attr/colorPrimary"
+            tools:visibility="visible" />
+
+        <!-- Primary star icon -->
+        <ImageView
+            android:id="@+id/icon_primary"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_marginEnd="8dp"
+            android:contentDescription="@string/primary_vehicle"
+            android:src="@drawable/ic_star"
+            android:visibility="gone"
+            app:layout_constraintEnd_toStartOf="@id/icon_audit_protected"
+            app:layout_constraintTop_toTopOf="parent"
+            app:tint="#FFC107"
+            tools:visibility="visible" />
+
+        <!-- Make & Model -->
+        <TextView
+            android:id="@+id/text_vehicle_name"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:ellipsize="end"
+            android:maxLines="1"
+            app:layout_constraintEnd_toStartOf="@id/icon_primary"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:text="Volkswagen Golf" />
+
+        <!-- License plate -->
+        <TextView
+            android:id="@+id/text_vehicle_plate"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:textSize="14sp"
+            android:textColor="?attr/colorPrimary"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/text_vehicle_name"
+            tools:text="B AB 1234" />
+
+        <!-- Fuel type -->
+        <TextView
+            android:id="@+id/text_vehicle_fuel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="4dp"
+            android:textSize="14sp"
+            android:textColor="?android:attr/textColorSecondary"
+            app:layout_constraintStart_toEndOf="@id/text_vehicle_plate"
+            app:layout_constraintTop_toBottomOf="@id/text_vehicle_name"
+            tools:text="Diesel" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</com.google.android.material.card.MaterialCardView>

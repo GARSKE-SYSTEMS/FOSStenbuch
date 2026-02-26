@@ -1,6 +1,8 @@
 package de.fosstenbuch.ui.trips
 
 import de.fosstenbuch.data.model.Trip
+import de.fosstenbuch.data.model.TripPurpose
+import de.fosstenbuch.data.model.Vehicle
 import de.fosstenbuch.domain.validation.ValidationResult
 
 /**
@@ -13,5 +15,7 @@ data class TripDetailUiState(
     val isSaving: Boolean = false,
     val savedSuccessfully: Boolean = false,
     val validationResult: ValidationResult? = null,
-    val error: String? = null
+    val error: String? = null,
+    val vehicles: List<Vehicle> = emptyList(),
+    val purposes: List<TripPurpose> = emptyList()
 )

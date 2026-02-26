@@ -19,6 +19,8 @@ class TripRepositoryImpl @Inject constructor(
     override suspend fun updateTrip(trip: Trip) = tripDao.updateTrip(trip)
     override suspend fun deleteTrip(trip: Trip) = tripDao.deleteTrip(trip)
     override suspend fun deleteAllTrips() = tripDao.deleteAllTrips()
+    override suspend fun getTripCountForVehicle(vehicleId: Long): Int =
+        tripDao.getTripCountForVehicle(vehicleId)
     override fun getTotalBusinessDistance(): Flow<Double?> = tripDao.getTotalBusinessDistance()
     override fun getTotalPrivateDistance(): Flow<Double?> = tripDao.getTotalPrivateDistance()
     override fun getTotalDistance(): Flow<Double?> = tripDao.getTotalDistance()

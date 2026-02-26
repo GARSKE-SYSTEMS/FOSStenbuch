@@ -8,5 +8,7 @@ data class SettingsUiState(
     val isLoading: Boolean = false,
     val error: String? = null,
     val vehicleCount: Int = 0,
-    val tripCount: Int = 0
+    val tripCount: Int = 0,
+    val locationCount: Int = 0,
+    val purposeCount: Int = 0
 )

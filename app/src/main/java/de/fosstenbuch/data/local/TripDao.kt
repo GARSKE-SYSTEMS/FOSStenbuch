@@ -17,10 +17,20 @@ interface TripDao {
     @Query("SELECT * FROM trips WHERE id = :id")
     fun getTripById(id: Long): Flow<Trip?>
 
-    @Query("SELECT * FROM trips WHERE businessTrip = 1 ORDER BY date DESC")
+    @Query("""
+        SELECT trips.* FROM trips 
+        INNER JOIN trip_purposes ON trips.purposeId = trip_purposes.id 
+        WHERE trip_purposes.isBusinessRelevant = 1 
+        ORDER BY trips.date DESC
+    """)
     fun getBusinessTrips(): Flow<List<Trip>>
 
-    @Query("SELECT * FROM trips WHERE businessTrip = 0 ORDER BY date DESC")
+    @Query("""
+        SELECT trips.* FROM trips 
+        INNER JOIN trip_purposes ON trips.purposeId = trip_purposes.id 
+        WHERE trip_purposes.isBusinessRelevant = 0 
+        ORDER BY trips.date DESC
+    """)
     fun getPrivateTrips(): Flow<List<Trip>>
 
     @Query("SELECT * FROM trips WHERE date BETWEEN :startDate AND :endDate ORDER BY date DESC")
@@ -38,10 +48,21 @@ interface TripDao {
     @Query("DELETE FROM trips")
     suspend fun deleteAllTrips()
 
-    @Query("SELECT SUM(distanceKm) FROM trips WHERE businessTrip = 1")
+    @Query("SELECT COUNT(*) FROM trips WHERE vehicleId = :vehicleId")
+    suspend fun getTripCountForVehicle(vehicleId: Long): Int
+
+    @Query("""
+        SELECT SUM(trips.distanceKm) FROM trips 
+        INNER JOIN trip_purposes ON trips.purposeId = trip_purposes.id 
+        WHERE trip_purposes.isBusinessRelevant = 1
+    """)
     fun getTotalBusinessDistance(): Flow<Double?>
 
-    @Query("SELECT SUM(distanceKm) FROM trips WHERE businessTrip = 0")
+    @Query("""
+        SELECT SUM(trips.distanceKm) FROM trips 
+        INNER JOIN trip_purposes ON trips.purposeId = trip_purposes.id 
+        WHERE trip_purposes.isBusinessRelevant = 0
+    """)
     fun getTotalPrivateDistance(): Flow<Double?>
 
     @Query("SELECT SUM(distanceKm) FROM trips")

@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import de.fosstenbuch.data.model.Trip
+import de.fosstenbuch.domain.usecase.purpose.GetAllPurposesUseCase
 import de.fosstenbuch.domain.usecase.trip.DeleteTripUseCase
 import de.fosstenbuch.domain.usecase.trip.GetAllTripsUseCase
 import de.fosstenbuch.domain.usecase.trip.GetBusinessTripsUseCase
@@ -22,13 +23,15 @@ class TripsViewModel @Inject constructor(
     private val getAllTripsUseCase: GetAllTripsUseCase,
     private val getBusinessTripsUseCase: GetBusinessTripsUseCase,
     private val getPrivateTripsUseCase: GetPrivateTripsUseCase,
-    private val deleteTripUseCase: DeleteTripUseCase
+    private val deleteTripUseCase: DeleteTripUseCase,
+    private val getAllPurposesUseCase: GetAllPurposesUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(TripsUiState())
     val uiState: StateFlow<TripsUiState> = _uiState.asStateFlow()
 
     init {
+        loadPurposes()
         loadTrips()
     }
 
@@ -56,6 +59,16 @@ class TripsViewModel @Inject constructor(
 
     fun clearError() {
         _uiState.update { it.copy(error = null) }
+    }
+
+    private fun loadPurposes() {
+        viewModelScope.launch {
+            getAllPurposesUseCase()
+                .catch { e -> Timber.e(e, "Failed to load purposes") }
+                .collect { purposes ->
+                    _uiState.update { it.copy(purposes = purposes) }
+                }
+        }
     }
 
     private fun loadTrips() {

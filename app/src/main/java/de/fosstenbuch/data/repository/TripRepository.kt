@@ -14,6 +14,7 @@ interface TripRepository {
     suspend fun updateTrip(trip: Trip)
     suspend fun deleteTrip(trip: Trip)
     suspend fun deleteAllTrips()
+    suspend fun getTripCountForVehicle(vehicleId: Long): Int
     fun getTotalBusinessDistance(): Flow<Double?>
     fun getTotalPrivateDistance(): Flow<Double?>
     fun getTotalDistance(): Flow<Double?>

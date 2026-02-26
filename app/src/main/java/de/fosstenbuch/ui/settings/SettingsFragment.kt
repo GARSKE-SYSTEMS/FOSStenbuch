@@ -9,7 +9,9 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.navigation.fragment.findNavController
 import dagger.hilt.android.AndroidEntryPoint
+import de.fosstenbuch.R
 import de.fosstenbuch.databinding.FragmentSettingsBinding
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -33,15 +35,39 @@ class SettingsFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        setupVehicleManagement()
+        setupLocationManagement()
+        setupPurposeManagement()
         observeState()
+    }
+
+    private fun setupVehicleManagement() {
+        binding.cardVehicles.setOnClickListener {
+            findNavController().navigate(R.id.action_settings_to_vehicles)
+        }
+    }
+
+    private fun setupLocationManagement() {
+        binding.cardLocations.setOnClickListener {
+            findNavController().navigate(R.id.action_settings_to_saved_locations)
+        }
+    }
+
+    private fun setupPurposeManagement() {
+        binding.cardPurposes.setOnClickListener {
+            findNavController().navigate(R.id.action_settings_to_purposes)
+        }
     }
 
     private fun observeState() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.uiState.collect { state ->
-                    Timber.d("SettingsUiState: vehicles=${state.vehicleCount}, trips=${state.tripCount}")
-                    // TODO Phase 7: Update preference views, data summary
+                    Timber.d("SettingsUiState: vehicles=${state.vehicleCount}, trips=${state.tripCount}, locations=${state.locationCount}, purposes=${state.purposeCount}")
+                    binding.textTripCount.text = getString(R.string.trip_count_format, state.tripCount)
+                    binding.textVehicleCount.text = getString(R.string.vehicle_count_format, state.vehicleCount)
+                    binding.textLocationCount.text = getString(R.string.location_count_format, state.locationCount)
+                    binding.textPurposeCount.text = getString(R.string.purpose_count_format, state.purposeCount)
                 }
             }
         }

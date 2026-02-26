@@ -159,7 +159,9 @@ ui/common/
 
 ---
 
-## Phase 3: Trip-CRUD UI
+## Phase 3: Trip-CRUD UI ✅
+
+**Status: Implementiert**
 
 **Ziel:** Vollständige Fahrtenverwaltung
 
@@ -197,7 +199,9 @@ res/layout/
 
 ---
 
-## Phase 4: Fahrzeugverwaltung
+## Phase 4: Fahrzeugverwaltung ✅
+
+**Status: Implementiert**
 
 **Ziel:** Fahrzeuge anlegen, bearbeiten, löschen
 
@@ -256,7 +260,9 @@ res/layout/
 
 ---
 
-## Phase 4b: Gespeicherte Orte & GPS-Vorschlag
+## Phase 4b: Gespeicherte Orte & GPS-Vorschlag ✅
+
+**Status: Implementiert**
 
 **Ziel:** Häufig genutzte Orte speichern; beim Starten/Beenden einer Fahrt wird automatisch der nächste gespeicherte Ort (≤ 1 km) vorgeschlagen.
 
@@ -318,7 +324,9 @@ res/layout/
 
 ---
 
-## Phase 4c: Benutzerdefinierte Fahrt-Zwecke
+## Phase 4c: Benutzerdefinierte Fahrt-Zwecke ✅
+
+**Status: Implementiert**
 
 **Ziel:** Statt fest codierter Kategorien (Privat / Beruflich) kann der Nutzer beliebige Zwecke anlegen und verwalten.
 
@@ -378,7 +386,9 @@ res/layout/
 
 ---
 
-## Phase 5: Statistiken
+## Phase 5: Statistiken ✅
+
+**Status: Implementiert**
 
 **Ziel:** Übersichtliche Auswertungen
 

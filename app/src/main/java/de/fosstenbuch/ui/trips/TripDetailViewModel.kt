@@ -5,9 +5,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import de.fosstenbuch.data.model.Trip
+import de.fosstenbuch.domain.usecase.purpose.GetAllPurposesUseCase
 import de.fosstenbuch.domain.usecase.trip.GetTripByIdUseCase
 import de.fosstenbuch.domain.usecase.trip.InsertTripUseCase
 import de.fosstenbuch.domain.usecase.trip.UpdateTripUseCase
+import de.fosstenbuch.domain.usecase.vehicle.GetAllVehiclesUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -22,7 +24,9 @@ class TripDetailViewModel @Inject constructor(
     private val savedStateHandle: SavedStateHandle,
     private val getTripByIdUseCase: GetTripByIdUseCase,
     private val insertTripUseCase: InsertTripUseCase,
-    private val updateTripUseCase: UpdateTripUseCase
+    private val updateTripUseCase: UpdateTripUseCase,
+    private val getAllVehiclesUseCase: GetAllVehiclesUseCase,
+    private val getAllPurposesUseCase: GetAllPurposesUseCase
 ) : ViewModel() {
 
     private val tripId: Long? = savedStateHandle.get<Long>("tripId")?.takeIf { it > 0 }
@@ -33,7 +37,29 @@ class TripDetailViewModel @Inject constructor(
     val uiState: StateFlow<TripDetailUiState> = _uiState.asStateFlow()
 
     init {
+        loadVehicles()
+        loadPurposes()
         tripId?.let { loadTrip(it) }
+    }
+
+    private fun loadVehicles() {
+        viewModelScope.launch {
+            getAllVehiclesUseCase()
+                .catch { e -> Timber.e(e, "Failed to load vehicles") }
+                .collect { vehicles ->
+                    _uiState.update { it.copy(vehicles = vehicles) }
+                }
+        }
+    }
+
+    private fun loadPurposes() {
+        viewModelScope.launch {
+            getAllPurposesUseCase()
+                .catch { e -> Timber.e(e, "Failed to load purposes") }
+                .collect { purposes ->
+                    _uiState.update { it.copy(purposes = purposes) }
+                }
+        }
     }
 
     private fun loadTrip(id: Long) {

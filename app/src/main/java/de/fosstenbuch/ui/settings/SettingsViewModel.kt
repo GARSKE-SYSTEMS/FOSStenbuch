@@ -3,6 +3,8 @@ package de.fosstenbuch.ui.settings
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import de.fosstenbuch.domain.usecase.location.GetAllSavedLocationsUseCase
+import de.fosstenbuch.domain.usecase.purpose.GetAllPurposesUseCase
 import de.fosstenbuch.domain.usecase.trip.GetAllTripsUseCase
 import de.fosstenbuch.domain.usecase.vehicle.GetAllVehiclesUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,15 +17,12 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
 
-/**
- * ViewModel for the Settings screen.
- * Currently provides a data summary; will be expanded in Phase 7
- * with user preferences (DataStore), backup/restore, and appearance settings.
- */
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     private val getAllTripsUseCase: GetAllTripsUseCase,
-    private val getAllVehiclesUseCase: GetAllVehiclesUseCase
+    private val getAllVehiclesUseCase: GetAllVehiclesUseCase,
+    private val getAllSavedLocationsUseCase: GetAllSavedLocationsUseCase,
+    private val getAllPurposesUseCase: GetAllPurposesUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SettingsUiState())
@@ -42,12 +41,16 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             combine(
                 getAllTripsUseCase(),
-                getAllVehiclesUseCase()
-            ) { trips, vehicles ->
+                getAllVehiclesUseCase(),
+                getAllSavedLocationsUseCase(),
+                getAllPurposesUseCase()
+            ) { trips, vehicles, locations, purposes ->
                 SettingsUiState(
                     isLoading = false,
                     tripCount = trips.size,
-                    vehicleCount = vehicles.size
+                    vehicleCount = vehicles.size,
+                    locationCount = locations.size,
+                    purposeCount = purposes.size
                 )
             }
                 .catch { e ->

@@ -1,6 +1,7 @@
 package de.fosstenbuch.ui.trips
 
 import de.fosstenbuch.data.model.Trip
+import de.fosstenbuch.data.model.TripPurpose
 
 /**
  * Represents the possible filter modes for the trips list.
@@ -26,6 +27,7 @@ enum class TripSort {
  */
 data class TripsUiState(
     val trips: List<Trip> = emptyList(),
+    val purposes: List<TripPurpose> = emptyList(),
     val isLoading: Boolean = true,
     val error: String? = null,
     val filter: TripFilter = TripFilter.ALL,

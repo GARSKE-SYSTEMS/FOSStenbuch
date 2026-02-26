@@ -9,7 +9,26 @@
         android:id="@+id/navigation_trips"
         android:name="de.fosstenbuch.ui.trips.TripsFragment"
         android:label="@string/title_trips"
-        tools:layout="@layout/fragment_trips" />
+        tools:layout="@layout/fragment_trips">
+
+        <action
+            android:id="@+id/action_trips_to_add_edit_trip"
+            app:destination="@id/navigation_add_edit_trip" />
+
+    </fragment>
+
+    <fragment
+        android:id="@+id/navigation_add_edit_trip"
+        android:name="de.fosstenbuch.ui.trips.AddEditTripFragment"
+        android:label="@string/add_edit_trip"
+        tools:layout="@layout/fragment_add_edit_trip">
+
+        <argument
+            android:name="tripId"
+            app:argType="long"
+            android:defaultValue="0L" />
+
+    </fragment>
 
     <fragment
         android:id="@+id/navigation_stats"
@@ -21,5 +40,97 @@
         android:id="@+id/navigation_settings"
         android:name="de.fosstenbuch.ui.settings.SettingsFragment"
         android:label="@string/title_settings"
-        tools:layout="@layout/fragment_settings" />
+        tools:layout="@layout/fragment_settings">
+
+        <action
+            android:id="@+id/action_settings_to_vehicles"
+            app:destination="@id/navigation_vehicles" />
+
+        <action
+            android:id="@+id/action_settings_to_saved_locations"
+            app:destination="@id/navigation_saved_locations" />
+
+        <action
+            android:id="@+id/action_settings_to_purposes"
+            app:destination="@id/navigation_purposes" />
+
+    </fragment>
+
+    <fragment
+        android:id="@+id/navigation_vehicles"
+        android:name="de.fosstenbuch.ui.vehicles.VehiclesFragment"
+        android:label="@string/title_vehicles"
+        tools:layout="@layout/fragment_vehicles">
+
+        <action
+            android:id="@+id/action_vehicles_to_add_edit_vehicle"
+            app:destination="@id/navigation_add_edit_vehicle" />
+
+    </fragment>
+
+    <fragment
+        android:id="@+id/navigation_add_edit_vehicle"
+        android:name="de.fosstenbuch.ui.vehicles.AddEditVehicleFragment"
+        android:label="@string/add_edit_vehicle"
+        tools:layout="@layout/fragment_add_edit_vehicle">
+
+        <argument
+            android:name="vehicleId"
+            app:argType="long"
+            android:defaultValue="0L" />
+
+    </fragment>
+
+    <!-- Saved Locations -->
+    <fragment
+        android:id="@+id/navigation_saved_locations"
+        android:name="de.fosstenbuch.ui.locations.SavedLocationsFragment"
+        android:label="@string/title_saved_locations"
+        tools:layout="@layout/fragment_saved_locations">
+
+        <action
+            android:id="@+id/action_saved_locations_to_add_edit_location"
+            app:destination="@id/navigation_add_edit_location" />
+
+    </fragment>
+
+    <fragment
+        android:id="@+id/navigation_add_edit_location"
+        android:name="de.fosstenbuch.ui.locations.AddEditLocationFragment"
+        android:label="@string/add_edit_location"
+        tools:layout="@layout/fragment_add_edit_location">
+
+        <argument
+            android:name="locationId"
+            app:argType="long"
+            android:defaultValue="0L" />
+
+    </fragment>
+
+    <!-- Trip Purposes -->
+    <fragment
+        android:id="@+id/navigation_purposes"
+        android:name="de.fosstenbuch.ui.purposes.PurposesFragment"
+        android:label="@string/title_purposes"
+        tools:layout="@layout/fragment_purposes">
+
+        <action
+            android:id="@+id/action_purposes_to_add_edit_purpose"
+            app:destination="@id/navigation_add_edit_purpose" />
+
+    </fragment>
+
+    <fragment
+        android:id="@+id/navigation_add_edit_purpose"
+        android:name="de.fosstenbuch.ui.purposes.AddEditPurposeFragment"
+        android:label="@string/add_edit_purpose"
+        tools:layout="@layout/fragment_add_edit_purpose">
+
+        <argument
+            android:name="purposeId"
+            app:argType="long"
+            android:defaultValue="0L" />
+
+    </fragment>
+
 </navigation>

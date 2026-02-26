@@ -1,6 +1,156 @@
 <resources>
     <string name="app_name">FOSStenbuch</string>
-    <string name="title_trips">Trips</string>
-    <string name="title_stats">Statistics</string>
-    <string name="title_settings">Settings</string>
+    <string name="title_trips">Fahrten</string>
+    <string name="title_stats">Statistik</string>
+    <string name="title_settings">Einstellungen</string>
+    <string name="title_vehicles">Fahrzeuge</string>
+
+    <!-- Trip list -->
+    <string name="filter_all">Alle</string>
+    <string name="filter_business">Geschäftlich</string>
+    <string name="filter_private">Privat</string>
+    <string name="sort_by">Sortierung</string>
+    <string name="no_trips">Keine Fahrten vorhanden</string>
+    <string name="add_first_trip">Tippen Sie auf +, um eine Fahrt hinzuzufügen</string>
+    <string name="add_trip">Fahrt hinzufügen</string>
+    <string name="trip_route_format">%1$s → %2$s</string>
+    <string name="distance_format">%.1f km</string>
+    <string name="business">Geschäftlich</string>
+    <string name="private_trip">Privat</string>
+    <string name="trip_cancelled">Storniert</string>
+
+    <!-- Trip form -->
+    <string name="add_edit_trip">Fahrt</string>
+    <string name="trip_date">Datum</string>
+    <string name="start_location">Startort</string>
+    <string name="end_location">Zielort</string>
+    <string name="distance_km">Distanz</string>
+    <string name="start_odometer">Km-Stand Start</string>
+    <string name="end_odometer">Km-Stand Ende</string>
+    <string name="purpose">Zweck</string>
+    <string name="business_trip">Geschäftliche Fahrt</string>
+    <string name="vehicle">Fahrzeug</string>
+    <string name="no_vehicle">Kein Fahrzeug</string>
+    <string name="notes">Notizen</string>
+    <string name="save">Speichern</string>
+
+    <!-- Delete -->
+    <string name="delete">Löschen</string>
+    <string name="cancel">Abbrechen</string>
+    <string name="delete_trip_title">Fahrt löschen?</string>
+    <string name="delete_trip_message">Möchten Sie diese Fahrt wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.</string>
+
+    <!-- Vehicles -->
+    <string name="no_vehicles">Keine Fahrzeuge vorhanden</string>
+    <string name="add_first_vehicle">Tippen Sie auf +, um ein Fahrzeug hinzuzufügen</string>
+    <string name="add_vehicle">Fahrzeug hinzufügen</string>
+    <string name="add_edit_vehicle">Fahrzeug</string>
+    <string name="vehicle_make">Hersteller</string>
+    <string name="vehicle_model">Modell</string>
+    <string name="license_plate">Kennzeichen</string>
+    <string name="license_plate_hint">z.B. B AB 1234</string>
+    <string name="fuel_type">Kraftstoffart</string>
+    <string name="primary_vehicle">Primärfahrzeug</string>
+    <string name="set_primary">Als Primärfahrzeug setzen</string>
+    <string name="delete_vehicle_title">Fahrzeug löschen?</string>
+    <string name="delete_vehicle_message">Möchten Sie dieses Fahrzeug wirklich löschen?</string>
+
+    <!-- Audit protection -->
+    <string name="audit_protection">Änderungssichere Protokollierung (Finanzamt)</string>
+    <string name="audit_protection_hint">Wenn aktiviert, können zugehörige Fahrten nicht gelöscht werden. Änderungen werden protokolliert. Diese Einstellung kann nicht rückgängig gemacht werden.</string>
+    <string name="audit_protection_active">Änderungssichere Protokollierung ist aktiv und kann nicht deaktiviert werden.</string>
+    <string name="audit_protection_warning_title">Änderungssichere Protokollierung aktivieren?</string>
+    <string name="audit_protection_warning_message">Diese Einstellung kann nicht rückgängig gemacht werden!\n\nWenn aktiviert:\n• Zugehörige Fahrten können nicht gelöscht werden\n• Alle Änderungen an Fahrten werden protokolliert\n• Das Fahrzeug kann nicht gelöscht werden, solange Fahrten existieren</string>
+    <string name="audit_protected">Änderungssicher</string>
+    <string name="enable">Aktivieren</string>
+
+    <!-- Settings -->
+    <string name="data_summary">Datenübersicht</string>
+    <string name="manage_vehicles">Fahrzeuge verwalten</string>
+    <string name="manage_vehicles_subtitle">Fahrzeuge hinzufügen, bearbeiten und löschen</string>
+    <string name="manage_locations">Standorte verwalten</string>
+    <string name="manage_locations_subtitle">Gespeicherte Standorte bearbeiten und löschen</string>
+    <string name="manage_purposes">Fahrt-Kategorien verwalten</string>
+    <string name="manage_purposes_subtitle">Kategorien hinzufügen, bearbeiten und löschen</string>
+    <string name="trip_count_format">Fahrten: %d</string>
+    <string name="vehicle_count_format">Fahrzeuge: %d</string>
+    <string name="location_count_format">Standorte: %d</string>
+    <string name="purpose_count_format">Kategorien: %d</string>
+
+    <!-- Saved Locations -->
+    <string name="title_saved_locations">Gespeicherte Standorte</string>
+    <string name="no_saved_locations">Keine Standorte gespeichert</string>
+    <string name="add_first_location">Tippen Sie auf +, um einen Standort hinzuzufügen</string>
+    <string name="add_location">Standort hinzufügen</string>
+    <string name="add_edit_location">Standort</string>
+    <string name="location_name">Name</string>
+    <string name="location_address">Adresse (optional)</string>
+    <string name="latitude">Breitengrad</string>
+    <string name="longitude">Längengrad</string>
+    <string name="get_current_location">Aktuellen Standort ermitteln</string>
+    <string name="location_permission_denied">Standortberechtigung wurde verweigert</string>
+    <string name="location_not_available">Standort nicht verfügbar</string>
+    <string name="error_name_required">Name ist erforderlich</string>
+    <string name="error_latitude_required">Breitengrad ist erforderlich</string>
+    <string name="error_longitude_required">Längengrad ist erforderlich</string>
+    <string name="delete_location_title">Standort löschen?</string>
+    <string name="delete_location_message">Möchten Sie diesen Standort wirklich löschen?</string>
+    <string name="location_suggested">Standort vorgeschlagen: %s</string>
+    <string name="usage_count_format">× %d</string>
+    <string name="coordinates_format">%s, %s</string>
+
+    <!-- Trip Purposes -->
+    <string name="title_purposes">Fahrt-Kategorien</string>
+    <string name="no_purposes">Keine Kategorien vorhanden</string>
+    <string name="add_purpose">Kategorie hinzufügen</string>
+    <string name="add_edit_purpose">Kategorie</string>
+    <string name="purpose_name">Name</string>
+    <string name="purpose_category">Kategorie</string>
+    <string name="purpose_color">Farbe (Hex)</string>
+    <string name="purpose_color_hint">#FF5722</string>
+    <string name="business_relevant">Geschäftsrelevant</string>
+    <string name="default_purpose">Standard</string>
+    <string name="delete_purpose_title">Kategorie löschen?</string>
+    <string name="delete_purpose_message">Möchten Sie diese Kategorie wirklich löschen?</string>
+    <string name="no_category">Keine Kategorie</string>
+    <string name="color_preview">Farbvorschau</string>
+    <string name="cannot_delete_default">Standard-Kategorien können nicht gelöscht werden</string>
+    <string name="cannot_delete_in_use">Kategorie wird noch von Fahrten verwendet</string>
+    <string name="purpose_name_duplicate">Eine Kategorie mit diesem Namen existiert bereits</string>
+
+    <!-- Statistics -->
+    <string name="stats_total_distance">Gesamtstrecke</string>
+    <string name="stats_business_distance">Geschäftliche Strecke</string>
+    <string name="stats_private_distance">Private Strecke</string>
+    <string name="stats_total_trips">Gesamtzahl Fahrten</string>
+    <string name="stats_average_distance">Durchschnittliche Distanz</string>
+    <string name="stats_trips_this_month">Fahrten diesen Monat</string>
+    <string name="stats_trips_this_year">Fahrten dieses Jahr</string>
+    <string name="stats_business_percentage">Geschäftsanteil</string>
+    <string name="stats_no_data">Noch keine Statistiken verfügbar</string>
+    <string name="stats_add_trips_hint">Fügen Sie Fahrten hinzu, um Statistiken zu sehen</string>
+    <string name="stats_year_label">Jahr: %d</string>
+    <string name="stats_km_format">%.1f km</string>
+    <string name="stats_count_format">%d</string>
+    <string name="stats_percent_format">%.0f %%</string>
+
+    <!-- Sort options -->
+    <string-array name="sort_options">
+        <item>Datum (neueste zuerst)</item>
+        <item>Datum (älteste zuerst)</item>
+        <item>Distanz (größte zuerst)</item>
+        <item>Distanz (kleinste zuerst)</item>
+    </string-array>
+
+    <!-- Fuel types -->
+    <string-array name="fuel_types">
+        <item>Benzin</item>
+        <item>Diesel</item>
+        <item>Elektro</item>
+        <item>Hybrid</item>
+        <item>Plug-in-Hybrid</item>
+        <item>Erdgas (CNG)</item>
+        <item>Autogas (LPG)</item>
+        <item>Wasserstoff</item>
+    </string-array>
 </resources>

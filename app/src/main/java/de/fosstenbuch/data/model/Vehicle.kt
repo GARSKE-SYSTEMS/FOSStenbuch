@@ -11,5 +11,6 @@ data class Vehicle(
     val licensePlate: String,
     val fuelType: String,
     val isPrimary: Boolean = false,
-    val notes: String? = null
+    val notes: String? = null,
+    val auditProtected: Boolean = false
 )

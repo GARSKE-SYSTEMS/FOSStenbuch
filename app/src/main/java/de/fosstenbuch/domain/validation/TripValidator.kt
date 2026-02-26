@@ -15,6 +15,7 @@ class TripValidator @Inject constructor() {
         const val FIELD_END_LOCATION = "endLocation"
         const val FIELD_DISTANCE = "distanceKm"
         const val FIELD_PURPOSE = "purpose"
+        const val FIELD_PURPOSE_ID = "purposeId"
         const val FIELD_DATE = "date"
         const val FIELD_ODOMETER = "odometer"
 
@@ -47,11 +48,16 @@ class TripValidator @Inject constructor() {
             errors[FIELD_DISTANCE] = "Distanz darf maximal $MAX_DISTANCE_KM km betragen"
         }
 
-        // Purpose
+        // Purpose (freetext description)
         if (trip.purpose.isBlank()) {
             errors[FIELD_PURPOSE] = "Zweck darf nicht leer sein"
         } else if (trip.purpose.length > MAX_PURPOSE_LENGTH) {
             errors[FIELD_PURPOSE] = "Zweck darf maximal $MAX_PURPOSE_LENGTH Zeichen lang sein"
+        }
+
+        // Purpose category
+        if (trip.purposeId == null) {
+            errors[FIELD_PURPOSE_ID] = "Bitte wählen Sie eine Kategorie aus"
         }
 
         // Date (not in the future)
