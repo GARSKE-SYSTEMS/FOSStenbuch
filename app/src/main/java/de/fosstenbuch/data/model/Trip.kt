@@ -43,5 +43,6 @@ data class Trip(
     val gpsDistanceKm: Double? = null,
     val isExported: Boolean = false,
     val businessPartner: String? = null,
-    val route: String? = null
+    val route: String? = null,
+    val chainHash: String? = null
 )

@@ -130,6 +130,7 @@
     <string name="color_preview">Farbvorschau</string>
     <string name="cannot_delete_default">Standard-Kategorien können nicht gelöscht werden</string>
     <string name="cannot_delete_in_use">Kategorie wird noch von Fahrten verwendet</string>
+    <string name="cannot_delete_audit_protected_trip">Fahrten von änderungssicheren Fahrzeugen können nicht gelöscht werden</string>
     <string name="purpose_name_duplicate">Eine Kategorie mit diesem Namen existiert bereits</string>
 
     <!-- Statistics -->
@@ -330,6 +331,7 @@
     <string name="notification_channel_desc">Tägliche Erinnerung zum Eintragen von Fahrten</string>
     <string name="notification_title">Fahrten eintragen</string>
     <string name="notification_message">Haben Sie heute Fahrten unternommen? Tragen Sie sie jetzt ein.</string>
+    <string name="notification_permission_required">Benachrichtigungsberechtigung erforderlich. Bitte aktivieren Sie die Berechtigung in den App-Einstellungen.</string>
 
     <!-- Trip Start/End Flow -->
     <string name="start_trip">Fahrt starten</string>

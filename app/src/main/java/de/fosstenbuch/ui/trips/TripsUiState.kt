@@ -32,7 +32,8 @@ data class TripsUiState(
     val error: String? = null,
     val filter: TripFilter = TripFilter.ALL,
     val sort: TripSort = TripSort.DATE_DESC,
-    val activeTrip: Trip? = null
+    val activeTrip: Trip? = null,
+    val auditProtectedVehicleIds: Set<Long> = emptySet()
 ) {
     val isEmpty: Boolean get() = !isLoading && error == null && trips.isEmpty()
     val hasActiveTrip: Boolean get() = activeTrip != null

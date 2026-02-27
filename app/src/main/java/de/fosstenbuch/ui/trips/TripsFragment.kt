@@ -85,6 +85,16 @@ class TripsFragment : Fragment() {
                 val position = viewHolder.bindingAdapterPosition
                 if (position == RecyclerView.NO_POSITION) return
                 val trip = tripAdapter.currentList.getOrNull(position) ?: return
+                if (viewModel.isTripDeletionBlocked(trip)) {
+                    // Restore item and show message
+                    tripAdapter.submitList(tripAdapter.currentList.toList())
+                    Snackbar.make(
+                        binding.root,
+                        R.string.cannot_delete_audit_protected_trip,
+                        Snackbar.LENGTH_LONG
+                    ).show()
+                    return
+                }
                 showDeleteConfirmation(trip, position)
             }
         }
@@ -120,8 +130,10 @@ class TripsFragment : Fragment() {
         }
 
         if (!trip.isActive) {
-            options.add(getString(R.string.delete))
-            actions.add { showDeleteConfirmationFromContext(trip) }
+            if (!viewModel.isTripDeletionBlocked(trip)) {
+                options.add(getString(R.string.delete))
+                actions.add { showDeleteConfirmationFromContext(trip) }
+            }
         }
 
         if (options.isEmpty()) return

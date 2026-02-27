@@ -11,6 +11,7 @@ import de.fosstenbuch.domain.usecase.trip.GetActiveTripUseCase
 import de.fosstenbuch.domain.usecase.trip.GetAllTripsUseCase
 import de.fosstenbuch.domain.usecase.trip.GetBusinessTripsUseCase
 import de.fosstenbuch.domain.usecase.trip.GetPrivateTripsUseCase
+import de.fosstenbuch.domain.usecase.vehicle.GetAllVehiclesUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -28,6 +29,7 @@ class TripsViewModel @Inject constructor(
     private val deleteTripUseCase: DeleteTripUseCase,
     private val getAllPurposesUseCase: GetAllPurposesUseCase,
     private val getActiveTripUseCase: GetActiveTripUseCase,
+    private val getAllVehiclesUseCase: GetAllVehiclesUseCase,
     private val tripRepository: TripRepository
 ) : ViewModel() {
 
@@ -38,6 +40,7 @@ class TripsViewModel @Inject constructor(
         loadPurposes()
         loadTrips()
         loadActiveTrip()
+        loadAuditProtectedVehicleIds()
     }
 
     fun setFilter(filter: TripFilter) {
@@ -53,8 +56,20 @@ class TripsViewModel @Inject constructor(
     fun deleteTrip(trip: Trip) {
         viewModelScope.launch {
             try {
-                deleteTripUseCase(trip)
-                // Flow will automatically update the list
+                when (val result = deleteTripUseCase(trip)) {
+                    is DeleteTripUseCase.Result.Success -> {
+                        // Flow will automatically update the list
+                    }
+                    is DeleteTripUseCase.Result.AuditProtected -> {
+                        _uiState.update {
+                            it.copy(error = "Fahrten von änderungssicheren Fahrzeugen können nicht gelöscht werden")
+                        }
+                    }
+                    is DeleteTripUseCase.Result.Error -> {
+                        Timber.e(result.exception, "Failed to delete trip")
+                        _uiState.update { it.copy(error = "Fahrt konnte nicht gelöscht werden") }
+                    }
+                }
             } catch (e: Exception) {
                 Timber.e(e, "Failed to delete trip")
                 _uiState.update { it.copy(error = "Fahrt konnte nicht gelöscht werden") }
@@ -135,5 +150,28 @@ class TripsViewModel @Inject constructor(
             TripSort.DISTANCE_DESC -> trips.sortedByDescending { it.distanceKm }
             TripSort.DISTANCE_ASC -> trips.sortedBy { it.distanceKm }
         }
+    }
+
+    private fun loadAuditProtectedVehicleIds() {
+        viewModelScope.launch {
+            getAllVehiclesUseCase()
+                .catch { e -> Timber.e(e, "Failed to load vehicles for audit check") }
+                .collect { vehicles ->
+                    val protectedIds = vehicles
+                        .filter { it.auditProtected }
+                        .map { it.id }
+                        .toSet()
+                    _uiState.update { it.copy(auditProtectedVehicleIds = protectedIds) }
+                }
+        }
+    }
+
+    /**
+     * Returns true if the trip belongs to an audit-protected vehicle
+     * and therefore cannot be deleted.
+     */
+    fun isTripDeletionBlocked(trip: Trip): Boolean {
+        val vehicleId = trip.vehicleId ?: return false
+        return vehicleId in _uiState.value.auditProtectedVehicleIds
     }
 }

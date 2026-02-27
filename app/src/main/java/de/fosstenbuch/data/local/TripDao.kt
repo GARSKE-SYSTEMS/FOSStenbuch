@@ -140,6 +140,12 @@ interface TripDao {
         AND trips.date BETWEEN :startDate AND :endDate AND trips.isActive = 0
     """)
     fun getPrivateDistanceByDateRange(startDate: Long, endDate: Long): Flow<Double?>
+
+    @Query("SELECT * FROM trips WHERE vehicleId = :vehicleId ORDER BY id ASC")
+    suspend fun getTripsForVehicleOrdered(vehicleId: Long): List<Trip>
+
+    @Query("UPDATE trips SET chainHash = :chainHash WHERE id = :tripId")
+    suspend fun updateTripChainHash(tripId: Long, chainHash: String?)
 }
 
 data class MonthlyDistance(
