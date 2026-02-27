@@ -19,9 +19,9 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
-import com.google.android.gms.location.LocationServices
-import com.google.android.gms.location.Priority
-import com.google.android.gms.tasks.CancellationTokenSource
+import android.content.Context
+import android.location.LocationManager
+import android.os.CancellationSignal
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
 import de.fosstenbuch.R
@@ -671,52 +671,66 @@ class AddEditTripFragment : Fragment() {
     @Suppress("MissingPermission")
     private fun suggestNearestLocation() {
         val act = activity ?: return
-        val fusedLocationClient = LocationServices.getFusedLocationProviderClient(act)
-        val cancellationToken = CancellationTokenSource()
+        val locationManager = act.getSystemService(Context.LOCATION_SERVICE) as LocationManager
 
-        fusedLocationClient.getCurrentLocation(
-            Priority.PRIORITY_BALANCED_POWER_ACCURACY,
-            cancellationToken.token
-        ).addOnSuccessListener { location ->
-            if (location != null && _binding != null) {
-                viewLifecycleOwner.lifecycleScope.launch {
-                    val nearest = findNearestSavedLocationUseCase(
-                        location.latitude, location.longitude
-                    )
-                    if (nearest != null && _binding != null) {
-                        val phase = viewModel.uiState.value.phase
-                        // Auto-fill start location (start phase) or end location (end phase)
-                        when (phase) {
-                            TripPhase.START -> {
-                                if (binding.editStartLocation.text.isNullOrBlank()) {
-                                    binding.editStartLocation.setText(nearest.name)
-                                    Snackbar.make(
-                                        binding.root,
-                                        getString(R.string.location_suggested, nearest.name),
-                                        Snackbar.LENGTH_SHORT
-                                    ).show()
-                                }
+        val provider = when {
+            locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) ->
+                LocationManager.GPS_PROVIDER
+            locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER) ->
+                LocationManager.NETWORK_PROVIDER
+            else -> return
+        }
+
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
+            locationManager.getCurrentLocation(
+                provider,
+                CancellationSignal(),
+                act.mainExecutor
+            ) { location -> handleSuggestedLocation(location) }
+        } else {
+            // API 26-29: use last known location as best-effort
+            val lastKnown = locationManager.getLastKnownLocation(provider)
+            handleSuggestedLocation(lastKnown)
+        }
+    }
+
+    private fun handleSuggestedLocation(location: android.location.Location?) {
+        if (location != null && _binding != null) {
+            viewLifecycleOwner.lifecycleScope.launch {
+                val nearest = findNearestSavedLocationUseCase(
+                    location.latitude, location.longitude
+                )
+                if (nearest != null && _binding != null) {
+                    val phase = viewModel.uiState.value.phase
+                    // Auto-fill start location (start phase) or end location (end phase)
+                    when (phase) {
+                        TripPhase.START -> {
+                            if (binding.editStartLocation.text.isNullOrBlank()) {
+                                binding.editStartLocation.setText(nearest.name)
+                                Snackbar.make(
+                                    binding.root,
+                                    getString(R.string.location_suggested, nearest.name),
+                                    Snackbar.LENGTH_SHORT
+                                ).show()
                             }
-                            TripPhase.END -> {
-                                if (binding.editEndLocation.text.isNullOrBlank()) {
-                                    binding.editEndLocation.setText(nearest.name)
-                                    autoFillBusinessPartner(nearest)
-                                    Snackbar.make(
-                                        binding.root,
-                                        getString(R.string.location_suggested, nearest.name),
-                                        Snackbar.LENGTH_SHORT
-                                    ).show()
-                                }
+                        }
+                        TripPhase.END -> {
+                            if (binding.editEndLocation.text.isNullOrBlank()) {
+                                binding.editEndLocation.setText(nearest.name)
+                                autoFillBusinessPartner(nearest)
+                                Snackbar.make(
+                                    binding.root,
+                                    getString(R.string.location_suggested, nearest.name),
+                                    Snackbar.LENGTH_SHORT
+                                ).show()
                             }
-                            TripPhase.EDIT -> {
-                                // Don't auto-fill in edit mode
-                            }
+                        }
+                        TripPhase.EDIT -> {
+                            // Don't auto-fill in edit mode
                         }
                     }
                 }
             }
-        }.addOnFailureListener { e ->
-            Timber.d(e, "GPS location not available for suggestion")
         }
     }
 

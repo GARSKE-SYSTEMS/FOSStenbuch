@@ -16,9 +16,9 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
-import com.google.android.gms.location.LocationServices
-import com.google.android.gms.location.Priority
-import com.google.android.gms.tasks.CancellationTokenSource
+import android.content.Context
+import android.location.LocationManager
+import android.os.CancellationSignal
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
 import de.fosstenbuch.R
@@ -92,22 +92,39 @@ class AddEditLocationFragment : Fragment() {
 
     @Suppress("MissingPermission")
     private fun getCurrentLocation() {
-        val fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity())
-        val cancellationToken = CancellationTokenSource()
+        val locationManager = requireContext().getSystemService(Context.LOCATION_SERVICE) as LocationManager
 
-        fusedLocationClient.getCurrentLocation(
-            Priority.PRIORITY_HIGH_ACCURACY,
-            cancellationToken.token
-        ).addOnSuccessListener { location ->
+        val provider = when {
+            locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) ->
+                LocationManager.GPS_PROVIDER
+            locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER) ->
+                LocationManager.NETWORK_PROVIDER
+            else -> {
+                Snackbar.make(binding.root, R.string.location_not_available, Snackbar.LENGTH_SHORT).show()
+                return
+            }
+        }
+
+        val callback = { location: android.location.Location? ->
             if (location != null) {
                 binding.editLatitude.setText(String.format(Locale.US, "%.6f", location.latitude))
                 binding.editLongitude.setText(String.format(Locale.US, "%.6f", location.longitude))
             } else {
                 Snackbar.make(binding.root, R.string.location_not_available, Snackbar.LENGTH_SHORT).show()
             }
-        }.addOnFailureListener { e ->
-            Timber.e(e, "Failed to get current location")
-            Snackbar.make(binding.root, R.string.location_not_available, Snackbar.LENGTH_SHORT).show()
+        }
+
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
+            locationManager.getCurrentLocation(
+                provider,
+                CancellationSignal(),
+                requireActivity().mainExecutor,
+                callback
+            )
+        } else {
+            // API 26-29: use last known location as best-effort
+            val lastKnown = locationManager.getLastKnownLocation(provider)
+            callback(lastKnown)
         }
     }
 
