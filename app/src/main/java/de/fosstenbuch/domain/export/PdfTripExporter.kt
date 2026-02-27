@@ -184,20 +184,26 @@ class PdfTripExporter @Inject constructor(
         canvas.drawText("Private Strecke: ${"%.1f".format(privateDist)} km", MARGIN, yPos + FONT_SIZE_BODY, bodyPaint)
         yPos += LINE_HEIGHT + 8f
 
-        // Check for audit-protected vehicles
-        val hasAuditProtected = trips.any { t ->
-            t.vehicleId?.let { vehicles[it]?.auditProtected } == true
-        }
-        if (hasAuditProtected) {
+        // List audit-protected vehicles
+        val auditProtectedVehicles = vehicles.values.filter { it.auditProtected }
+        if (auditProtectedVehicles.isNotEmpty()) {
             val noticePaint = Paint(bodyPaint).apply {
                 color = Color.parseColor("#1B5E20")
                 typeface = Typeface.create(Typeface.DEFAULT, Typeface.ITALIC)
             }
             canvas.drawText(
-                "✓ Unverändertes Fahrtenbuch gemäß §22 UStG – Änderungssichere Protokollierung aktiv",
+                "✓ Änderungssichere Protokollierung gemäß §22 UStG aktiv für:",
                 MARGIN, yPos + FONT_SIZE_BODY, noticePaint
             )
-            yPos += LINE_HEIGHT + 4f
+            yPos += LINE_HEIGHT
+            for (v in auditProtectedVehicles) {
+                canvas.drawText(
+                    "    • ${v.make} ${v.model} (${v.licensePlate})",
+                    MARGIN, yPos + FONT_SIZE_BODY, noticePaint
+                )
+                yPos += LINE_HEIGHT
+            }
+            yPos += 4f
         }
 
         // Table header

@@ -16,11 +16,11 @@ data class ExportUiState(
     val dateFrom: LocalDate = LocalDate.now().withDayOfYear(1),
     val dateTo: LocalDate = LocalDate.now(),
     val format: ExportFormat = ExportFormat.CSV,
-    val includeAuditLog: Boolean = false,
+    val includeAuditLog: Boolean = true,
 
     // Export tracking
-    val onlyNew: Boolean = false,
-    val markAsExported: Boolean = false,
+    val onlyNew: Boolean = true,
+    val markAsExported: Boolean = true,
 
     // Driver & confirmation
     val driverName: String = "",

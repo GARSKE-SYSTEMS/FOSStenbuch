@@ -45,6 +45,16 @@ class CsvTripExporter @Inject constructor(
                     writer.write("\n")
                 }
 
+                // List audit-protected vehicles
+                val auditProtectedVehicles = vehicles.values.filter { it.auditProtected }
+                if (auditProtectedVehicles.isNotEmpty()) {
+                    writer.write(csvLine("--- Änderungssicher geführte Fahrzeuge ---"))
+                    for (v in auditProtectedVehicles) {
+                        writer.write(csvLine("${v.make} ${v.model}", v.licensePlate))
+                    }
+                    writer.write("\n")
+                }
+
                 // Header row
                 writer.write(
                     csvLine(
