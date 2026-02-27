@@ -78,7 +78,12 @@ class ExportFormatTest {
     }
 
     @Test
-    fun `ExportFormat has exactly 2 values`() {
-        assertEquals(2, ExportFormat.values().size)
+    fun `FINANZAMT_PDF format exists`() {
+        assertEquals("FINANZAMT_PDF", ExportFormat.FINANZAMT_PDF.name)
+    }
+
+    @Test
+    fun `ExportFormat has exactly 3 values`() {
+        assertEquals(3, ExportFormat.values().size)
     }
 }

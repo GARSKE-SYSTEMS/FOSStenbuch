@@ -304,7 +304,9 @@ class AddEditTripFragment : Fragment() {
             notes = binding.editNotes.text.toString().trim().ifEmpty { null },
             endTime = selectedEndTime,
             gpsDistanceKm = viewModel.uiState.value.gpsDistanceKm.takeIf { it > 0 },
-            isActive = false
+            isActive = false,
+            businessPartner = binding.editBusinessPartner.text.toString().trim().ifEmpty { null },
+            route = binding.editRoute.text.toString().trim().ifEmpty { null }
         )
     }
 
@@ -325,7 +327,9 @@ class AddEditTripFragment : Fragment() {
             isCancelled = existingTrip?.isCancelled ?: false,
             cancellationReason = existingTrip?.cancellationReason,
             endTime = selectedEndTime,
-            gpsDistanceKm = existingTrip?.gpsDistanceKm
+            gpsDistanceKm = existingTrip?.gpsDistanceKm,
+            businessPartner = binding.editBusinessPartnerEdit.text.toString().trim().ifEmpty { null },
+            route = binding.editRouteEdit.text.toString().trim().ifEmpty { null }
         )
     }
 
@@ -498,6 +502,10 @@ class AddEditTripFragment : Fragment() {
                     binding.editEndOdometer.setText(estimatedEnd.toString())
                 }
 
+                // Pre-fill business partner and route if existing
+                trip.businessPartner?.let { binding.editBusinessPartner.setText(it) }
+                trip.route?.let { binding.editRoute.setText(it) }
+
                 selectedVehicleId = trip.vehicleId
                 selectedPurposeId = trip.purposeId
             }
@@ -513,6 +521,8 @@ class AddEditTripFragment : Fragment() {
                 binding.editDistanceEdit.setText(trip.distanceKm.toString())
                 binding.editPurposeEdit.setText(trip.purpose)
                 binding.editNotesEdit.setText(trip.notes ?: "")
+                binding.editBusinessPartnerEdit.setText(trip.businessPartner ?: "")
+                binding.editRouteEdit.setText(trip.route ?: "")
                 trip.startOdometer?.let { binding.editStartOdometerEdit.setText(it.toString()) }
                 trip.endOdometer?.let { binding.editEndOdometerEdit.setText(it.toString()) }
                 selectedVehicleId = trip.vehicleId

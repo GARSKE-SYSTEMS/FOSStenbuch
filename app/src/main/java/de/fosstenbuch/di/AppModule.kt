@@ -3,6 +3,7 @@ package de.fosstenbuch.di
 import android.content.Context
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import dagger.Module
 import dagger.Provides
@@ -30,6 +31,15 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object AppModule {
 
+    private val MIGRATION_6_7 = object : Migration(6, 7) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE trips ADD COLUMN businessPartner TEXT DEFAULT NULL")
+            db.execSQL("ALTER TABLE trips ADD COLUMN route TEXT DEFAULT NULL")
+            db.execSQL("ALTER TABLE trip_templates ADD COLUMN businessPartner TEXT DEFAULT NULL")
+            db.execSQL("ALTER TABLE trip_templates ADD COLUMN route TEXT DEFAULT NULL")
+        }
+    }
+
     @Provides
     @Singleton
     fun provideAppDatabase(@ApplicationContext context: Context): AppDatabase {
@@ -38,6 +48,7 @@ object AppModule {
             AppDatabase::class.java,
             "fosstenbuch-database"
         )
+            .addMigrations(MIGRATION_6_7)
             .fallbackToDestructiveMigration()
             .addCallback(object : RoomDatabase.Callback() {
                 override fun onCreate(db: SupportSQLiteDatabase) {

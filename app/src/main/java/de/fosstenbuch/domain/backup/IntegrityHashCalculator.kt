@@ -104,7 +104,9 @@ class IntegrityHashCalculator @Inject constructor() {
             append("${t.vehicleId ?: "null"}|")
             append("${t.isCancelled}|")
             append("${t.cancellationReason ?: "null"}|")
-            append("${t.endTime?.time ?: "null"}")
+            append("${t.endTime?.time ?: "null"}|")
+            append("${t.businessPartner ?: "null"}|")
+            append("${t.route ?: "null"}")
             append("\n")
         }.toByteArray(Charsets.UTF_8)
     }

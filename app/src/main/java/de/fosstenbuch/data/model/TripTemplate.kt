@@ -13,5 +13,7 @@ data class TripTemplate(
     val purpose: String,
     val purposeId: Long? = null,
     val notes: String? = null,
-    val vehicleId: Long? = null
+    val vehicleId: Long? = null,
+    val businessPartner: String? = null,
+    val route: String? = null
 )

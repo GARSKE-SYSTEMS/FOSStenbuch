@@ -40,6 +40,10 @@
     <string name="vehicle">Fahrzeug</string>
     <string name="error_vehicle_required">Bitte wählen Sie ein Fahrzeug aus</string>
     <string name="notes">Notizen</string>
+    <string name="business_partner">Geschäftspartner / Kunde</string>
+    <string name="business_partner_hint">z.B. Firma Müller GmbH</string>
+    <string name="route_description">Route / Umweg</string>
+    <string name="route_description_hint">z.B. über A9, Umweg wegen Baustelle</string>
     <string name="save">Speichern</string>
 
     <!-- Delete -->
@@ -188,6 +192,7 @@
     <string name="export_format">Format</string>
     <string name="export_format_csv">CSV (Excel)</string>
     <string name="export_format_pdf">PDF</string>
+    <string name="export_format_finanzamt_pdf">PDF (Finanzamt)</string>
     <string name="export_include_audit_log">Änderungsprotokoll einschließen</string>
     <string name="export_trip_count_preview">%d Fahrten im ausgewählten Zeitraum</string>
     <string name="export_tracking_title">Exportverlauf</string>
@@ -204,6 +209,11 @@
     <string name="export_confirm_title">Export bestätigen</string>
     <string name="export_confirm_message">Hiermit bestätige ich, dass alle Einträge in diesem Fahrtenbuch der Wahrheit entsprechen.</string>
     <string name="export_confirm_yes">Bestätigen &amp; Exportieren</string>
+    <string name="export_company_name">Firma / Betrieb</string>
+    <string name="export_company_name_hint">Wird im Finanzamt-PDF angezeigt</string>
+    <string name="export_finanzamt_hint">Enthält alle gem. § 6 Abs. 1 Nr. 4 EStG erforderlichen Angaben</string>
+    <string name="export_finanzamt_warning_no_partner">Achtung: %d Geschäftsfahrten ohne Geschäftspartner gefunden. Für die Finanzamt-Konformität sollte bei jeder geschäftlichen Fahrt der besuchte Geschäftspartner eingetragen sein.</string>
+    <string name="export_finanzamt_warning_no_odometer">Achtung: %d Fahrten ohne lückenlose Km-Stände gefunden. Das Finanzamt erwartet durchgehende Km-Stand-Aufzeichnungen.</string>
     <string name="settings_export">Daten exportieren</string>
     <string name="settings_export_subtitle">Fahrten als CSV oder PDF exportieren</string>
 

@@ -10,5 +10,6 @@ data class ExportConfig(
     val includeAuditLog: Boolean = false,
     val format: ExportFormat = ExportFormat.CSV,
     val driverName: String = "",
-    val truthfulnessConfirmed: Boolean = false
+    val truthfulnessConfirmed: Boolean = false,
+    val companyName: String = ""
 )

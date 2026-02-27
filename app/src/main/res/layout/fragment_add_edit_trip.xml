@@ -262,6 +262,46 @@
 
             </com.google.android.material.textfield.TextInputLayout>
 
+            <!-- Business partner (Finanzamt) -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/layout_business_partner"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                android:hint="@string/business_partner"
+                app:helperText="@string/business_partner_hint"
+                app:helperTextEnabled="true">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/edit_business_partner"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="text"
+                    android:maxLength="200" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- Route description (Finanzamt - for detours) -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/layout_route"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                android:hint="@string/route_description"
+                app:helperText="@string/route_description_hint"
+                app:helperTextEnabled="true">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/edit_route"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="text"
+                    android:maxLength="300" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
             <!-- Purpose category dropdown -->
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/layout_purpose_category"
@@ -506,6 +546,46 @@
                     android:layout_height="wrap_content"
                     android:inputType="text"
                     android:maxLength="200" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- Business partner (Finanzamt) -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/layout_business_partner_edit"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                android:hint="@string/business_partner"
+                app:helperText="@string/business_partner_hint"
+                app:helperTextEnabled="true">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/edit_business_partner_edit"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="text"
+                    android:maxLength="200" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- Route description (Finanzamt - for detours) -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/layout_route_edit"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                android:hint="@string/route_description"
+                app:helperText="@string/route_description_hint"
+                app:helperTextEnabled="true">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/edit_route_edit"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="text"
+                    android:maxLength="300" />
 
             </com.google.android.material.textfield.TextInputLayout>
 

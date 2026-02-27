@@ -86,7 +86,8 @@ class CsvTripExporterTest {
         val file = exporter.export(config, emptyList(), emptyMap(), emptyMap(), emptyMap())
 
         val content = file.readText()
-        assertTrue(content.contains("Datum"))
+        assertTrue(content.contains("Startdatum"))
+        assertTrue(content.contains("Enddatum"))
         assertTrue(content.contains("Startort"))
         assertTrue(content.contains("Zielort"))
         assertTrue(content.contains("Distanz (km)"))

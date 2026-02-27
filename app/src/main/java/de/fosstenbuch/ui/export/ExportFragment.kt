@@ -95,14 +95,36 @@ class ExportFragment : Fragment() {
             val format = when (checkedId) {
                 R.id.radio_csv -> ExportFormat.CSV
                 R.id.radio_pdf -> ExportFormat.PDF
+                R.id.radio_finanzamt_pdf -> ExportFormat.FINANZAMT_PDF
                 else -> ExportFormat.CSV
             }
             viewModel.setFormat(format)
+
+            // Show/hide Finanzamt-specific fields
+            val isFinanzamt = format == ExportFormat.FINANZAMT_PDF
+            binding.textFinanzamtHint.visibility = if (isFinanzamt) View.VISIBLE else View.GONE
+            binding.layoutCompanyName.visibility = if (isFinanzamt) View.VISIBLE else View.GONE
+
+            // Finanzamt export always includes audit log
+            if (isFinanzamt) {
+                binding.switchAuditLog.isChecked = true
+                binding.switchAuditLog.isEnabled = false
+            } else {
+                binding.switchAuditLog.isEnabled = true
+            }
         }
 
         binding.switchAuditLog.setOnCheckedChangeListener { _, isChecked ->
             viewModel.setIncludeAuditLog(isChecked)
         }
+
+        binding.editCompanyName.addTextChangedListener(object : android.text.TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: android.text.Editable?) {
+                viewModel.setCompanyName(s?.toString()?.trim() ?: "")
+            }
+        })
     }
 
     private fun setupExportTracking() {
@@ -164,6 +186,7 @@ class ExportFragment : Fragment() {
                     when (state.format) {
                         ExportFormat.CSV -> binding.radioCsv.isChecked = true
                         ExportFormat.PDF -> binding.radioPdf.isChecked = true
+                        ExportFormat.FINANZAMT_PDF -> binding.radioFinanzamtPdf.isChecked = true
                     }
                     binding.switchAuditLog.isChecked = state.includeAuditLog
                     binding.switchOnlyNew.isChecked = state.onlyNew
@@ -222,6 +245,7 @@ class ExportFragment : Fragment() {
         val mimeType = when (format) {
             ExportFormat.CSV -> "text/csv"
             ExportFormat.PDF -> "application/pdf"
+            ExportFormat.FINANZAMT_PDF -> "application/pdf"
         }
 
         val shareIntent = Intent(Intent.ACTION_SEND).apply {

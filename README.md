@@ -1,152 +1,214 @@
-# FOSStenbuch - Free Open Source Fahrtenbuch
+# FOSStenbuch
 
-[![Garske Systems](https://img.shields.io/badge/Developed%20by-Garske%20Systems-blue)](https://garske-systems.de)
+**Free Open Source Software Fahrtenbuch für Android**
 
-FOSStenbuch is a free and open-source mileage logbook (Fahrtenbuch) app for Android, developed and maintained by [Garske Systems](https://garske-systems.de). It's designed to help users track their business and private trips for tax and reimbursement purposes.
+FOSStenbuch ist ein quelloffenes, digitales Fahrtenbuch für Android – entwickelt für Privatpersonen, Selbstständige und Unternehmen, die ihre Fahrten einfach, datenschutzfreundlich und ohne Cloud-Zwang dokumentieren möchten.
+
+---
 
 ## Features
 
-- **Trip Tracking**: Record start/end locations, distances, purposes, and trip types
-- **Vehicle Management**: Manage multiple vehicles with details
-- **Statistics**: View comprehensive statistics and reports
-- **Export**: Export trip data for tax purposes
-- **Offline First**: All data stored locally on your device
-- **Privacy Focused**: No tracking, no ads, no unnecessary permissions
+- **Fahrtenerfassung** – Fahrten mit Start-/Zielort, Kilometerstand, Zweck und Fahrzeug anlegen
+- **GPS-Tracking** – Standorterfassung im Hintergrund via Foreground Service
+- **Fahrzeugverwaltung** – Mehrere Fahrzeuge verwalten
+- **Fahrzwecke** – Individuelle Fahrzwecke (dienstlich, privat, etc.) definieren
+- **Gespeicherte Orte** – Häufig genutzte Orte speichern und wiederverwenden
+- **Kilometerstand-Tracking** – Lückenlose Dokumentation der Kilometerstände
+- **Statistiken** – Auswertungen und Übersichten über Fahrten und Kilometer
+- **Export** – Fahrten als PDF oder CSV exportieren und teilen
+- **Backup & Restore** – Lokale Datensicherung und Wiederherstellung
+- **Erinnerungen** – Benachrichtigungen zur Fahrtenerfassung
+- **Audit-Log** – Nachvollziehbare Änderungshistorie der Fahrten
+- **Vorlagen** – Wiederkehrende Fahrten als Vorlage speichern
+- **Material Design** – Moderne Android-Oberfläche mit Material 3 Komponenten
+- **Offline-first** – Alle Daten werden lokal auf dem Gerät gespeichert (Room-Datenbank)
+- **Kein Tracking, keine Werbung, keine Cloud** – Volle Datenkontrolle
+
+---
+
+## Screenshots
+
+<!-- Screenshots hier einfügen, z.B.:
+<p float="left">
+  <img src="docs/screenshots/trips.png" width="200" />
+  <img src="docs/screenshots/stats.png" width="200" />
+  <img src="docs/screenshots/export.png" width="200" />
+</p>
+-->
+
+*Screenshots folgen in Kürze.*
+
+---
 
 ## Tech Stack
 
-- **Kotlin**: Primary programming language
-- **Jetpack Compose**: Modern UI toolkit (planned for future)
-- **Room**: Local database for trip and vehicle data
-- **Hilt**: Dependency injection
-- **Coroutines**: Asynchronous programming
-- **Navigation Component**: In-app navigation
-- **Timber**: Logging
+| Bereich              | Technologie                                      |
+|----------------------|--------------------------------------------------|
+| Sprache              | Kotlin                                           |
+| Min SDK              | 26 (Android 8.0)                                 |
+| Target SDK           | 34 (Android 14)                                  |
+| Architektur          | MVVM + Clean Architecture (Data / Domain / UI)   |
+| Dependency Injection | Hilt (Dagger)                                    |
+| Datenbank            | Room (SQLite)                                    |
+| Navigation           | Jetpack Navigation + SafeArgs                    |
+| Asynchronität        | Kotlin Coroutines + Flow                         |
+| UI                   | View Binding + Material Design Components        |
+| Paginierung          | Paging 3                                         |
+| Standort             | Google Play Services Location                    |
+| Einstellungen        | DataStore Preferences                            |
+| Logging              | Timber                                           |
+| Testing              | JUnit 4, MockK, Coroutines Test                  |
+| Code Coverage        | Kover                                            |
+| CI/CD                | GitHub Actions                                   |
+| Build System         | Gradle (Kotlin DSL)                              |
 
-## Architecture
+---
 
-The app follows clean architecture principles:
+## Voraussetzungen
 
-- **Data Layer**: Room database, repositories, DAOs
-- **Domain Layer**: Business logic, use cases
-- **Presentation Layer**: UI components, ViewModels
+- **Android Studio** Hedgehog (2023.1.1) oder neuer
+- **JDK 17**
+- **Android SDK** mit API Level 34
+- **Gradle** 8.x (wird über den Gradle Wrapper mitgeliefert)
 
-## Development Setup
+---
 
-### Prerequisites
+## Installation & Build
 
-- Android Studio (latest stable version)
-- Java 17
-- Android SDK 34
-- Minimum SDK 26 (Android 8.0 Oreo)
-
-### Building
-
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/yourusername/FOSStenbuch.git
-   cd FOSStenbuch
-   ```
-
-2. Open in Android Studio
-3. Build the project (Build > Make Project)
-
-### Running Tests
+### Projekt klonen
 
 ```bash
-# Unit tests
-./gradlew test
-
-# Android instrumented tests
-./gradlew connectedAndroidTest
+git clone https://github.com/garske-systems/FOSStenbuch.git
+cd FOSStenbuch
 ```
 
-## CI/CD
+### Debug-Build erstellen
 
-The project uses GitHub Actions for:
+```bash
+./gradlew assembleDebug
+```
 
-- **Continuous Integration**: Runs on every push to main branch and PRs to main/release
-- **Automated Testing**: Unit tests and instrumented tests
-- **Release Builds**: Automated APK generation when PR to release branch is merged
+Die APK liegt anschließend unter `app/build/outputs/apk/debug/app-debug.apk`.
 
-### Release Process
+### Tests ausführen
 
-1. **Development**: All work happens on feature branches, merged to `main` via PR
-2. **Testing**: CI runs automatically on all PRs to `main`
-3. **Release Preparation**:
-   - Create a PR from `main` to `release` branch
-   - Include version bump and release notes in the PR
-   - Get required approvals
-4. **Release Build**: When PR is merged, release workflow automatically:
-   - Builds signed release APK
-   - Uploads APK as workflow artifact
-   - Available for download from GitHub Actions
+```bash
+./gradlew test
+```
 
-**Important**: The `release` branch is PR-only - no direct pushes allowed!
+### Code Coverage Report
 
-## Contributing
+```bash
+./gradlew koverHtmlReport
+```
 
-Contributions are welcome! Please follow these steps:
+---
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/your-feature`)
-3. Commit your changes (`git commit -m 'Add some feature'`)
-4. Push to the branch (`git push origin feature/your-feature`)
-5. Open a Pull Request
+## Projektstruktur
 
-## License
+```
+app/src/main/java/de/fosstenbuch/
+├── data/                   # Datenschicht
+│   ├── local/              # Room-Datenbank, DAOs
+│   ├── model/              # Datenmodelle (Trip, Vehicle, TripPurpose, ...)
+│   └── repository/         # Repository-Implementierungen
+├── di/                     # Hilt Dependency Injection Module
+├── domain/                 # Geschäftslogik
+│   ├── backup/             # Backup & Restore
+│   ├── export/             # PDF/CSV-Export
+│   ├── notification/       # Erinnerungen
+│   ├── service/            # Location Tracking Service
+│   ├── usecase/            # Use Cases (Trip, Vehicle, Stats, ...)
+│   └── validation/         # Eingabevalidierung
+├── ui/                     # Präsentationsschicht
+│   ├── common/             # Gemeinsame UI-Komponenten
+│   ├── export/             # Export-Screen
+│   ├── locations/          # Gespeicherte Orte
+│   ├── main/               # MainActivity
+│   ├── mileage/            # Kilometerstand
+│   ├── purposes/           # Fahrzwecke
+│   ├── settings/           # Einstellungen
+│   ├── stats/              # Statistiken
+│   ├── trips/              # Fahrten
+│   └── vehicles/           # Fahrzeuge
+├── utils/                  # Hilfsfunktionen
+└── MainApplication.kt      # Application-Klasse
+```
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+---
+
+## Berechtigungen
+
+| Berechtigung                    | Verwendung                                             |
+|---------------------------------|--------------------------------------------------------|
+| `ACCESS_FINE_LOCATION`          | GPS-Standorterfassung für Fahrten                      |
+| `ACCESS_COARSE_LOCATION`        | Ungefähre Standortbestimmung als Fallback              |
+| `FOREGROUND_SERVICE`            | GPS-Tracking im Hintergrund                            |
+| `FOREGROUND_SERVICE_LOCATION`   | Standort-Foreground-Service (ab Android 14)            |
+| `POST_NOTIFICATIONS`            | Fahrt-Erinnerungen anzeigen                            |
+| `RECEIVE_BOOT_COMPLETED`        | Erinnerungen nach Geräteneustart wiederherstellen      |
+| `SCHEDULE_EXACT_ALARM`          | Exakte Erinnerungszeitpunkte planen                    |
+
+---
+
+## Mitwirken (Contributing)
+
+Beiträge sind herzlich willkommen! So kannst du mitmachen:
+
+1. **Fork** des Repositories erstellen
+2. **Feature-Branch** anlegen: `git checkout -b feature/mein-feature`
+3. **Änderungen committen**: `git commit -m "feat: Beschreibung der Änderung"`
+4. **Branch pushen**: `git push origin feature/mein-feature`
+5. **Pull Request** öffnen
+
+### Richtlinien
+
+- Halte dich an die bestehende Projektstruktur (MVVM + Clean Architecture)
+- Schreibe Unit Tests für neue Geschäftslogik
+- Verwende [Conventional Commits](https://www.conventionalcommits.org/) für Commit-Messages
+- Stelle sicher, dass `./gradlew test` erfolgreich durchläuft
+
+---
 
 ## Roadmap
 
-- [ ] Basic trip CRUD operations
-- [ ] Vehicle management
-- [ ] Statistics dashboard
-- [ ] Data export (CSV, PDF)
-- [ ] Backup/restore functionality
-- [ ] Dark mode support
-- [ ] Multi-language support
-- [ ] Widget for quick trip entry
-- [ ] Mileage rate calculations
-- [ ] Trip categorization and filtering
+- [ ] F-Droid Veröffentlichung
+- [x] Finanzamt-konformer PDF-Export
+- [ ] Dunkelmodus (Dark Theme)
+- [ ] Widget für Schnellerfassung
+- [ ] Automatische Fahrterkennung
+- [ ] Multi-Language Support (Englisch)
 
-## Support
+---
 
-For questions, issues, or feature requests:
-- Open an issue on GitHub
-- Visit [Garske Systems website](https://garske-systems.de)
-- Contact: support@garske-systems.de
+## Lizenz
 
-## About Garske Systems
+Dieses Projekt ist unter der **MIT-Lizenz** lizenziert – siehe [LICENSE](LICENSE) für Details.
 
-FOSStenbuch is developed and maintained by [Garske Systems](https://garske-systems.de), an IT consulting company specializing in custom software solutions, mobile applications, and open-source development. Our expertise includes:
+```
+MIT License
 
-- IT consulting and digital transformation
-- Custom software development
-- Mobile application development (Android & iOS)
-- Open-source solutions and contributions
-- Enterprise IT infrastructure
+Copyright (c) 2023 FOSStenbuch Contributors
+```
 
-## Contributing
+---
 
-We welcome contributions from the community! If you'd like to contribute:
+## Maintainer
 
-- Fork the repository
-- Create a feature branch
-- Submit a Pull Request
-- Report bugs or suggest features via GitHub Issues
+Dieses Projekt wird betreut und hauptsächlich entwickelt von:
 
-## Professional Services
+**[Garske Systems](https://garske-systems.de)**
 
-As an IT consulting company, Garske Systems offers professional services for FOSStenbuch:
+---
 
-- **Customization and Integration**: Tailor FOSStenbuch to your business needs
-- **Enterprise Deployment**: Large-scale rollout and management
-- **Support Contracts**: Priority support and maintenance
-- **Training**: User and administrator training
-- **IT Consulting**: Digital transformation strategies
+## Kontakt
 
-Contact us at [https://garske-systems.de](https://garske-systems.de) for consulting inquiries.
+- **Website:** [garske-systems.de](https://garske-systems.de)
+- **Issues:** [GitHub Issues](https://github.com/garske-systems/FOSStenbuch/issues)
 
-Thank you for using FOSStenbuch! 🚗💨
+---
+
+<p align="center">
+  Made with ❤️ as Free Open Source Software.
+  Dieses Projekt wurde mit KI-unterstützung entwickelt.
+</p>

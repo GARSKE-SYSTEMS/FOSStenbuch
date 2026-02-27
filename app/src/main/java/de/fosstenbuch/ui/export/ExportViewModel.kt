@@ -13,6 +13,7 @@ import de.fosstenbuch.data.repository.TripRepository
 import de.fosstenbuch.domain.export.CsvTripExporter
 import de.fosstenbuch.domain.export.ExportConfig
 import de.fosstenbuch.domain.export.ExportFormat
+import de.fosstenbuch.domain.export.FinanzamtPdfTripExporter
 import de.fosstenbuch.domain.export.PdfTripExporter
 import de.fosstenbuch.domain.usecase.purpose.GetAllPurposesUseCase
 import de.fosstenbuch.domain.usecase.trip.GetAllTripsUseCase
@@ -37,7 +38,8 @@ class ExportViewModel @Inject constructor(
     private val preferencesManager: PreferencesManager,
     private val tripAuditLogDao: TripAuditLogDao,
     private val csvTripExporter: CsvTripExporter,
-    private val pdfTripExporter: PdfTripExporter
+    private val pdfTripExporter: PdfTripExporter,
+    private val finanzamtPdfTripExporter: FinanzamtPdfTripExporter
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ExportUiState())
@@ -122,6 +124,10 @@ class ExportViewModel @Inject constructor(
         _uiState.update { it.copy(markAsExported = mark) }
     }
 
+    fun setCompanyName(name: String) {
+        _uiState.update { it.copy(companyName = name) }
+    }
+
     fun clearError() {
         _uiState.update { it.copy(error = null) }
     }
@@ -175,12 +181,14 @@ class ExportViewModel @Inject constructor(
                     includeAuditLog = state.includeAuditLog,
                     format = state.format,
                     driverName = state.driverName,
-                    truthfulnessConfirmed = true
+                    truthfulnessConfirmed = true,
+                    companyName = state.companyName
                 )
 
                 val exporter = when (state.format) {
                     ExportFormat.CSV -> csvTripExporter
                     ExportFormat.PDF -> pdfTripExporter
+                    ExportFormat.FINANZAMT_PDF -> finanzamtPdfTripExporter
                 }
 
                 val file = exporter.export(config, trips, purposeMap, vehicleMap, auditLogs)

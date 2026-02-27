@@ -24,6 +24,7 @@ data class ExportUiState(
 
     // Driver & confirmation
     val driverName: String = "",
+    val companyName: String = "",
 
     // Available data
     val purposes: List<TripPurpose> = emptyList(),

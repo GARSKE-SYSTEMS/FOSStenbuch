@@ -2,5 +2,6 @@ package de.fosstenbuch.domain.export
 
 enum class ExportFormat {
     CSV,
-    PDF
+    PDF,
+    FINANZAMT_PDF
 }
