@@ -1,5 +1,6 @@
 package de.fosstenbuch.data.local
 
+import androidx.paging.PagingSource
 import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
@@ -13,6 +14,9 @@ import kotlinx.coroutines.flow.Flow
 interface TripDao {
     @Query("SELECT * FROM trips ORDER BY date DESC")
     fun getAllTrips(): Flow<List<Trip>>
+
+    @Query("SELECT * FROM trips ORDER BY date DESC")
+    fun getAllTripsPaged(): PagingSource<Int, Trip>
 
     @Query("SELECT * FROM trips WHERE id = :id")
     fun getTripById(id: Long): Flow<Trip?>
@@ -80,6 +84,22 @@ interface TripDao {
         ORDER BY month
     """)
     fun getMonthlyDistanceSummary(year: Int): Flow<List<MonthlyDistance>>
+
+    @Query("""
+        SELECT SUM(trips.distanceKm) FROM trips 
+        INNER JOIN trip_purposes ON trips.purposeId = trip_purposes.id 
+        WHERE trip_purposes.isBusinessRelevant = 1 
+        AND CAST(strftime('%Y', trips.date / 1000, 'unixepoch') AS INTEGER) = :year
+    """)
+    fun getBusinessDistanceForYear(year: Int): Flow<Double?>
+
+    @Query("""
+        SELECT COUNT(*) FROM trips 
+        INNER JOIN trip_purposes ON trips.purposeId = trip_purposes.id 
+        WHERE trip_purposes.isBusinessRelevant = 1 
+        AND CAST(strftime('%Y', trips.date / 1000, 'unixepoch') AS INTEGER) = :year
+    """)
+    fun getBusinessTripCountForYear(year: Int): Flow<Int>
 }
 
 data class MonthlyDistance(

@@ -65,7 +65,8 @@
             android:layout_height="48dp"
             android:layout_gravity="center_horizontal"
             android:layout_marginBottom="16dp"
-            android:background="@color/colorPrimary" />
+            android:background="@color/colorPrimary"
+            android:contentDescription="@string/cd_color_preview" />
 
         <!-- Save button -->
         <com.google.android.material.button.MaterialButton
@@ -80,6 +81,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
+            android:contentDescription="@string/cd_saving"
             android:visibility="gone" />
 
     </LinearLayout>

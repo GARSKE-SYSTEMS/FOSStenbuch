@@ -3,6 +3,7 @@ package de.fosstenbuch.data.local
 import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
@@ -28,6 +29,8 @@ class PreferencesManager(private val context: Context) {
         private val KEY_DISTANCE_UNIT = stringPreferencesKey("distance_unit")
         private val KEY_DEFAULT_PURPOSE_ID = longPreferencesKey("default_purpose_id")
         private val KEY_DEFAULT_VEHICLE_ID = longPreferencesKey("default_vehicle_id")
+        private val KEY_REMINDER_ENABLED = booleanPreferencesKey("reminder_enabled")
+        private val KEY_REMINDER_TIME = stringPreferencesKey("reminder_time")
     }
 
     // --- Dark Mode ---
@@ -88,5 +91,23 @@ class PreferencesManager(private val context: Context) {
                 it.remove(KEY_DEFAULT_VEHICLE_ID)
             }
         }
+    }
+
+    // --- Reminder ---
+
+    val reminderEnabled: Flow<Boolean> = context.dataStore.data.map { prefs ->
+        prefs[KEY_REMINDER_ENABLED] ?: false
+    }
+
+    suspend fun setReminderEnabled(enabled: Boolean) {
+        context.dataStore.edit { it[KEY_REMINDER_ENABLED] = enabled }
+    }
+
+    val reminderTime: Flow<String> = context.dataStore.data.map { prefs ->
+        prefs[KEY_REMINDER_TIME] ?: "18:00"
+    }
+
+    suspend fun setReminderTime(time: String) {
+        context.dataStore.edit { it[KEY_REMINDER_TIME] = time }
     }
 }

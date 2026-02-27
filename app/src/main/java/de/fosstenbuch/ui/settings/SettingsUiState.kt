@@ -29,5 +29,9 @@ data class SettingsUiState(
     val backupSuccess: Boolean = false,
     val restoreSuccess: Boolean = false,
     val deleteSuccess: Boolean = false,
-    val backupFilePath: String? = null
+    val backupFilePath: String? = null,
+
+    // Reminder
+    val reminderEnabled: Boolean = false,
+    val reminderTime: String = "18:00"
 )

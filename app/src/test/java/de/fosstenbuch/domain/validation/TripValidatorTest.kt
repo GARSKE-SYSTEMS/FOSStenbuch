@@ -26,7 +26,7 @@ class TripValidatorTest {
         endLocation = "Hamburg",
         distanceKm = 280.0,
         purpose = "Kundentermin",
-        businessTrip = true
+        purposeId = 1L
     )
 
     @Test

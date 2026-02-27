@@ -32,7 +32,7 @@ class InsertTripUseCaseTest {
             endLocation = "Hamburg",
             distanceKm = 280.0,
             purpose = "Kundentermin",
-            businessTrip = true
+            purposeId = 1L
         )
         coEvery { mockRepository.insertTrip(trip) } returns 42L
 
@@ -51,7 +51,7 @@ class InsertTripUseCaseTest {
             endLocation = "Hamburg",
             distanceKm = 280.0,
             purpose = "Kundentermin",
-            businessTrip = true
+            purposeId = 1L
         )
 
         val result = useCase(trip)
@@ -68,7 +68,7 @@ class InsertTripUseCaseTest {
             endLocation = "Hamburg",
             distanceKm = 280.0,
             purpose = "Kundentermin",
-            businessTrip = true
+            purposeId = 1L
         )
         coEvery { mockRepository.insertTrip(trip) } throws RuntimeException("DB error")
 

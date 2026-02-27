@@ -13,12 +13,15 @@ import de.fosstenbuch.data.local.AppDatabase
 import de.fosstenbuch.data.local.SavedLocationDao
 import de.fosstenbuch.data.local.TripAuditLogDao
 import de.fosstenbuch.data.local.TripPurposeDao
+import de.fosstenbuch.data.local.TripTemplateDao
 import de.fosstenbuch.data.repository.SavedLocationRepository
 import de.fosstenbuch.data.repository.SavedLocationRepositoryImpl
 import de.fosstenbuch.data.repository.TripPurposeRepository
 import de.fosstenbuch.data.repository.TripPurposeRepositoryImpl
 import de.fosstenbuch.data.repository.TripRepository
 import de.fosstenbuch.data.repository.TripRepositoryImpl
+import de.fosstenbuch.data.repository.TripTemplateRepository
+import de.fosstenbuch.data.repository.TripTemplateRepositoryImpl
 import de.fosstenbuch.data.repository.VehicleRepository
 import de.fosstenbuch.data.repository.VehicleRepositoryImpl
 import javax.inject.Singleton
@@ -105,5 +108,17 @@ object AppModule {
     @Singleton
     fun provideTripPurposeRepository(database: AppDatabase): TripPurposeRepository {
         return TripPurposeRepositoryImpl(database.tripPurposeDao())
+    }
+
+    @Provides
+    @Singleton
+    fun provideTripTemplateDao(database: AppDatabase): TripTemplateDao {
+        return database.tripTemplateDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideTripTemplateRepository(database: AppDatabase): TripTemplateRepository {
+        return TripTemplateRepositoryImpl(database.tripTemplateDao())
     }
 }

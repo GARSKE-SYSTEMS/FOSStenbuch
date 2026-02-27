@@ -36,6 +36,7 @@
 
     <!-- Delete -->
     <string name="delete">Löschen</string>
+    <string name="deleted">Gelöscht</string>
     <string name="cancel">Abbrechen</string>
     <string name="delete_trip_title">Fahrt löschen?</string>
     <string name="delete_trip_message">Möchten Sie diese Fahrt wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.</string>
@@ -216,4 +217,63 @@
         <item>Kilometer</item>
         <item>Meilen</item>
     </string-array>
+
+    <!-- Accessibility -->
+    <string name="cd_loading">Wird geladen</string>
+    <string name="cd_saving">Wird gespeichert</string>
+    <string name="cd_exporting">Wird exportiert</string>
+    <string name="cd_color_preview">Farbvorschau</string>
+    <string name="cd_previous_year">Vorheriges Jahr</string>
+    <string name="cd_next_year">Nächstes Jahr</string>
+    <string name="cd_trip_type_indicator">Fahrt-Typ Markierung</string>
+    <string name="cd_purpose_color">Farbindikator der Kategorie</string>
+    <string name="cd_accent_indicator">Akzentfarbe</string>
+    <string name="cd_delete_action">Zum Löschen wischen</string>
+    <string name="cd_navigate_to">Navigieren zu %s</string>
+    <string name="cd_filter_purpose">Kategorie %s filtern</string>
+
+    <!-- Phase 9: Kilometerpauschale -->
+    <string name="title_mileage_calculator">Kilometerpauschale</string>
+    <string name="mileage_calculator">Kilometerpauschale-Rechner</string>
+    <string name="mileage_calculator_subtitle">Steuerliche Entfernungspauschale berechnen</string>
+    <string name="mileage_year">Jahr</string>
+    <string name="mileage_business_km">Geschäftliche Kilometer</string>
+    <string name="mileage_rate_standard">Pauschale (erste 20 km)</string>
+    <string name="mileage_rate_extended">Pauschale (ab 21. km)</string>
+    <string name="mileage_result">Steuerlich absetzbar</string>
+    <string name="mileage_calculate">Berechnen</string>
+    <string name="mileage_use_stats">Aus Statistik übernehmen</string>
+    <string name="mileage_rate_info">Entfernungspauschale 2024: 0,30 €/km (erste 20 km), 0,38 €/km (ab 21. km)</string>
+    <string name="mileage_result_format">%.2f €</string>
+    <string name="mileage_km_format">%.1f km</string>
+    <string name="mileage_no_data">Keine geschäftlichen Fahrten im gewählten Jahr</string>
+    <string name="mileage_disclaimer">Hinweis: Diese Berechnung dient nur zur Orientierung. Für die genaue steuerliche Berechnung konsultieren Sie bitte Ihren Steuerberater.</string>
+    <string name="mileage_one_way_distance">Einfache Entfernung (km)</string>
+    <string name="mileage_working_days">Arbeitstage</string>
+    <string name="mileage_working_days_hint">Standard: 230</string>
+
+    <!-- Phase 9: Trip Templates -->
+    <string name="title_templates">Vorlagen</string>
+    <string name="trip_templates">Fahrt-Vorlagen</string>
+    <string name="trip_templates_subtitle">Wiederkehrende Fahrten als Vorlage speichern</string>
+    <string name="save_as_template">Als Vorlage speichern</string>
+    <string name="use_template">Vorlage verwenden</string>
+    <string name="template_name">Vorlagenname</string>
+    <string name="no_templates">Keine Vorlagen vorhanden</string>
+    <string name="add_first_template">Erstellen Sie Vorlagen aus häufig genutzten Fahrten</string>
+    <string name="template_saved">Vorlage gespeichert</string>
+    <string name="delete_template_title">Vorlage löschen?</string>
+    <string name="delete_template_message">Möchten Sie diese Vorlage wirklich löschen?</string>
+
+    <!-- Phase 9: Notifications -->
+    <string name="settings_notifications">Erinnerungen</string>
+    <string name="notification_reminder">Fahrt-Erinnerung</string>
+    <string name="notification_reminder_subtitle">Tägliche Erinnerung zum Eintragen von Fahrten</string>
+    <string name="notification_enabled">Erinnerung aktiviert</string>
+    <string name="notification_time">Erinnerungszeit</string>
+    <string name="notification_time_default">18:00</string>
+    <string name="notification_channel_name">Fahrt-Erinnerungen</string>
+    <string name="notification_channel_desc">Tägliche Erinnerung zum Eintragen von Fahrten</string>
+    <string name="notification_title">Fahrten eintragen</string>
+    <string name="notification_message">Haben Sie heute Fahrten unternommen? Tragen Sie sie jetzt ein.</string>
 </resources>

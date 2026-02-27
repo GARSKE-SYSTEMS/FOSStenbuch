@@ -58,6 +58,10 @@
             android:id="@+id/action_settings_to_export"
             app:destination="@id/navigation_export" />
 
+        <action
+            android:id="@+id/action_settings_to_mileage_calculator"
+            app:destination="@id/navigation_mileage_calculator" />
+
     </fragment>
 
     <fragment
@@ -143,5 +147,12 @@
         android:name="de.fosstenbuch.ui.export.ExportFragment"
         android:label="@string/title_export"
         tools:layout="@layout/fragment_export" />
+
+    <!-- Mileage Calculator -->
+    <fragment
+        android:id="@+id/navigation_mileage_calculator"
+        android:name="de.fosstenbuch.ui.mileage.MileageCalculatorFragment"
+        android:label="@string/title_mileage_calculator"
+        tools:layout="@layout/fragment_mileage_calculator" />
 
 </navigation>

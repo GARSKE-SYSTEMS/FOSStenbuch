@@ -80,6 +80,20 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    fun setReminderEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            preferencesManager.setReminderEnabled(enabled)
+            _uiState.update { it.copy(reminderEnabled = enabled) }
+        }
+    }
+
+    fun setReminderTime(time: String) {
+        viewModelScope.launch {
+            preferencesManager.setReminderTime(time)
+            _uiState.update { it.copy(reminderTime = time) }
+        }
+    }
+
     // --- Backup / Restore / Delete ---
 
     fun performBackup() {
@@ -192,6 +206,17 @@ class SettingsViewModel @Inject constructor(
                             defaultPurposeId = defaults.first,
                             defaultVehicleId = defaults.second
                         )
+                    }
+                }
+        }
+        viewModelScope.launch {
+            combine(
+                preferencesManager.reminderEnabled,
+                preferencesManager.reminderTime
+            ) { enabled, time -> Pair(enabled, time) }
+                .collect { (enabled, time) ->
+                    _uiState.update {
+                        it.copy(reminderEnabled = enabled, reminderTime = time)
                     }
                 }
         }

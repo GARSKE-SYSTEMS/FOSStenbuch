@@ -11,7 +11,8 @@
         android:id="@+id/view_purpose_color"
         android:layout_width="12dp"
         android:layout_height="12dp"
-        android:background="@drawable/rounded_accent" />
+        android:background="@drawable/rounded_accent"
+        android:importantForAccessibility="no" />
 
     <CheckBox
         android:id="@+id/checkbox_purpose"

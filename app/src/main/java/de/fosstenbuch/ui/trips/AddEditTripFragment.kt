@@ -24,10 +24,13 @@ import dagger.hilt.android.AndroidEntryPoint
 import de.fosstenbuch.R
 import de.fosstenbuch.data.model.Trip
 import de.fosstenbuch.data.model.TripPurpose
+import de.fosstenbuch.data.model.TripTemplate
 import de.fosstenbuch.data.model.Vehicle
+import de.fosstenbuch.data.repository.TripTemplateRepository
 import de.fosstenbuch.databinding.FragmentAddEditTripBinding
 import de.fosstenbuch.domain.usecase.location.FindNearestSavedLocationUseCase
 import de.fosstenbuch.domain.validation.TripValidator
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.text.SimpleDateFormat
@@ -53,6 +56,9 @@ class AddEditTripFragment : Fragment() {
     @Inject
     lateinit var findNearestSavedLocationUseCase: FindNearestSavedLocationUseCase
 
+    @Inject
+    lateinit var tripTemplateRepository: TripTemplateRepository
+
     private val locationPermissionRequest = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
@@ -76,6 +82,7 @@ class AddEditTripFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         setupDatePicker()
         setupSaveButton()
+        setupTemplateButtons()
         observeState()
         tryLocationSuggestion()
     }
@@ -304,6 +311,113 @@ class AddEditTripFragment : Fragment() {
         binding.layoutDate.error = null
         binding.layoutStartOdometer.error = null
         binding.layoutEndOdometer.error = null
+    }
+
+    private fun setupTemplateButtons() {
+        binding.buttonUseTemplate.setOnClickListener {
+            showTemplateBottomSheet()
+        }
+
+        binding.buttonSaveAsTemplate.setOnClickListener {
+            showSaveAsTemplateDialog()
+        }
+    }
+
+    private fun showTemplateBottomSheet() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            val templates = tripTemplateRepository.getAllTemplates().first()
+            if (templates.isEmpty()) {
+                Snackbar.make(binding.root, getString(R.string.no_templates), Snackbar.LENGTH_SHORT).show()
+                return@launch
+            }
+
+            val dialog = com.google.android.material.bottomsheet.BottomSheetDialog(requireContext())
+            val recyclerView = androidx.recyclerview.widget.RecyclerView(requireContext()).apply {
+                layoutManager = androidx.recyclerview.widget.LinearLayoutManager(context)
+                setPadding(0, 16, 0, 16)
+            }
+            val adapter = TripTemplateAdapter(
+                onTemplateClick = { template ->
+                    applyTemplate(template)
+                    dialog.dismiss()
+                },
+                onDeleteClick = { template ->
+                    viewLifecycleOwner.lifecycleScope.launch {
+                        tripTemplateRepository.deleteTemplate(template)
+                        Snackbar.make(binding.root, getString(R.string.deleted), Snackbar.LENGTH_SHORT).show()
+                        dialog.dismiss()
+                    }
+                }
+            )
+            adapter.submitList(templates)
+            recyclerView.adapter = adapter
+            dialog.setContentView(recyclerView)
+            dialog.show()
+        }
+    }
+
+    private fun applyTemplate(template: TripTemplate) {
+        binding.editStartLocation.setText(template.startLocation)
+        binding.editEndLocation.setText(template.endLocation)
+        binding.editDistance.setText(template.distanceKm.toString())
+        binding.editPurpose.setText(template.purpose)
+        selectedPurposeId = template.purposeId
+        selectedVehicleId = template.vehicleId
+        template.notes?.let { binding.editNotes.setText(it) }
+
+        // Update dropdowns
+        val purposeIndex = purposes.indexOfFirst { it.id == template.purposeId }
+        if (purposeIndex >= 0) {
+            binding.spinnerPurposeCategory.setText(purposes[purposeIndex].name, false)
+        }
+        val vehicleIndex = vehicles.indexOfFirst { it.id == template.vehicleId }
+        if (vehicleIndex >= 0) {
+            val items = listOf(getString(R.string.no_vehicle)) +
+                vehicles.map { "${it.make} ${it.model} (${it.licensePlate})" }
+            binding.spinnerVehicle.setText(items[vehicleIndex + 1], false)
+        }
+
+        Snackbar.make(binding.root, getString(R.string.template_saved), Snackbar.LENGTH_SHORT).show()
+    }
+
+    private fun showSaveAsTemplateDialog() {
+        val editText = com.google.android.material.textfield.TextInputEditText(requireContext())
+        editText.hint = getString(R.string.template_name)
+
+        val layout = com.google.android.material.textfield.TextInputLayout(requireContext()).apply {
+            addView(editText)
+            setPadding(48, 16, 48, 0)
+        }
+
+        com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
+            .setTitle(getString(R.string.save_as_template))
+            .setView(layout)
+            .setPositiveButton(getString(R.string.save)) { _, _ ->
+                val name = editText.text?.toString()?.trim() ?: return@setPositiveButton
+                if (name.isNotBlank()) {
+                    saveCurrentAsTemplate(name)
+                }
+            }
+            .setNegativeButton(getString(R.string.cancel), null)
+            .show()
+    }
+
+    private fun saveCurrentAsTemplate(name: String) {
+        val template = TripTemplate(
+            name = name,
+            startLocation = binding.editStartLocation.text.toString().trim(),
+            endLocation = binding.editEndLocation.text.toString().trim(),
+            distanceKm = binding.editDistance.text.toString().toDoubleOrNull() ?: 0.0,
+            purpose = binding.editPurpose.text.toString().trim(),
+            purposeId = selectedPurposeId,
+            notes = binding.editNotes.text.toString().trim().ifEmpty { null },
+            vehicleId = selectedVehicleId
+        )
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            tripTemplateRepository.insertTemplate(template)
+            Snackbar.make(binding.root, getString(R.string.template_saved), Snackbar.LENGTH_SHORT).show()
+        }
     }
 
     override fun onDestroyView() {

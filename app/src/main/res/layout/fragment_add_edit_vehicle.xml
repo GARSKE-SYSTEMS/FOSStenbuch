@@ -56,7 +56,7 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="12dp"
             android:hint="@string/license_plate"
-            android:helperText="@string/license_plate_hint">
+            app:helperText="@string/license_plate_hint">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/edit_license_plate"
@@ -143,6 +143,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
+            android:contentDescription="@string/cd_saving"
             android:visibility="gone" />
 
     </LinearLayout>

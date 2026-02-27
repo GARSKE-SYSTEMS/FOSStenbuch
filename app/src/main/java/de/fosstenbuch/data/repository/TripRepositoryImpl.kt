@@ -28,4 +28,8 @@ class TripRepositoryImpl @Inject constructor(
         tripDao.getTripCountByDateRange(startDate, endDate)
     override fun getMonthlyDistanceSummary(year: Int): Flow<List<MonthlyDistance>> =
         tripDao.getMonthlyDistanceSummary(year)
+    override fun getBusinessDistanceForYear(year: Int): Flow<Double?> =
+        tripDao.getBusinessDistanceForYear(year)
+    override fun getBusinessTripCountForYear(year: Int): Flow<Int> =
+        tripDao.getBusinessTripCountForYear(year)
 }

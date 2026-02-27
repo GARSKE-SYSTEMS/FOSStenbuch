@@ -22,7 +22,7 @@ import java.util.Date
             onDelete = ForeignKey.SET_NULL
         )
     ],
-    indices = [Index("purposeId"), Index("vehicleId")]
+    indices = [Index("purposeId"), Index("vehicleId"), Index("date")]
 )
 data class Trip(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,

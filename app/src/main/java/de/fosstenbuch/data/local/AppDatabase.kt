@@ -7,6 +7,7 @@ import de.fosstenbuch.data.model.SavedLocation
 import de.fosstenbuch.data.model.Trip
 import de.fosstenbuch.data.model.TripAuditLog
 import de.fosstenbuch.data.model.TripPurpose
+import de.fosstenbuch.data.model.TripTemplate
 import de.fosstenbuch.data.model.Vehicle
 
 @Database(
@@ -15,9 +16,10 @@ import de.fosstenbuch.data.model.Vehicle
         Vehicle::class,
         TripAuditLog::class,
         SavedLocation::class,
-        TripPurpose::class
+        TripPurpose::class,
+        TripTemplate::class
     ],
-    version = 3,
+    version = 4,
     exportSchema = false
 )
 @TypeConverters(DateConverters::class)
@@ -27,4 +29,5 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun tripAuditLogDao(): TripAuditLogDao
     abstract fun savedLocationDao(): SavedLocationDao
     abstract fun tripPurposeDao(): TripPurposeDao
+    abstract fun tripTemplateDao(): TripTemplateDao
 }

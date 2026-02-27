@@ -3,6 +3,7 @@ package de.fosstenbuch.data.repository
 import de.fosstenbuch.data.local.TripDao
 import de.fosstenbuch.data.model.Trip
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.runBlocking
@@ -23,17 +24,14 @@ class TripRepositoryTest {
 
     @Test
     fun `getAllTrips should return flow of trips`() = runBlocking {
-        // Given
         val testTrips = listOf(
-            Trip(1, Date(), "Start1", "End1", 10.0, "Business", true),
-            Trip(2, Date(), "Start2", "End2", 15.0, "Private", false)
+            Trip(1, Date(), "Start1", "End1", 10.0, "Business", purposeId = 1L),
+            Trip(2, Date(), "Start2", "End2", 15.0, "Private", purposeId = 2L)
         )
         coEvery { mockTripDao.getAllTrips() } returns flowOf(testTrips)
 
-        // When
         val result = tripRepository.getAllTrips()
 
-        // Then
         result.collect { trips ->
             assertEquals(2, trips.size)
             assertEquals("Start1", trips[0].startLocation)
@@ -43,14 +41,40 @@ class TripRepositoryTest {
 
     @Test
     fun `insertTrip should return inserted trip id`() = runBlocking {
-        // Given
-        val testTrip = Trip(1, Date(), "Start", "End", 10.0, "Business", true)
+        val testTrip = Trip(1, Date(), "Start", "End", 10.0, "Business", purposeId = 1L)
         coEvery { mockTripDao.insertTrip(testTrip) } returns 1L
 
-        // When
         val result = tripRepository.insertTrip(testTrip)
 
-        // Then
         assertEquals(1L, result)
+    }
+
+    @Test
+    fun `deleteTrip should delegate to dao`() = runBlocking {
+        val testTrip = Trip(1, Date(), "Start", "End", 10.0, "Business", purposeId = 1L)
+        coEvery { mockTripDao.deleteTrip(testTrip) } returns Unit
+
+        tripRepository.deleteTrip(testTrip)
+
+        coVerify(exactly = 1) { mockTripDao.deleteTrip(testTrip) }
+    }
+
+    @Test
+    fun `updateTrip should delegate to dao`() = runBlocking {
+        val testTrip = Trip(1, Date(), "Start", "End", 10.0, "Business", purposeId = 1L)
+        coEvery { mockTripDao.updateTrip(testTrip) } returns Unit
+
+        tripRepository.updateTrip(testTrip)
+
+        coVerify(exactly = 1) { mockTripDao.updateTrip(testTrip) }
+    }
+
+    @Test
+    fun `getTripCountForVehicle should delegate to dao`() = runBlocking {
+        coEvery { mockTripDao.getTripCountForVehicle(5L) } returns 3
+
+        val result = tripRepository.getTripCountForVehicle(5L)
+
+        assertEquals(3, result)
     }
 }

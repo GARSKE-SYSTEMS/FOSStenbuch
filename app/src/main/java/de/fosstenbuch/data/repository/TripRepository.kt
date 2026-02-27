@@ -20,4 +20,6 @@ interface TripRepository {
     fun getTotalDistance(): Flow<Double?>
     fun getTripCountByDateRange(startDate: Long, endDate: Long): Flow<Int>
     fun getMonthlyDistanceSummary(year: Int): Flow<List<MonthlyDistance>>
+    fun getBusinessDistanceForYear(year: Int): Flow<Double?>
+    fun getBusinessTripCountForYear(year: Int): Flow<Int>
 }

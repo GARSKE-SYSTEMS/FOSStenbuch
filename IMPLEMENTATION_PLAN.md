@@ -498,42 +498,99 @@ di/
 
 ---
 
-## Phase 8: Polish & Qualität
+## Phase 8: Polish & Qualität ✅
 
-### 8.1 Error Handling
+**Status: Implementiert**
+
+### 8.1 Error Handling ✅
 ```
 utils/
-├── Result.kt                 (sealed class: Success, Error, Loading)
-├── ErrorMapper.kt            (DB-Fehler → User-Meldung)
+├── Result.kt                 ✅ (sealed class: Success, Error, Loading)
+├── ErrorMapper.kt            ✅ (DB-Fehler → User-Meldung auf Deutsch)
 ```
 
-### 8.2 Testing
-- Unit Tests für alle Use Cases
-- Unit Tests für alle ViewModels
-- Repository Tests erweitern
-- UI Tests (Espresso) für kritische Flows
+### 8.2 Testing ✅
+- Unit Tests für Use Cases (Trip, Vehicle, Purpose, Location, Mileage) ✅
+- Repository Tests erweitert ✅
+- Utility Tests (HaversineUtils, Result, ErrorMapper) ✅
+- Broken Tests fixed (Trip model migration businessTrip → purposeId) ✅
 
-### 8.3 Accessibility
-- Content Descriptions für alle interaktiven Elemente
-- Mindestgröße für Touch-Targets
+### 8.3 Accessibility ✅
+- Content Descriptions für alle ProgressBars ✅
+- Content Descriptions für Farbvorschauen ✅
+- importantForAccessibility="no" für dekorative Views ✅
+- Accessibility-Strings in strings.xml ✅
 
-### 8.4 Performance
-- Room Queries optimieren (Indices)
-- Pagination für große Fahrtenlisten (Paging 3)
+### 8.4 Performance ✅
+- Room Index auf trips.date für ORDER BY/WHERE-Queries ✅
+- Paging 3 Dependency + PagingSource in TripDao ✅
+- Room Paging Integration ✅
+- DB Version 4 ✅
 
 ---
 
-## Phase 9: Erweiterte Features (Roadmap)
+## Phase 9: Erweiterte Features (Roadmap) ✅
 
-| Feature | Priorität | Abhängigkeit |
-|---------|-----------|-------------|
-| Home-Screen Widget (Quick-Entry) | Mittel | Phase 3 |
-| Kilometerpauschale-Rechner | Mittel | Phase 5 |
-| Wiederkehrende Fahrten (Templates) | Niedrig | Phase 3 |
-| Kategorien/Tags für Fahrten | Niedrig | Phase 3 |
-| Mehrere Fahrtenbücher | Niedrig | Phase 4 |
-| Auto-Vervollständigung Orte | Niedrig | Phase 3 |
-| Benachrichtigungen (Fahrt eintragen) | Niedrig | Phase 3 |
+**Status: Implementiert (Kilometerpauschale, Templates, Benachrichtigungen)**
+
+| Feature | Priorität | Status |
+|---------|-----------|--------|
+| Kilometerpauschale-Rechner | Mittel | ✅ Implementiert |
+| Wiederkehrende Fahrten (Templates) | Niedrig | ✅ Implementiert |
+| Benachrichtigungen (Fahrt eintragen) | Niedrig | ✅ Implementiert |
+| Home-Screen Widget (Quick-Entry) | Mittel | Roadmap |
+| Kategorien/Tags für Fahrten | Niedrig | Roadmap |
+| Mehrere Fahrtenbücher | Niedrig | Roadmap |
+| Auto-Vervollständigung Orte | Niedrig | Roadmap |
+
+### 9.1 Kilometerpauschale-Rechner ✅
+```
+domain/usecase/mileage/
+├── CalculateMileageAllowanceUseCase.kt ✅ (Entfernungspauschale 0,30€/0,38€)
+ui/mileage/
+├── MileageCalculatorFragment.kt        ✅
+├── MileageCalculatorViewModel.kt       ✅
+├── MileageCalculatorUiState.kt         ✅
+layout/
+├── fragment_mileage_calculator.xml     ✅
+```
+- Jahresauswahl mit Vor-/Zurück
+- Geschäftliche Kilometer aus Statistik übernehmbar
+- Manuelle Eingabe (einfache Entfernung + Arbeitstage)
+- Entfernungspauschale 2024: 0,30 €/km (erste 20 km), 0,38 €/km (ab 21. km)
+- Ergebnis mit Detailaufschlüsselung
+- Navigation über Einstellungen
+
+### 9.2 Fahrt-Vorlagen (Templates) ✅
+```
+data/model/
+├── TripTemplate.kt                     ✅
+data/local/
+├── TripTemplateDao.kt                  ✅
+data/repository/
+├── TripTemplateRepository.kt           ✅
+├── TripTemplateRepositoryImpl.kt       ✅
+ui/trips/
+├── TripTemplateAdapter.kt              ✅
+layout/
+├── item_trip_template.xml              ✅
+```
+- Speichern von Fahrten als Vorlage im Add/Edit Trip
+- BottomSheet zur Vorlagenauswahl
+- Automatisches Ausfüllen aus Vorlage
+- Löschen von Vorlagen
+
+### 9.3 Fahrt-Erinnerungen ✅
+```
+domain/notification/
+├── TripReminderReceiver.kt             ✅ (BroadcastReceiver + AlarmManager)
+├── BootReceiver.kt                     ✅ (Re-Schedule nach Neustart)
+```
+- Tägliche Erinnerung zum Eintragen von Fahrten
+- Konfigurierbare Uhrzeit (TimePickerDialog)
+- Ein/Ausschalten in Einstellungen
+- NotificationChannel für Android O+
+- RECEIVE_BOOT_COMPLETED für Alarm-Persistenz
 
 ---
 
@@ -619,12 +676,17 @@ java/de/fosstenbuch/
 │   ├── PreferencesModule.kt
 │   └── UseCaseModule.kt
 ├── domain/
+│   ├── backup/
+│   │   └── BackupManager.kt
 │   ├── export/
 │   │   ├── CsvTripExporter.kt
 │   │   ├── ExportConfig.kt
 │   │   ├── ExportFormat.kt
 │   │   ├── PdfTripExporter.kt
 │   │   └── TripExporter.kt
+│   ├── notification/
+│   │   ├── BootReceiver.kt
+│   │   └── TripReminderReceiver.kt
 │   ├── usecase/
 │   │   ├── audit/
 │   │   │   ├── GetAuditLogForTripUseCase.kt
@@ -635,6 +697,8 @@ java/de/fosstenbuch/
 │   │   │   ├── GetAllSavedLocationsUseCase.kt
 │   │   │   ├── InsertSavedLocationUseCase.kt
 │   │   │   └── UpdateSavedLocationUseCase.kt
+│   │   ├── mileage/
+│   │   │   └── CalculateMileageAllowanceUseCase.kt
 │   │   ├── purpose/
 │   │   │   ├── DeletePurposeUseCase.kt
 │   │   │   ├── GetAllPurposesUseCase.kt
@@ -660,6 +724,10 @@ java/de/fosstenbuch/
 │   │   └── SavedLocationsViewModel.kt
 │   ├── main/
 │   │   └── MainActivity.kt
+│   ├── mileage/
+│   │   ├── MileageCalculatorFragment.kt
+│   │   ├── MileageCalculatorViewModel.kt
+│   │   └── MileageCalculatorUiState.kt
 │   ├── purposes/
 │   │   ├── AddEditPurposeFragment.kt
 │   │   ├── PurposeAdapter.kt
@@ -677,6 +745,7 @@ java/de/fosstenbuch/
 │   │   ├── TripAdapter.kt
 │   │   ├── TripDetailFragment.kt
 │   │   ├── TripDetailViewModel.kt
+│   │   ├── TripTemplateAdapter.kt
 │   │   ├── TripsFragment.kt
 │   │   ├── TripsUiState.kt
 │   │   └── TripsViewModel.kt

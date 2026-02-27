@@ -21,6 +21,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import de.fosstenbuch.R
 import de.fosstenbuch.data.local.PreferencesManager
 import de.fosstenbuch.databinding.FragmentSettingsBinding
+import de.fosstenbuch.domain.notification.TripReminderReceiver
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.io.File
@@ -51,18 +52,26 @@ class SettingsFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         setupExport()
+        setupMileageCalculator()
         setupAppearance()
         setupGeneralPreferences()
         setupVehicleManagement()
         setupLocationManagement()
         setupPurposeManagement()
         setupDataManagement()
+        setupNotifications()
         observeState()
     }
 
     private fun setupExport() {
         binding.cardExport.setOnClickListener {
             findNavController().navigate(R.id.action_settings_to_export)
+        }
+    }
+
+    private fun setupMileageCalculator() {
+        binding.cardMileageCalculator.setOnClickListener {
+            findNavController().navigate(R.id.action_settings_to_mileage_calculator)
         }
     }
 
@@ -127,6 +136,44 @@ class SettingsFragment : Fragment() {
 
         binding.buttonDeleteAll.setOnClickListener {
             confirmDeleteAll()
+        }
+    }
+
+    private fun setupNotifications() {
+        TripReminderReceiver.createNotificationChannel(requireContext())
+
+        binding.switchReminder.setOnCheckedChangeListener { _, isChecked ->
+            viewModel.setReminderEnabled(isChecked)
+            binding.buttonReminderTime.visibility = if (isChecked) View.VISIBLE else View.GONE
+            if (isChecked) {
+                val time = viewModel.uiState.value.reminderTime
+                val parts = time.split(":")
+                val hour = parts.getOrNull(0)?.toIntOrNull() ?: 18
+                val minute = parts.getOrNull(1)?.toIntOrNull() ?: 0
+                TripReminderReceiver.scheduleReminder(requireContext(), hour, minute)
+            } else {
+                TripReminderReceiver.cancelReminder(requireContext())
+            }
+        }
+
+        binding.buttonReminderTime.setOnClickListener {
+            val current = viewModel.uiState.value.reminderTime
+            val parts = current.split(":")
+            val hour = parts.getOrNull(0)?.toIntOrNull() ?: 18
+            val minute = parts.getOrNull(1)?.toIntOrNull() ?: 0
+
+            android.app.TimePickerDialog(
+                requireContext(),
+                { _, selectedHour, selectedMinute ->
+                    val time = "%02d:%02d".format(selectedHour, selectedMinute)
+                    viewModel.setReminderTime(time)
+                    binding.buttonReminderTime.text = getString(R.string.notification_time) + ": " + time
+                    TripReminderReceiver.scheduleReminder(requireContext(), selectedHour, selectedMinute)
+                },
+                hour,
+                minute,
+                true
+            ).show()
         }
     }
 
@@ -222,6 +269,11 @@ class SettingsFragment : Fragment() {
                         Toast.makeText(requireContext(), R.string.delete_all_success, Toast.LENGTH_SHORT).show()
                         viewModel.consumeDeleteSuccess()
                     }
+
+                    // Reminder
+                    binding.switchReminder.isChecked = state.reminderEnabled
+                    binding.buttonReminderTime.visibility = if (state.reminderEnabled) View.VISIBLE else View.GONE
+                    binding.buttonReminderTime.text = getString(R.string.notification_time) + ": " + state.reminderTime
                 }
             }
         }
