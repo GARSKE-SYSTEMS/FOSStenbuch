@@ -316,7 +316,7 @@ class BackupManager @Inject constructor(
     // --- Nullable JSON helpers ---
 
     private fun JSONObject.optStringOrNull(key: String): String? {
-        return if (isNull(key)) null else optString(key, null)
+        return if (has(key) && !isNull(key)) optString(key) else null
     }
 
     private fun JSONObject.optLongOrNull(key: String): Long? {

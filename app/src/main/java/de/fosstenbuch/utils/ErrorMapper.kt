@@ -32,13 +32,13 @@ class ErrorMapper @Inject constructor() {
                 // IO errors
                 is IOException -> mapIOException(throwable)
 
-                // Common runtime errors
+                // Common runtime errors (NumberFormatException before IllegalArgumentException since it's a subclass)
+                is NumberFormatException -> "Ungültiges Zahlenformat. Bitte überprüfen Sie Ihre Eingaben."
                 is IllegalArgumentException -> "Ungültige Eingabe: ${throwable.localizedMessage ?: "Bitte überprüfen Sie Ihre Eingaben."}"
                 is IllegalStateException -> "Unerwarteter Zustand: Bitte starten Sie die App neu."
                 is SecurityException -> "Fehlende Berechtigung: Bitte erteilen Sie die erforderlichen Berechtigungen in den Einstellungen."
                 is UnsupportedOperationException -> "Diese Aktion wird nicht unterstützt."
                 is OutOfMemoryError -> "Zu wenig Arbeitsspeicher. Bitte schließen Sie andere Apps."
-                is NumberFormatException -> "Ungültiges Zahlenformat. Bitte überprüfen Sie Ihre Eingaben."
                 is NullPointerException -> "Fehlende Daten. Bitte versuchen Sie es erneut."
                 is ConcurrentModificationException -> "Gleichzeitiger Zugriff. Bitte versuchen Sie es erneut."
 

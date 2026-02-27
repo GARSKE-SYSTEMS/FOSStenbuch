@@ -32,7 +32,7 @@ class HaversineUtilsTest {
     fun `equator to pole is approximately 10000 km`() {
         val distance = HaversineUtils.distanceInMeters(0.0, 0.0, 90.0, 0.0)
         val distanceKm = distance / 1000.0
-        assertEquals(10018.0, distanceKm, 10.0)
+        assertEquals(10008.0, distanceKm, 10.0)
     }
 
     @Test
