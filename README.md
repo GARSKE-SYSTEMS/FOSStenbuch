@@ -1,5 +1,7 @@
 # FOSStenbuch
 
+[![Android CI](https://github.com/GARSKE-SYSTEMS/FOSStenbuch/actions/workflows/android-ci.yml/badge.svg)](https://github.com/GARSKE-SYSTEMS/FOSStenbuch/actions/workflows/android-ci.yml)
+
 **Free Open Source Software Fahrtenbuch für Android**
 
 FOSStenbuch ist ein quelloffenes, digitales Fahrtenbuch für Android – entwickelt für Privatpersonen, Selbstständige und Unternehmen, die ihre Fahrten einfach, datenschutzfreundlich und ohne Cloud-Zwang dokumentieren möchten.
