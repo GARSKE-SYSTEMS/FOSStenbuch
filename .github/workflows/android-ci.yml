@@ -26,17 +26,18 @@ jobs:
       run: chmod +x gradlew
 
     - name: Decode debug keystore
-      if: env.DEBUG_KEYSTORE_FILE != ''
+      id: decode_keystore
+      if: env.ANDROID_KEYSTORE_FILE != ''
       env:
-        DEBUG_KEYSTORE_FILE: ${{ secrets.DEBUG_KEYSTORE_FILE }}
-      run: echo "$DEBUG_KEYSTORE_FILE" | base64 --decode > ${{ github.workspace }}/debug.keystore
+        ANDROID_KEYSTORE_FILE: ${{ secrets.ANDROID_KEYSTORE_FILE }}
+      run: echo "$ANDROID_KEYSTORE_FILE" | base64 --decode > ${{ github.workspace }}/debug.keystore
 
     - name: Build with Gradle
       env:
-        DEBUG_KEYSTORE_PATH: ${{ github.workspace }}/debug.keystore
-        DEBUG_KEYSTORE_PASSWORD: ${{ secrets.DEBUG_KEYSTORE_PASSWORD }}
-        DEBUG_KEY_ALIAS: ${{ secrets.DEBUG_KEY_ALIAS }}
-        DEBUG_KEY_PASSWORD: ${{ secrets.DEBUG_KEY_PASSWORD }}
+        DEBUG_KEYSTORE_PATH: ${{ steps.decode_keystore.outcome == 'success' && format('{0}/debug.keystore', github.workspace) || '' }}
+        DEBUG_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+        DEBUG_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        DEBUG_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
       run: ./gradlew assembleDebug
 
     - name: Run unit tests

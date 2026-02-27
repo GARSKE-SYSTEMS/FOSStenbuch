@@ -100,7 +100,7 @@ android {
         // work without uninstalling. Falls back to default local debug keystore.
         getByName("debug") {
             val debugKsPath = System.getenv("DEBUG_KEYSTORE_PATH")
-            if (debugKsPath != null) {
+            if (!debugKsPath.isNullOrBlank() && file(debugKsPath).exists()) {
                 storeFile = file(debugKsPath)
                 storePassword = System.getenv("DEBUG_KEYSTORE_PASSWORD") ?: "android"
                 keyAlias = System.getenv("DEBUG_KEY_ALIAS") ?: "androiddebugkey"
