@@ -28,15 +28,11 @@ FOSStenbuch ist ein quelloffenes, digitales Fahrtenbuch für Android – entwick
 
 ## Screenshots
 
-<!-- Screenshots hier einfügen, z.B.:
 <p float="left">
-  <img src="docs/screenshots/trips.png" width="200" />
-  <img src="docs/screenshots/stats.png" width="200" />
-  <img src="docs/screenshots/export.png" width="200" />
+  <img src="screenshots/a.png" width="250" />
+  <img src="screenshots/b.png" width="250" />
+  <img src="screenshots/c.png" width="250" />
 </p>
--->
-
-*Screenshots folgen in Kürze.*
 
 ---
 
@@ -54,7 +50,7 @@ FOSStenbuch ist ein quelloffenes, digitales Fahrtenbuch für Android – entwick
 | Asynchronität        | Kotlin Coroutines + Flow                         |
 | UI                   | View Binding + Material Design Components        |
 | Paginierung          | Paging 3                                         |
-| Standort             | Google Play Services Location                    |
+| Standort             | Android LocationManager (AOSP)                   |
 | Einstellungen        | DataStore Preferences                            |
 | Logging              | Timber                                           |
 | Testing              | JUnit 4, MockK, Coroutines Test                  |
