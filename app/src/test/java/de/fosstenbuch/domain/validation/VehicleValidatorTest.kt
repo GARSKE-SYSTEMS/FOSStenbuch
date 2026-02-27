@@ -1,6 +1,7 @@
 package de.fosstenbuch.domain.validation
 
 import de.fosstenbuch.data.model.Vehicle
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
@@ -80,5 +81,46 @@ class VehicleValidatorTest {
         val result = validator.validate(validVehicle().copy(fuelType = ""))
         assertFalse(result.isValid)
         assertNotNull(result.errorFor(VehicleValidator.FIELD_FUEL_TYPE))
+    }
+
+    @Test
+    fun `make exceeding max length fails`() {
+        val longMake = "A".repeat(101)
+        val result = validator.validate(validVehicle().copy(make = longMake))
+        assertFalse(result.isValid)
+        assertNotNull(result.errorFor(VehicleValidator.FIELD_MAKE))
+    }
+
+    @Test
+    fun `model exceeding max length fails`() {
+        val longModel = "A".repeat(101)
+        val result = validator.validate(validVehicle().copy(model = longModel))
+        assertFalse(result.isValid)
+        assertNotNull(result.errorFor(VehicleValidator.FIELD_MODEL))
+    }
+
+    @Test
+    fun `make at exactly max length passes`() {
+        val maxMake = "A".repeat(100)
+        val result = validator.validate(validVehicle().copy(make = maxMake))
+        assertTrue(result.isValid || result.errorFor(VehicleValidator.FIELD_MAKE) == null)
+    }
+
+    @Test
+    fun `multiple validation errors returned at once`() {
+        val result = validator.validate(validVehicle().copy(
+            make = "",
+            model = "",
+            licensePlate = "",
+            fuelType = ""
+        ))
+        assertFalse(result.isValid)
+        assertEquals(4, result.errors.size)
+    }
+
+    @Test
+    fun `license plate with H suffix passes`() {
+        val result = validator.validate(validVehicle().copy(licensePlate = "B AB 1234H"))
+        assertTrue(result.isValid)
     }
 }

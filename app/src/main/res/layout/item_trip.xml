@@ -81,6 +81,24 @@
             app:layout_constraintTop_toBottomOf="@id/text_trip_route"
             tools:text="Kundenbesuch" />
 
+        <!-- Active badge -->
+        <TextView
+            android:id="@+id/text_trip_active"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:paddingHorizontal="8dp"
+            android:paddingVertical="2dp"
+            android:text="@string/trip_active"
+            android:textColor="@color/white"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:background="@drawable/rounded_accent"
+            android:visibility="gone"
+            app:layout_constraintStart_toEndOf="@id/text_trip_date"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:visibility="visible" />
+
         <!-- Cancelled indicator -->
         <TextView
             android:id="@+id/text_trip_cancelled"

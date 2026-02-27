@@ -32,4 +32,11 @@ class TripRepositoryImpl @Inject constructor(
         tripDao.getBusinessDistanceForYear(year)
     override fun getBusinessTripCountForYear(year: Int): Flow<Int> =
         tripDao.getBusinessTripCountForYear(year)
+    override fun getActiveTrip(): Flow<Trip?> = tripDao.getActiveTrip()
+    override suspend fun getLastEndOdometerForVehicle(vehicleId: Long): Int? =
+        tripDao.getLastEndOdometerForVehicle(vehicleId)
+    override suspend fun getLastEndOdometer(): Int? =
+        tripDao.getLastEndOdometer()
+    override suspend fun getLastCompletedTrip(): Trip? =
+        tripDao.getLastCompletedTrip()
 }

@@ -22,4 +22,8 @@ interface TripRepository {
     fun getMonthlyDistanceSummary(year: Int): Flow<List<MonthlyDistance>>
     fun getBusinessDistanceForYear(year: Int): Flow<Double?>
     fun getBusinessTripCountForYear(year: Int): Flow<Int>
+    fun getActiveTrip(): Flow<Trip?>
+    suspend fun getLastEndOdometerForVehicle(vehicleId: Long): Int?
+    suspend fun getLastEndOdometer(): Int?
+    suspend fun getLastCompletedTrip(): Trip?
 }

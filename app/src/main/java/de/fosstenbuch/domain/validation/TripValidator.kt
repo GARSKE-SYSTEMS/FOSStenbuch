@@ -18,11 +18,40 @@ class TripValidator @Inject constructor() {
         const val FIELD_PURPOSE_ID = "purposeId"
         const val FIELD_DATE = "date"
         const val FIELD_ODOMETER = "odometer"
+        const val FIELD_START_ODOMETER = "startOdometer"
 
         private const val MAX_DISTANCE_KM = 99_999.0
         private const val MAX_LOCATION_LENGTH = 200
         private const val MAX_PURPOSE_LENGTH = 200
     }
+
+    /**
+     * Validates only the fields required when starting a trip:
+     * startLocation, startOdometer, and date.
+     */
+    fun validateStart(trip: Trip): ValidationResult {
+        val errors = mutableMapOf<String, String>()
+
+        // Start location
+        if (trip.startLocation.isBlank()) {
+            errors[FIELD_START_LOCATION] = "Startort darf nicht leer sein"
+        } else if (trip.startLocation.length > MAX_LOCATION_LENGTH) {
+            errors[FIELD_START_LOCATION] = "Startort darf maximal $MAX_LOCATION_LENGTH Zeichen lang sein"
+        }
+
+        // Start odometer is required for start phase
+        if (trip.startOdometer == null) {
+            errors[FIELD_START_ODOMETER] = "Kilometerstand ist erforderlich"
+        } else if (trip.startOdometer < 0) {
+            errors[FIELD_START_ODOMETER] = "Kilometerstand darf nicht negativ sein"
+        }
+
+        return ValidationResult(errors)
+    }
+
+    /**
+     * Validates all fields for a completed trip (end phase or full edit).
+     */
 
     fun validate(trip: Trip): ValidationResult {
         val errors = mutableMapOf<String, String>()

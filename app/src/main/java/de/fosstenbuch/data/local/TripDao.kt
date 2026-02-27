@@ -100,6 +100,18 @@ interface TripDao {
         AND CAST(strftime('%Y', trips.date / 1000, 'unixepoch') AS INTEGER) = :year
     """)
     fun getBusinessTripCountForYear(year: Int): Flow<Int>
+
+    @Query("SELECT * FROM trips WHERE isActive = 1 LIMIT 1")
+    fun getActiveTrip(): Flow<Trip?>
+
+    @Query("SELECT endOdometer FROM trips WHERE isActive = 0 AND vehicleId = :vehicleId ORDER BY date DESC LIMIT 1")
+    suspend fun getLastEndOdometerForVehicle(vehicleId: Long): Int?
+
+    @Query("SELECT endOdometer FROM trips WHERE isActive = 0 ORDER BY date DESC LIMIT 1")
+    suspend fun getLastEndOdometer(): Int?
+
+    @Query("SELECT * FROM trips WHERE isActive = 0 ORDER BY date DESC LIMIT 1")
+    suspend fun getLastCompletedTrip(): Trip?
 }
 
 data class MonthlyDistance(

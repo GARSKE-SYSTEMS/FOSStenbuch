@@ -2,8 +2,11 @@ package de.fosstenbuch.ui.trips
 
 import android.Manifest
 import android.app.DatePickerDialog
+import android.app.TimePickerDialog
 import android.content.pm.PackageManager
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -28,6 +31,7 @@ import de.fosstenbuch.data.model.TripTemplate
 import de.fosstenbuch.data.model.Vehicle
 import de.fosstenbuch.data.repository.TripTemplateRepository
 import de.fosstenbuch.databinding.FragmentAddEditTripBinding
+import de.fosstenbuch.domain.service.LocationTrackingService
 import de.fosstenbuch.domain.usecase.location.FindNearestSavedLocationUseCase
 import de.fosstenbuch.domain.validation.TripValidator
 import kotlinx.coroutines.flow.first
@@ -46,8 +50,9 @@ class AddEditTripFragment : Fragment() {
     private val binding get() = _binding!!
 
     private val viewModel: TripDetailViewModel by viewModels()
-    private val dateFormat = SimpleDateFormat("dd.MM.yyyy", Locale.GERMANY)
-    private var selectedDate: Date = Date()
+    private val dateTimeFormat = SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.GERMANY)
+    private var selectedDateTime: Date = Date()
+    private var selectedEndTime: Date = Date()
     private var selectedVehicleId: Long? = null
     private var selectedPurposeId: Long? = null
     private var vehicles: List<Vehicle> = emptyList()
@@ -80,12 +85,416 @@ class AddEditTripFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        setupDatePicker()
-        setupSaveButton()
-        setupTemplateButtons()
+        setupDateTimePickers()
+        setupButtons()
+        setupOdometerAutoCalculation()
         observeState()
+        observeGpsDistance()
         tryLocationSuggestion()
     }
+
+    // ========== Date/Time pickers ==========
+
+    private fun setupDateTimePickers() {
+        // Start phase: date+time picker
+        binding.editDate.setText(dateTimeFormat.format(selectedDateTime))
+        binding.editDate.setOnClickListener { showDateTimePicker(isStart = true) }
+
+        // End phase: arrival time picker
+        binding.editEndTime.setText(dateTimeFormat.format(selectedEndTime))
+        binding.editEndTime.setOnClickListener { showDateTimePicker(isStart = false) }
+
+        // Edit phase: date+time picker
+        binding.editDateEdit.setText(dateTimeFormat.format(selectedDateTime))
+        binding.editDateEdit.setOnClickListener { showDateTimePicker(isStart = true) }
+    }
+
+    private fun showDateTimePicker(isStart: Boolean) {
+        val cal = Calendar.getInstance()
+        cal.time = if (isStart) selectedDateTime else selectedEndTime
+
+        DatePickerDialog(
+            requireContext(),
+            { _, year, month, day ->
+                cal.set(Calendar.YEAR, year)
+                cal.set(Calendar.MONTH, month)
+                cal.set(Calendar.DAY_OF_MONTH, day)
+                // Then show time picker
+                TimePickerDialog(
+                    requireContext(),
+                    { _, hour, minute ->
+                        cal.set(Calendar.HOUR_OF_DAY, hour)
+                        cal.set(Calendar.MINUTE, minute)
+                        cal.set(Calendar.SECOND, 0)
+                        val date = cal.time
+                        if (isStart) {
+                            selectedDateTime = date
+                            binding.editDate.setText(dateTimeFormat.format(date))
+                            binding.editDateEdit.setText(dateTimeFormat.format(date))
+                        } else {
+                            selectedEndTime = date
+                            binding.editEndTime.setText(dateTimeFormat.format(date))
+                        }
+                    },
+                    cal.get(Calendar.HOUR_OF_DAY),
+                    cal.get(Calendar.MINUTE),
+                    true
+                ).show()
+            },
+            cal.get(Calendar.YEAR),
+            cal.get(Calendar.MONTH),
+            cal.get(Calendar.DAY_OF_MONTH)
+        ).show()
+    }
+
+    // ========== Button setup ==========
+
+    private fun setupButtons() {
+        // Start trip button
+        binding.buttonStartTrip.setOnClickListener {
+            val trip = buildStartTrip()
+            viewModel.startTrip(trip)
+        }
+
+        // Save (end trip) button
+        binding.buttonSave.setOnClickListener {
+            clearEndErrors()
+            val trip = buildEndTrip()
+            viewModel.endTrip(trip)
+        }
+
+        // Save (edit mode) button
+        binding.buttonSaveEdit.setOnClickListener {
+            clearEditErrors()
+            val trip = buildEditTrip()
+            viewModel.saveTrip(trip)
+        }
+
+        // Template buttons (edit mode only)
+        binding.buttonUseTemplate.setOnClickListener { showTemplateBottomSheet() }
+        binding.buttonSaveAsTemplate.setOnClickListener { showSaveAsTemplateDialog() }
+    }
+
+    // ========== Auto-calculate distance from odometer ==========
+
+    private fun setupOdometerAutoCalculation() {
+        binding.editEndOdometer.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: Editable?) {
+                autoCalculateDistance()
+            }
+        })
+    }
+
+    private fun autoCalculateDistance() {
+        val state = viewModel.uiState.value
+        val startOdo = state.trip?.startOdometer ?: return
+        val endOdo = binding.editEndOdometer.text.toString().toIntOrNull() ?: return
+        if (endOdo > startOdo) {
+            val distanceKm = (endOdo - startOdo).toDouble()
+            binding.editDistance.setText(distanceKm.toString())
+        }
+    }
+
+    // ========== Build Trip objects from form ==========
+
+    private fun buildStartTrip(): Trip {
+        return Trip(
+            date = selectedDateTime,
+            startLocation = binding.editStartLocation.text.toString().trim(),
+            startOdometer = binding.editStartOdometer.text.toString().toIntOrNull(),
+            vehicleId = selectedVehicleId,
+            isActive = true
+        )
+    }
+
+    private fun buildEndTrip(): Trip {
+        val activeTrip = viewModel.uiState.value.trip ?: return buildStartTrip()
+        return activeTrip.copy(
+            endLocation = binding.editEndLocation.text.toString().trim(),
+            endOdometer = binding.editEndOdometer.text.toString().toIntOrNull(),
+            distanceKm = binding.editDistance.text.toString().toDoubleOrNull() ?: 0.0,
+            purpose = binding.editPurpose.text.toString().trim(),
+            purposeId = selectedPurposeId,
+            notes = binding.editNotes.text.toString().trim().ifEmpty { null },
+            endTime = selectedEndTime,
+            gpsDistanceKm = viewModel.uiState.value.gpsDistanceKm.takeIf { it > 0 },
+            isActive = false
+        )
+    }
+
+    private fun buildEditTrip(): Trip {
+        val existingTrip = viewModel.uiState.value.trip
+        return Trip(
+            id = existingTrip?.id ?: 0,
+            date = selectedDateTime,
+            startLocation = binding.editStartLocationEdit.text.toString().trim(),
+            endLocation = binding.editEndLocationEdit.text.toString().trim(),
+            distanceKm = binding.editDistanceEdit.text.toString().toDoubleOrNull() ?: 0.0,
+            purpose = binding.editPurposeEdit.text.toString().trim(),
+            purposeId = selectedPurposeId,
+            notes = binding.editNotesEdit.text.toString().trim().ifEmpty { null },
+            startOdometer = binding.editStartOdometerEdit.text.toString().toIntOrNull(),
+            endOdometer = binding.editEndOdometerEdit.text.toString().toIntOrNull(),
+            vehicleId = selectedVehicleId,
+            isCancelled = existingTrip?.isCancelled ?: false,
+            cancellationReason = existingTrip?.cancellationReason,
+            endTime = existingTrip?.endTime,
+            gpsDistanceKm = existingTrip?.gpsDistanceKm
+        )
+    }
+
+    // ========== Observe ViewModel state ==========
+
+    private fun observeState() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.uiState.collect { state ->
+                    // Show correct phase section
+                    updatePhaseVisibility(state.phase)
+
+                    // Populate form if editing existing trip
+                    state.trip?.let { populateForm(it, state.phase) }
+
+                    // Pre-fill start odometer from last trip
+                    if (state.phase == TripPhase.START && state.lastEndOdometer != null && !formPopulated) {
+                        binding.editStartOdometer.setText(state.lastEndOdometer.toString())
+                    }
+
+                    // Update vehicle dropdown
+                    if (state.vehicles != vehicles) {
+                        vehicles = state.vehicles
+                        setupVehicleDropdown(state.vehicles, state.phase)
+                    }
+
+                    // Update purposes dropdown
+                    if (state.purposes != purposes) {
+                        purposes = state.purposes
+                        setupPurposeCategoryDropdown(state.purposes, state.phase)
+                    }
+
+                    // Loading/saving states
+                    binding.progressSaving.visibility =
+                        if (state.isSaving) View.VISIBLE else View.GONE
+                    binding.buttonStartTrip.isEnabled = !state.isSaving
+                    binding.buttonSave.isEnabled = !state.isSaving
+                    binding.buttonSaveEdit.isEnabled = !state.isSaving
+
+                    // Validation errors
+                    state.validationResult?.let { validation ->
+                        when (state.phase) {
+                            TripPhase.START -> {
+                                binding.layoutStartLocation.error =
+                                    validation.errorFor(TripValidator.FIELD_START_LOCATION)
+                                binding.layoutStartOdometer.error =
+                                    validation.errorFor(TripValidator.FIELD_START_ODOMETER)
+                            }
+                            TripPhase.END -> {
+                                binding.layoutEndLocation.error =
+                                    validation.errorFor(TripValidator.FIELD_END_LOCATION)
+                                binding.layoutDistance.error =
+                                    validation.errorFor(TripValidator.FIELD_DISTANCE)
+                                binding.layoutPurpose.error =
+                                    validation.errorFor(TripValidator.FIELD_PURPOSE)
+                                binding.layoutPurposeCategory.error =
+                                    validation.errorFor(TripValidator.FIELD_PURPOSE_ID)
+                                binding.layoutEndOdometer.error =
+                                    validation.errorFor(TripValidator.FIELD_ODOMETER)
+                            }
+                            TripPhase.EDIT -> {
+                                binding.layoutStartLocationEdit.error =
+                                    validation.errorFor(TripValidator.FIELD_START_LOCATION)
+                                binding.layoutEndLocationEdit.error =
+                                    validation.errorFor(TripValidator.FIELD_END_LOCATION)
+                                binding.layoutDistanceEdit.error =
+                                    validation.errorFor(TripValidator.FIELD_DISTANCE)
+                                binding.layoutPurposeEdit.error =
+                                    validation.errorFor(TripValidator.FIELD_PURPOSE)
+                                binding.layoutPurposeCategoryEdit.error =
+                                    validation.errorFor(TripValidator.FIELD_PURPOSE_ID)
+                                binding.layoutDateEdit.error =
+                                    validation.errorFor(TripValidator.FIELD_DATE)
+                                val odometerError = validation.errorFor(TripValidator.FIELD_ODOMETER)
+                                binding.layoutStartOdometerEdit.error = odometerError
+                                binding.layoutEndOdometerEdit.error = odometerError
+                            }
+                        }
+                    }
+
+                    // Error message
+                    state.error?.let { error ->
+                        Snackbar.make(binding.root, error, Snackbar.LENGTH_LONG).show()
+                        viewModel.clearError()
+                    }
+
+                    // Successfully saved
+                    if (state.savedSuccessfully) {
+                        // If we just started a trip, start GPS tracking
+                        if (state.phase == TripPhase.START && state.trip?.isActive == true) {
+                            LocationTrackingService.start(requireContext(), state.trip.id)
+                        }
+                        viewModel.onSaveConsumed()
+                        findNavController().popBackStack()
+                    }
+                }
+            }
+        }
+    }
+
+    private fun updatePhaseVisibility(phase: TripPhase) {
+        binding.sectionStart.visibility = if (phase == TripPhase.START) View.VISIBLE else View.GONE
+        binding.sectionEnd.visibility = if (phase == TripPhase.END) View.VISIBLE else View.GONE
+        binding.sectionEdit.visibility = if (phase == TripPhase.EDIT) View.VISIBLE else View.GONE
+    }
+
+    // ========== GPS Distance observation ==========
+
+    private fun observeGpsDistance() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                LocationTrackingService.gpsDistanceKm.collect { distanceKm ->
+                    viewModel.updateGpsDistance(distanceKm)
+
+                    if (viewModel.uiState.value.phase == TripPhase.END) {
+                        binding.textGpsDistance.text =
+                            String.format(Locale.GERMANY, getString(R.string.active_trip_gps_km), distanceKm)
+
+                        // Pre-fill end odometer from GPS estimate
+                        val startOdo = viewModel.uiState.value.trip?.startOdometer
+                        if (startOdo != null && distanceKm > 0) {
+                            val estimatedEnd = startOdo + distanceKm.toInt()
+                            if (binding.editEndOdometer.text.isNullOrBlank()) {
+                                binding.editEndOdometer.setText(estimatedEnd.toString())
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // ========== Form population ==========
+
+    private var formPopulated = false
+
+    private fun populateForm(trip: Trip, phase: TripPhase) {
+        if (formPopulated) return
+        formPopulated = true
+
+        when (phase) {
+            TripPhase.END -> {
+                // Show start summary
+                val startInfo = "${trip.startLocation}, ${dateTimeFormat.format(trip.date)} — Km-Stand: ${trip.startOdometer ?: "?"}"
+                binding.textStartSummary.text = startInfo
+
+                // Pre-fill end time with current time
+                selectedEndTime = Date()
+                binding.editEndTime.setText(dateTimeFormat.format(selectedEndTime))
+
+                // Pre-fill end odometer from GPS if available
+                val gpsKm = LocationTrackingService.gpsDistanceKm.value
+                if (trip.startOdometer != null && gpsKm > 0) {
+                    val estimatedEnd = trip.startOdometer + gpsKm.toInt()
+                    binding.editEndOdometer.setText(estimatedEnd.toString())
+                }
+
+                selectedVehicleId = trip.vehicleId
+                selectedPurposeId = trip.purposeId
+            }
+            TripPhase.EDIT -> {
+                selectedDateTime = trip.date
+                binding.editDateEdit.setText(dateTimeFormat.format(trip.date))
+                binding.editStartLocationEdit.setText(trip.startLocation)
+                binding.editEndLocationEdit.setText(trip.endLocation)
+                binding.editDistanceEdit.setText(trip.distanceKm.toString())
+                binding.editPurposeEdit.setText(trip.purpose)
+                binding.editNotesEdit.setText(trip.notes ?: "")
+                trip.startOdometer?.let { binding.editStartOdometerEdit.setText(it.toString()) }
+                trip.endOdometer?.let { binding.editEndOdometerEdit.setText(it.toString()) }
+                selectedVehicleId = trip.vehicleId
+                selectedPurposeId = trip.purposeId
+            }
+            TripPhase.START -> {
+                // Start phase — form is prefilled by observeState (lastEndOdometer + GPS location)
+            }
+        }
+    }
+
+    // ========== Dropdowns ==========
+
+    private fun setupVehicleDropdown(vehicleList: List<Vehicle>, phase: TripPhase) {
+        val items = listOf(getString(R.string.no_vehicle)) +
+            vehicleList.map { "${it.make} ${it.model} (${it.licensePlate})" }
+        val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_list_item_1, items)
+
+        val spinner = when (phase) {
+            TripPhase.START -> binding.spinnerVehicle
+            TripPhase.END -> return // No vehicle spinner in end phase
+            TripPhase.EDIT -> binding.spinnerVehicleEdit
+        }
+        spinner.setAdapter(adapter)
+
+        // Set current selection
+        val currentIndex = selectedVehicleId?.let { id ->
+            vehicleList.indexOfFirst { it.id == id } + 1
+        } ?: 0
+        if (currentIndex in items.indices) {
+            spinner.setText(items[currentIndex], false)
+        }
+
+        spinner.setOnItemClickListener { _, _, position, _ ->
+            selectedVehicleId = if (position == 0) null else vehicleList[position - 1].id
+            viewModel.onVehicleChanged(selectedVehicleId)
+        }
+    }
+
+    private fun setupPurposeCategoryDropdown(purposeList: List<TripPurpose>, phase: TripPhase) {
+        val items = purposeList.map { it.name }
+        val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_list_item_1, items)
+
+        val spinner = when (phase) {
+            TripPhase.START -> return // No purpose spinner in start phase
+            TripPhase.END -> binding.spinnerPurposeCategory
+            TripPhase.EDIT -> binding.spinnerPurposeCategoryEdit
+        }
+        spinner.setAdapter(adapter)
+
+        // Set current selection
+        val currentIndex = selectedPurposeId?.let { id ->
+            purposeList.indexOfFirst { it.id == id }
+        } ?: -1
+        if (currentIndex in items.indices) {
+            spinner.setText(items[currentIndex], false)
+        }
+
+        spinner.setOnItemClickListener { _, _, position, _ ->
+            selectedPurposeId = purposeList[position].id
+        }
+    }
+
+    // ========== Error clearing ==========
+
+    private fun clearEndErrors() {
+        binding.layoutEndLocation.error = null
+        binding.layoutEndOdometer.error = null
+        binding.layoutDistance.error = null
+        binding.layoutPurpose.error = null
+        binding.layoutPurposeCategory.error = null
+    }
+
+    private fun clearEditErrors() {
+        binding.layoutStartLocationEdit.error = null
+        binding.layoutEndLocationEdit.error = null
+        binding.layoutDistanceEdit.error = null
+        binding.layoutPurposeEdit.error = null
+        binding.layoutPurposeCategoryEdit.error = null
+        binding.layoutDateEdit.error = null
+        binding.layoutStartOdometerEdit.error = null
+        binding.layoutEndOdometerEdit.error = null
+    }
+
+    // ========== Location suggestion ==========
 
     private fun tryLocationSuggestion() {
         if (hasLocationPermission()) {
@@ -124,14 +533,32 @@ class AddEditTripFragment : Fragment() {
                         location.latitude, location.longitude
                     )
                     if (nearest != null && _binding != null) {
-                        // Auto-fill start location if empty
-                        if (binding.editStartLocation.text.isNullOrBlank()) {
-                            binding.editStartLocation.setText(nearest.name)
-                            Snackbar.make(
-                                binding.root,
-                                getString(R.string.location_suggested, nearest.name),
-                                Snackbar.LENGTH_SHORT
-                            ).show()
+                        val phase = viewModel.uiState.value.phase
+                        // Auto-fill start location (start phase) or end location (end phase)
+                        when (phase) {
+                            TripPhase.START -> {
+                                if (binding.editStartLocation.text.isNullOrBlank()) {
+                                    binding.editStartLocation.setText(nearest.name)
+                                    Snackbar.make(
+                                        binding.root,
+                                        getString(R.string.location_suggested, nearest.name),
+                                        Snackbar.LENGTH_SHORT
+                                    ).show()
+                                }
+                            }
+                            TripPhase.END -> {
+                                if (binding.editEndLocation.text.isNullOrBlank()) {
+                                    binding.editEndLocation.setText(nearest.name)
+                                    Snackbar.make(
+                                        binding.root,
+                                        getString(R.string.location_suggested, nearest.name),
+                                        Snackbar.LENGTH_SHORT
+                                    ).show()
+                                }
+                            }
+                            TripPhase.EDIT -> {
+                                // Don't auto-fill in edit mode
+                            }
                         }
                     }
                 }
@@ -141,187 +568,7 @@ class AddEditTripFragment : Fragment() {
         }
     }
 
-    private fun setupDatePicker() {
-        binding.editDate.setText(dateFormat.format(selectedDate))
-        binding.editDate.setOnClickListener {
-            val cal = Calendar.getInstance()
-            cal.time = selectedDate
-            DatePickerDialog(
-                requireContext(),
-                { _, year, month, day ->
-                    cal.set(year, month, day)
-                    selectedDate = cal.time
-                    binding.editDate.setText(dateFormat.format(selectedDate))
-                },
-                cal.get(Calendar.YEAR),
-                cal.get(Calendar.MONTH),
-                cal.get(Calendar.DAY_OF_MONTH)
-            ).show()
-        }
-    }
-
-    private fun setupSaveButton() {
-        binding.buttonSave.setOnClickListener {
-            clearErrors()
-            val trip = buildTripFromForm()
-            viewModel.saveTrip(trip)
-        }
-    }
-
-    private fun buildTripFromForm(): Trip {
-        val existingTrip = viewModel.uiState.value.trip
-        return Trip(
-            id = existingTrip?.id ?: 0,
-            date = selectedDate,
-            startLocation = binding.editStartLocation.text.toString().trim(),
-            endLocation = binding.editEndLocation.text.toString().trim(),
-            distanceKm = binding.editDistance.text.toString().toDoubleOrNull() ?: 0.0,
-            purpose = binding.editPurpose.text.toString().trim(),
-            purposeId = selectedPurposeId,
-            notes = binding.editNotes.text.toString().trim().ifEmpty { null },
-            startOdometer = binding.editStartOdometer.text.toString().toIntOrNull(),
-            endOdometer = binding.editEndOdometer.text.toString().toIntOrNull(),
-            vehicleId = selectedVehicleId,
-            isCancelled = existingTrip?.isCancelled ?: false,
-            cancellationReason = existingTrip?.cancellationReason
-        )
-    }
-
-    private fun observeState() {
-        viewLifecycleOwner.lifecycleScope.launch {
-            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.uiState.collect { state ->
-                    // Populate form if editing existing trip
-                    state.trip?.let { populateForm(it) }
-
-                    // Update vehicles dropdown
-                    if (state.vehicles != vehicles) {
-                        vehicles = state.vehicles
-                        setupVehicleDropdown(state.vehicles)
-                    }
-
-                    // Update purposes dropdown
-                    if (state.purposes != purposes) {
-                        purposes = state.purposes
-                        setupPurposeCategoryDropdown(state.purposes)
-                    }
-
-                    // Loading/saving states
-                    binding.progressSaving.visibility =
-                        if (state.isSaving) View.VISIBLE else View.GONE
-                    binding.buttonSave.isEnabled = !state.isSaving
-
-                    // Validation errors
-                    state.validationResult?.let { validation ->
-                        binding.layoutStartLocation.error =
-                            validation.errorFor(TripValidator.FIELD_START_LOCATION)
-                        binding.layoutEndLocation.error =
-                            validation.errorFor(TripValidator.FIELD_END_LOCATION)
-                        binding.layoutDistance.error =
-                            validation.errorFor(TripValidator.FIELD_DISTANCE)
-                        binding.layoutPurpose.error =
-                            validation.errorFor(TripValidator.FIELD_PURPOSE)
-                        binding.layoutPurposeCategory.error =
-                            validation.errorFor(TripValidator.FIELD_PURPOSE_ID)
-                        binding.layoutDate.error =
-                            validation.errorFor(TripValidator.FIELD_DATE)
-                        val odometerError = validation.errorFor(TripValidator.FIELD_ODOMETER)
-                        binding.layoutStartOdometer.error = odometerError
-                        binding.layoutEndOdometer.error = odometerError
-                    }
-
-                    // Error message
-                    state.error?.let { error ->
-                        Snackbar.make(binding.root, error, Snackbar.LENGTH_LONG).show()
-                        viewModel.clearError()
-                    }
-
-                    // Successfully saved
-                    if (state.savedSuccessfully) {
-                        viewModel.onSaveConsumed()
-                        findNavController().popBackStack()
-                    }
-                }
-            }
-        }
-    }
-
-    private var formPopulated = false
-
-    private fun populateForm(trip: Trip) {
-        if (formPopulated) return
-        formPopulated = true
-
-        selectedDate = trip.date
-        binding.editDate.setText(dateFormat.format(trip.date))
-        binding.editStartLocation.setText(trip.startLocation)
-        binding.editEndLocation.setText(trip.endLocation)
-        binding.editDistance.setText(trip.distanceKm.toString())
-        binding.editPurpose.setText(trip.purpose)
-        binding.editNotes.setText(trip.notes ?: "")
-        trip.startOdometer?.let { binding.editStartOdometer.setText(it.toString()) }
-        trip.endOdometer?.let { binding.editEndOdometer.setText(it.toString()) }
-        selectedVehicleId = trip.vehicleId
-        selectedPurposeId = trip.purposeId
-    }
-
-    private fun setupVehicleDropdown(vehicleList: List<Vehicle>) {
-        val items = listOf(getString(R.string.no_vehicle)) +
-            vehicleList.map { "${it.make} ${it.model} (${it.licensePlate})" }
-        val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_list_item_1, items)
-        binding.spinnerVehicle.setAdapter(adapter)
-
-        // Set current selection
-        val currentIndex = selectedVehicleId?.let { id ->
-            vehicleList.indexOfFirst { it.id == id } + 1
-        } ?: 0
-        if (currentIndex in items.indices) {
-            binding.spinnerVehicle.setText(items[currentIndex], false)
-        }
-
-        binding.spinnerVehicle.setOnItemClickListener { _, _, position, _ ->
-            selectedVehicleId = if (position == 0) null else vehicleList[position - 1].id
-        }
-    }
-
-    private fun setupPurposeCategoryDropdown(purposeList: List<TripPurpose>) {
-        val items = purposeList.map { it.name }
-        val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_list_item_1, items)
-        binding.spinnerPurposeCategory.setAdapter(adapter)
-
-        // Set current selection
-        val currentIndex = selectedPurposeId?.let { id ->
-            purposeList.indexOfFirst { it.id == id }
-        } ?: -1
-        if (currentIndex in items.indices) {
-            binding.spinnerPurposeCategory.setText(items[currentIndex], false)
-        }
-
-        binding.spinnerPurposeCategory.setOnItemClickListener { _, _, position, _ ->
-            selectedPurposeId = purposeList[position].id
-        }
-    }
-
-    private fun clearErrors() {
-        binding.layoutStartLocation.error = null
-        binding.layoutEndLocation.error = null
-        binding.layoutDistance.error = null
-        binding.layoutPurpose.error = null
-        binding.layoutPurposeCategory.error = null
-        binding.layoutDate.error = null
-        binding.layoutStartOdometer.error = null
-        binding.layoutEndOdometer.error = null
-    }
-
-    private fun setupTemplateButtons() {
-        binding.buttonUseTemplate.setOnClickListener {
-            showTemplateBottomSheet()
-        }
-
-        binding.buttonSaveAsTemplate.setOnClickListener {
-            showSaveAsTemplateDialog()
-        }
-    }
+    // ========== Templates (edit mode) ==========
 
     private fun showTemplateBottomSheet() {
         viewLifecycleOwner.lifecycleScope.launch {
@@ -357,24 +604,24 @@ class AddEditTripFragment : Fragment() {
     }
 
     private fun applyTemplate(template: TripTemplate) {
-        binding.editStartLocation.setText(template.startLocation)
-        binding.editEndLocation.setText(template.endLocation)
-        binding.editDistance.setText(template.distanceKm.toString())
-        binding.editPurpose.setText(template.purpose)
+        binding.editStartLocationEdit.setText(template.startLocation)
+        binding.editEndLocationEdit.setText(template.endLocation)
+        binding.editDistanceEdit.setText(template.distanceKm.toString())
+        binding.editPurposeEdit.setText(template.purpose)
         selectedPurposeId = template.purposeId
         selectedVehicleId = template.vehicleId
-        template.notes?.let { binding.editNotes.setText(it) }
+        template.notes?.let { binding.editNotesEdit.setText(it) }
 
         // Update dropdowns
         val purposeIndex = purposes.indexOfFirst { it.id == template.purposeId }
         if (purposeIndex >= 0) {
-            binding.spinnerPurposeCategory.setText(purposes[purposeIndex].name, false)
+            binding.spinnerPurposeCategoryEdit.setText(purposes[purposeIndex].name, false)
         }
         val vehicleIndex = vehicles.indexOfFirst { it.id == template.vehicleId }
         if (vehicleIndex >= 0) {
             val items = listOf(getString(R.string.no_vehicle)) +
                 vehicles.map { "${it.make} ${it.model} (${it.licensePlate})" }
-            binding.spinnerVehicle.setText(items[vehicleIndex + 1], false)
+            binding.spinnerVehicleEdit.setText(items[vehicleIndex + 1], false)
         }
 
         Snackbar.make(binding.root, getString(R.string.template_saved), Snackbar.LENGTH_SHORT).show()
@@ -405,12 +652,12 @@ class AddEditTripFragment : Fragment() {
     private fun saveCurrentAsTemplate(name: String) {
         val template = TripTemplate(
             name = name,
-            startLocation = binding.editStartLocation.text.toString().trim(),
-            endLocation = binding.editEndLocation.text.toString().trim(),
-            distanceKm = binding.editDistance.text.toString().toDoubleOrNull() ?: 0.0,
-            purpose = binding.editPurpose.text.toString().trim(),
+            startLocation = binding.editStartLocationEdit.text.toString().trim(),
+            endLocation = binding.editEndLocationEdit.text.toString().trim(),
+            distanceKm = binding.editDistanceEdit.text.toString().toDoubleOrNull() ?: 0.0,
+            purpose = binding.editPurposeEdit.text.toString().trim(),
             purposeId = selectedPurposeId,
-            notes = binding.editNotes.text.toString().trim().ifEmpty { null },
+            notes = binding.editNotesEdit.text.toString().trim().ifEmpty { null },
             vehicleId = selectedVehicleId
         )
 

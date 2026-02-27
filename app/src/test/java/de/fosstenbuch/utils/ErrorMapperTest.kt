@@ -83,4 +83,42 @@ class ErrorMapperTest {
         val message = ErrorMapper.mapWithContext(RuntimeException("error"), "Fahrt speichern")
         assertTrue(message.startsWith("Fahrt speichern:"))
     }
+
+    @Test
+    fun `instance can be created via constructor`() {
+        val mapper = ErrorMapper()
+        // ErrorMapper is a class with companion object methods
+        // Verify instance creation works (for DI coverage)
+        assertTrue(mapper is ErrorMapper)
+    }
+
+    @Test
+    fun `IllegalStateException maps correctly`() {
+        val message = ErrorMapper.map(IllegalStateException("bad state"))
+        assertTrue(message.contains("Unerwarteter Zustand"))
+    }
+
+    @Test
+    fun `UnsupportedOperationException maps correctly`() {
+        val message = ErrorMapper.map(UnsupportedOperationException("not supported"))
+        assertTrue(message.contains("nicht unterstützt"))
+    }
+
+    @Test
+    fun `NullPointerException maps correctly`() {
+        val message = ErrorMapper.map(NullPointerException("null ref"))
+        assertTrue(message.contains("Fehlende Daten"))
+    }
+
+    @Test
+    fun `ConcurrentModificationException maps correctly`() {
+        val message = ErrorMapper.map(ConcurrentModificationException("concurrent"))
+        assertTrue(message.contains("Gleichzeitiger Zugriff"))
+    }
+
+    @Test
+    fun `IOException without message maps to generic IO error`() {
+        val message = ErrorMapper.map(IOException())
+        assertTrue(message.contains("Ausgabefehler") || message.contains("Bitte versuchen"))
+    }
 }

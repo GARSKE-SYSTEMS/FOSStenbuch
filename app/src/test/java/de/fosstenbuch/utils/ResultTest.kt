@@ -95,4 +95,51 @@ class ResultTest {
         val result: Result<String> = Result.error("fail")
         assertNull(result.getOrNull())
     }
+
+    @Test
+    fun `map passes through loading`() {
+        val result: Result<Int> = Result.loading()
+        val mapped = result.map { it * 2 }
+        assertTrue(mapped.isLoading)
+    }
+
+    @Test
+    fun `flatMap passes through loading`() {
+        val result: Result<Int> = Result.loading()
+        val mapped = result.flatMap { Result.success(it * 2) }
+        assertTrue(mapped.isLoading)
+    }
+
+    @Test
+    fun `flatMap passes through error`() {
+        val result: Result<Int> = Result.error("failed")
+        val mapped = result.flatMap { Result.success(it * 2) }
+        assertTrue(mapped.isError)
+    }
+
+    @Test
+    fun `error with exception and message`() {
+        val ex = RuntimeException("boom")
+        val result = Result.Error(exception = ex, message = "custom")
+        assertEquals("custom", result.message)
+        assertEquals(ex, result.exception)
+    }
+
+    @Test
+    fun `error with null exception uses default message`() {
+        val result = Result.Error()
+        assertEquals("Unbekannter Fehler", result.message)
+    }
+
+    @Test
+    fun `errorMessageOrNull returns null on loading`() {
+        val result: Result<String> = Result.loading()
+        assertNull(result.errorMessageOrNull())
+    }
+
+    @Test
+    fun `getOrNull returns null on loading`() {
+        val result: Result<String> = Result.loading()
+        assertNull(result.getOrNull())
+    }
 }

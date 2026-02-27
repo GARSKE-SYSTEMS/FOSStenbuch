@@ -6,6 +6,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import de.fosstenbuch.data.model.Trip
 import de.fosstenbuch.domain.usecase.purpose.GetAllPurposesUseCase
 import de.fosstenbuch.domain.usecase.trip.DeleteTripUseCase
+import de.fosstenbuch.domain.usecase.trip.GetActiveTripUseCase
 import de.fosstenbuch.domain.usecase.trip.GetAllTripsUseCase
 import de.fosstenbuch.domain.usecase.trip.GetBusinessTripsUseCase
 import de.fosstenbuch.domain.usecase.trip.GetPrivateTripsUseCase
@@ -24,7 +25,8 @@ class TripsViewModel @Inject constructor(
     private val getBusinessTripsUseCase: GetBusinessTripsUseCase,
     private val getPrivateTripsUseCase: GetPrivateTripsUseCase,
     private val deleteTripUseCase: DeleteTripUseCase,
-    private val getAllPurposesUseCase: GetAllPurposesUseCase
+    private val getAllPurposesUseCase: GetAllPurposesUseCase,
+    private val getActiveTripUseCase: GetActiveTripUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(TripsUiState())
@@ -33,6 +35,7 @@ class TripsViewModel @Inject constructor(
     init {
         loadPurposes()
         loadTrips()
+        loadActiveTrip()
     }
 
     fun setFilter(filter: TripFilter) {
@@ -93,6 +96,16 @@ class TripsViewModel @Inject constructor(
                     _uiState.update {
                         it.copy(isLoading = false, trips = sorted, error = null)
                     }
+                }
+        }
+    }
+
+    private fun loadActiveTrip() {
+        viewModelScope.launch {
+            getActiveTripUseCase()
+                .catch { e -> Timber.e(e, "Failed to load active trip") }
+                .collect { activeTrip ->
+                    _uiState.update { it.copy(activeTrip = activeTrip) }
                 }
         }
     }

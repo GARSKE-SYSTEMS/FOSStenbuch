@@ -276,4 +276,22 @@
     <string name="notification_channel_desc">Tägliche Erinnerung zum Eintragen von Fahrten</string>
     <string name="notification_title">Fahrten eintragen</string>
     <string name="notification_message">Haben Sie heute Fahrten unternommen? Tragen Sie sie jetzt ein.</string>
+
+    <!-- Trip Start/End Flow -->
+    <string name="start_trip">Fahrt starten</string>
+    <string name="end_trip">Fahrt beenden</string>
+    <string name="trip_in_progress">Fahrt läuft…</string>
+    <string name="trip_start_time">Startzeit</string>
+    <string name="trip_end_time">Ankunftszeit</string>
+    <string name="trip_date_time">Datum \u0026 Uhrzeit</string>
+    <string name="estimated_odometer">Geschätzter Km-Stand (GPS)</string>
+    <string name="gps_distance_format">GPS: %.1f km</string>
+    <string name="active_trip_banner_text">%1$s — seit %2$s</string>
+    <string name="active_trip_gps_km">GPS-Strecke: %.1f km</string>
+    <string name="already_active_trip">Es läuft bereits eine Fahrt. Bitte beenden Sie diese zuerst.</string>
+    <string name="tracking_channel_name">Fahrt-Aufzeichnung</string>
+    <string name="tracking_channel_desc">Benachrichtigung während eine Fahrt aufgezeichnet wird</string>
+    <string name="tracking_notification_title">Fahrt wird aufgezeichnet</string>
+    <string name="tracking_notification_text">Gefahrene Strecke: %.1f km</string>
+    <string name="trip_active">Aktiv</string>
 </resources>

@@ -12,124 +12,61 @@
         android:orientation="vertical"
         android:padding="16dp">
 
-        <!-- Template actions -->
+        <!-- ========== START PHASE SECTION ========== -->
         <LinearLayout
+            android:id="@+id/section_start"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="12dp"
-            android:gravity="center_vertical"
-            android:orientation="horizontal">
+            android:orientation="vertical"
+            android:visibility="gone"
+            tools:visibility="visible">
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/button_use_template"
-                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="8dp"
-                android:layout_weight="1"
-                android:text="@string/use_template"
-                android:textSize="12sp" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/button_save_as_template"
-                style="@style/Widget.MaterialComponents.Button.TextButton"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="@string/save_as_template"
-                android:textSize="12sp" />
-
-        </LinearLayout>
-
-        <!-- Date -->
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/layout_date"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="12dp"
-            android:hint="@string/trip_date"
-            app:startIconDrawable="@drawable/ic_trips">
-
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/edit_date"
+            <!-- Date + Time -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/layout_date"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:focusable="false"
-                android:clickable="true"
-                android:inputType="none" />
+                android:layout_marginBottom="12dp"
+                android:hint="@string/trip_date_time"
+                app:startIconDrawable="@drawable/ic_trips">
 
-        </com.google.android.material.textfield.TextInputLayout>
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/edit_date"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:clickable="true"
+                    android:focusable="false"
+                    android:inputType="none" />
 
-        <!-- Start location -->
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/layout_start_location"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="12dp"
-            android:hint="@string/start_location">
+            </com.google.android.material.textfield.TextInputLayout>
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/edit_start_location"
+            <!-- Start location -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/layout_start_location"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="text"
-                android:maxLength="200" />
+                android:layout_marginBottom="12dp"
+                android:hint="@string/start_location"
+                app:startIconDrawable="@drawable/ic_location">
 
-        </com.google.android.material.textfield.TextInputLayout>
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/edit_start_location"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="text"
+                    android:maxLength="200" />
 
-        <!-- End location -->
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/layout_end_location"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="12dp"
-            android:hint="@string/end_location">
+            </com.google.android.material.textfield.TextInputLayout>
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/edit_end_location"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:inputType="text"
-                android:maxLength="200" />
-
-        </com.google.android.material.textfield.TextInputLayout>
-
-        <!-- Distance -->
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/layout_distance"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="12dp"
-            android:hint="@string/distance_km"
-            app:suffixText="km">
-
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/edit_distance"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:inputType="numberDecimal" />
-
-        </com.google.android.material.textfield.TextInputLayout>
-
-        <!-- Odometer row -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="12dp"
-            android:orientation="horizontal"
-            android:weightSum="2">
-
+            <!-- Start odometer -->
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/layout_start_odometer"
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                android:layout_width="0dp"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginEnd="6dp"
-                android:layout_weight="1"
+                android:layout_marginBottom="12dp"
                 android:hint="@string/start_odometer"
                 app:suffixText="km">
 
@@ -141,14 +78,139 @@
 
             </com.google.android.material.textfield.TextInputLayout>
 
+            <!-- Vehicle dropdown -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/layout_vehicle"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                android:hint="@string/vehicle">
+
+                <AutoCompleteTextView
+                    android:id="@+id/spinner_vehicle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="none" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- Start Trip button -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/button_start_trip"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/start_trip"
+                app:icon="@drawable/ic_location" />
+
+        </LinearLayout>
+
+        <!-- ========== END PHASE SECTION ========== -->
+        <LinearLayout
+            android:id="@+id/section_end"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone"
+            tools:visibility="gone">
+
+            <!-- Start summary card -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                app:cardCornerRadius="8dp"
+                app:cardElevation="2dp"
+                app:cardBackgroundColor="?attr/colorPrimary"
+                app:contentPaddingBottom="12dp"
+                app:contentPaddingLeft="16dp"
+                app:contentPaddingRight="16dp"
+                app:contentPaddingTop="12dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/trip_in_progress"
+                        android:textColor="?attr/colorOnPrimary"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/text_start_summary"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:textColor="?attr/colorOnPrimary"
+                        android:textSize="13sp"
+                        tools:text="Berlin, 15.03.2026 08:30 — Km-Stand: 45.000" />
+
+                    <TextView
+                        android:id="@+id/text_gps_distance"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:textColor="?attr/colorOnPrimary"
+                        android:textSize="13sp"
+                        tools:text="GPS-Strecke: 42,3 km" />
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Arrival time -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/layout_end_time"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                android:hint="@string/trip_end_time"
+                app:startIconDrawable="@drawable/ic_trips">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/edit_end_time"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:clickable="true"
+                    android:focusable="false"
+                    android:inputType="none" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- End location -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/layout_end_location"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                android:hint="@string/end_location"
+                app:startIconDrawable="@drawable/ic_location">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/edit_end_location"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="text"
+                    android:maxLength="200" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- End odometer (GPS-estimated) -->
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/layout_end_odometer"
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                android:layout_width="0dp"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="6dp"
-                android:layout_weight="1"
+                android:layout_marginBottom="12dp"
                 android:hint="@string/end_odometer"
+                app:helperText="@string/estimated_odometer"
+                app:helperTextEnabled="true"
                 app:suffixText="km">
 
                 <com.google.android.material.textfield.TextInputEditText
@@ -159,85 +221,325 @@
 
             </com.google.android.material.textfield.TextInputLayout>
 
+            <!-- Distance (auto-calculated) -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/layout_distance"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                android:hint="@string/distance_km"
+                app:suffixText="km">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/edit_distance"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="numberDecimal" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- Purpose description -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/layout_purpose"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                android:hint="@string/purpose">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/edit_purpose"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="text"
+                    android:maxLength="200" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- Purpose category dropdown -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/layout_purpose_category"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                android:hint="@string/purpose_category">
+
+                <AutoCompleteTextView
+                    android:id="@+id/spinner_purpose_category"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="none" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- Notes -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/layout_notes"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                android:hint="@string/notes">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/edit_notes"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="top"
+                    android:inputType="textMultiLine"
+                    android:minLines="2" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- Save button (end trip) -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/button_save"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/save"
+                app:icon="@drawable/ic_save" />
+
         </LinearLayout>
 
-        <!-- Purpose description -->
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/layout_purpose"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+        <!-- ========== EDIT PHASE SECTION (viewing/editing completed trip) ========== -->
+        <LinearLayout
+            android:id="@+id/section_edit"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="12dp"
-            android:hint="@string/purpose">
+            android:orientation="vertical"
+            android:visibility="gone"
+            tools:visibility="gone">
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/edit_purpose"
+            <!-- Template actions -->
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="text"
-                android:maxLength="200" />
+                android:layout_marginBottom="12dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
 
-        </com.google.android.material.textfield.TextInputLayout>
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/button_use_template"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="8dp"
+                    android:layout_weight="1"
+                    android:text="@string/use_template"
+                    android:textSize="12sp" />
 
-        <!-- Purpose category dropdown -->
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/layout_purpose_category"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="12dp"
-            android:hint="@string/purpose_category">
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/button_save_as_template"
+                    style="@style/Widget.MaterialComponents.Button.TextButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/save_as_template"
+                    android:textSize="12sp" />
 
-            <AutoCompleteTextView
-                android:id="@+id/spinner_purpose_category"
+            </LinearLayout>
+
+            <!-- Date + Time -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/layout_date_edit"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="none" />
+                android:layout_marginBottom="12dp"
+                android:hint="@string/trip_date_time"
+                app:startIconDrawable="@drawable/ic_trips">
 
-        </com.google.android.material.textfield.TextInputLayout>
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/edit_date_edit"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:clickable="true"
+                    android:focusable="false"
+                    android:inputType="none" />
 
-        <!-- Vehicle dropdown -->
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/layout_vehicle"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="12dp"
-            android:hint="@string/vehicle">
+            </com.google.android.material.textfield.TextInputLayout>
 
-            <AutoCompleteTextView
-                android:id="@+id/spinner_vehicle"
+            <!-- Start location -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/layout_start_location_edit"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="none" />
+                android:layout_marginBottom="12dp"
+                android:hint="@string/start_location">
 
-        </com.google.android.material.textfield.TextInputLayout>
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/edit_start_location_edit"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="text"
+                    android:maxLength="200" />
 
-        <!-- Notes -->
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/layout_notes"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            android:hint="@string/notes">
+            </com.google.android.material.textfield.TextInputLayout>
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/edit_notes"
+            <!-- End location -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/layout_end_location_edit"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="textMultiLine"
-                android:minLines="2"
-                android:gravity="top" />
+                android:layout_marginBottom="12dp"
+                android:hint="@string/end_location">
 
-        </com.google.android.material.textfield.TextInputLayout>
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/edit_end_location_edit"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="text"
+                    android:maxLength="200" />
 
-        <!-- Save button -->
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/button_save"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/save" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- Distance -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/layout_distance_edit"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                android:hint="@string/distance_km"
+                app:suffixText="km">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/edit_distance_edit"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="numberDecimal" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- Odometer row -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                android:orientation="horizontal"
+                android:weightSum="2">
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/layout_start_odometer_edit"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="6dp"
+                    android:layout_weight="1"
+                    android:hint="@string/start_odometer"
+                    app:suffixText="km">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/edit_start_odometer_edit"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="number" />
+
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/layout_end_odometer_edit"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="6dp"
+                    android:layout_weight="1"
+                    android:hint="@string/end_odometer"
+                    app:suffixText="km">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/edit_end_odometer_edit"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="number" />
+
+                </com.google.android.material.textfield.TextInputLayout>
+
+            </LinearLayout>
+
+            <!-- Purpose description -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/layout_purpose_edit"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                android:hint="@string/purpose">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/edit_purpose_edit"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="text"
+                    android:maxLength="200" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- Purpose category dropdown -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/layout_purpose_category_edit"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                android:hint="@string/purpose_category">
+
+                <AutoCompleteTextView
+                    android:id="@+id/spinner_purpose_category_edit"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="none" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- Vehicle dropdown -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/layout_vehicle_edit"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                android:hint="@string/vehicle">
+
+                <AutoCompleteTextView
+                    android:id="@+id/spinner_vehicle_edit"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="none" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- Notes -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/layout_notes_edit"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                android:hint="@string/notes">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/edit_notes_edit"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="top"
+                    android:inputType="textMultiLine"
+                    android:minLines="2" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- Save button (edit mode) -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/button_save_edit"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/save" />
+
+        </LinearLayout>
 
         <!-- Loading overlay for saving -->
         <ProgressBar

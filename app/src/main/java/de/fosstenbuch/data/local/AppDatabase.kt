@@ -19,7 +19,7 @@ import de.fosstenbuch.data.model.Vehicle
         TripPurpose::class,
         TripTemplate::class
     ],
-    version = 4,
+    version = 5,
     exportSchema = false
 )
 @TypeConverters(DateConverters::class)

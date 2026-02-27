@@ -4,6 +4,80 @@ plugins {
     id("org.jetbrains.kotlin.kapt")
     id("com.google.dagger.hilt.android")
     id("androidx.navigation.safeargs.kotlin")
+    id("org.jetbrains.kotlinx.kover")
+}
+
+koverReport {
+    filters {
+        excludes {
+            // Exclude Android UI, DI, generated code from coverage
+            classes(
+                // UI layer
+                "*Fragment",
+                "*Fragment\$*",
+                "*Activity",
+                "*Activity\$*",
+                "*Adapter",
+                "*Adapter\$*",
+                "*Application",
+                "*Application\$*",
+                "*ViewModel",
+                "*ViewModel\$*",
+                "*UiState",
+                "*UiState\$*",
+                "*Receiver",
+                "*Receiver\$*",
+                // Service (Android-dependent, not unit-testable)
+                "*Service",
+                "*Service\$*",
+                // UI helper classes
+                "de.fosstenbuch.ui.stats.StatItem",
+                "de.fosstenbuch.ui.trips.TripFilter",
+                "de.fosstenbuch.ui.trips.TripSort",
+                "de.fosstenbuch.ui.trips.TripPhase",
+                "de.fosstenbuch.ui.common.*",
+                // DI modules
+                "*Module",
+                "*Module\$*",
+                // Hilt / Dagger generated
+                "*_Factory",
+                "*_Factory\$*",
+                "*_HiltModules*",
+                "*_MembersInjector",
+                "*Binding*",
+                "hilt_aggregated_deps.*",
+                "*_HiltComponents*",
+                "*_ComponentTreeDeps*",
+                "*_GeneratedInjector",
+                "*Hilt_*",
+                // Room generated DAO implementations
+                "*_Impl",
+                "*_Impl\$*",
+                // Navigation generated
+                "*BuildConfig",
+                "*Directions",
+                "*Directions\$*",
+                "*Args",
+                "*Args\$*",
+                // DAOs (interfaces, covered via repository tests)
+                "*Dao",
+                "*Dao\$*",
+                // Android-dependent classes not unit-testable
+                "*PdfTripExporter",
+                "*PdfTripExporter\$*",
+                "*BackupManager",
+                "*BackupManager\$*",
+                "*PreferencesManager",
+                "*PreferencesManager\$*",
+                "*PreferencesManagerKt",
+                "*TimberDebugTree",
+                // Room database
+                "de.fosstenbuch.data.local.AppDatabase",
+                "de.fosstenbuch.data.local.AppDatabase\$*"
+            )
+            annotatedBy("dagger.Module", "dagger.internal.DaggerGenerated", "androidx.room.Database")
+        }
+    }
 }
 
 android {

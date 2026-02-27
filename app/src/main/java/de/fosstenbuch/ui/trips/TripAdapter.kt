@@ -18,7 +18,7 @@ class TripAdapter(
     private val onTripClick: (Trip) -> Unit
 ) : ListAdapter<Trip, TripAdapter.TripViewHolder>(TripDiffCallback()) {
 
-    private val dateFormat = SimpleDateFormat("dd.MM.yyyy", Locale.GERMANY)
+    private val dateTimeFormat = SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.GERMANY)
     private var purposeMap: Map<Long, TripPurpose> = emptyMap()
 
     fun setPurposes(purposes: List<TripPurpose>) {
@@ -51,14 +51,26 @@ class TripAdapter(
         }
 
         fun bind(trip: Trip) {
-            binding.textTripDate.text = dateFormat.format(trip.date)
-            binding.textTripRoute.text = itemView.context.getString(
-                R.string.trip_route_format, trip.startLocation, trip.endLocation
-            )
+            binding.textTripDate.text = dateTimeFormat.format(trip.date)
+
+            // Route: show "→ ..." for active trips without end location
+            if (trip.isActive) {
+                binding.textTripRoute.text = itemView.context.getString(
+                    R.string.trip_route_format, trip.startLocation, "..."
+                )
+            } else {
+                binding.textTripRoute.text = itemView.context.getString(
+                    R.string.trip_route_format, trip.startLocation, trip.endLocation
+                )
+            }
+
             binding.textTripDistance.text = itemView.context.getString(
                 R.string.distance_format, trip.distanceKm
             )
             binding.textTripPurpose.text = trip.purpose
+
+            // Active badge
+            binding.textTripActive.visibility = if (trip.isActive) View.VISIBLE else View.GONE
 
             // Purpose category badge
             val purpose = trip.purposeId?.let { purposeMap[it] }

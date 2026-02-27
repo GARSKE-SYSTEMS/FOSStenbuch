@@ -20,8 +20,11 @@ import dagger.hilt.android.AndroidEntryPoint
 import de.fosstenbuch.R
 import de.fosstenbuch.data.model.Trip
 import de.fosstenbuch.databinding.FragmentTripsBinding
+import de.fosstenbuch.domain.service.LocationTrackingService
 import kotlinx.coroutines.launch
 import timber.log.Timber
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 @AndroidEntryPoint
 class TripsFragment : Fragment() {
@@ -31,6 +34,7 @@ class TripsFragment : Fragment() {
 
     private val viewModel: TripsViewModel by viewModels()
     private lateinit var tripAdapter: TripAdapter
+    private val dateTimeFormat = SimpleDateFormat("HH:mm", Locale.GERMANY)
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -48,6 +52,7 @@ class TripsFragment : Fragment() {
         setupSortDropdown()
         setupFab()
         observeState()
+        observeGpsForBanner()
     }
 
     private fun setupRecyclerView() {
@@ -129,14 +134,21 @@ class TripsFragment : Fragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.uiState.collect { state ->
-                    Timber.d("TripsUiState: loading=${state.isLoading}, trips=${state.trips.size}, empty=${state.isEmpty}")
+                    Timber.d("TripsUiState: loading=${state.isLoading}, trips=${state.trips.size}, empty=${state.isEmpty}, activeTrip=${state.activeTrip?.id}")
 
                     binding.progressBar.visibility =
                         if (state.isLoading) View.VISIBLE else View.GONE
                     binding.layoutEmpty.visibility =
-                        if (state.isEmpty) View.VISIBLE else View.GONE
+                        if (state.isEmpty && !state.hasActiveTrip) View.VISIBLE else View.GONE
                     binding.recyclerTrips.visibility =
                         if (!state.isLoading && !state.isEmpty) View.VISIBLE else View.GONE
+
+                    // Active trip banner
+                    updateActiveTripBanner(state.activeTrip)
+
+                    // Hide FAB when a trip is already active
+                    binding.fabAddTrip.visibility =
+                        if (state.hasActiveTrip) View.GONE else View.VISIBLE
 
                     tripAdapter.setPurposes(state.purposes)
                     tripAdapter.submitList(state.trips)
@@ -151,6 +163,41 @@ class TripsFragment : Fragment() {
                     state.error?.let { error ->
                         Snackbar.make(binding.root, error, Snackbar.LENGTH_LONG).show()
                         viewModel.clearError()
+                    }
+                }
+            }
+        }
+    }
+
+    private fun updateActiveTripBanner(activeTrip: Trip?) {
+        if (activeTrip != null) {
+            binding.cardActiveTrip.visibility = View.VISIBLE
+            val startTime = dateTimeFormat.format(activeTrip.date)
+            binding.textActiveTripInfo.text = getString(
+                R.string.active_trip_banner_text,
+                activeTrip.startLocation,
+                startTime
+            )
+            // GPS distance will be updated by observeGpsForBanner
+            binding.buttonEndTrip.setOnClickListener {
+                val action = TripsFragmentDirections.actionTripsToAddEditTrip(tripId = activeTrip.id)
+                findNavController().navigate(action)
+            }
+        } else {
+            binding.cardActiveTrip.visibility = View.GONE
+        }
+    }
+
+    private fun observeGpsForBanner() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                LocationTrackingService.gpsDistanceKm.collect { distanceKm ->
+                    if (viewModel.uiState.value.hasActiveTrip) {
+                        binding.textActiveTripGps.text = getString(
+                            R.string.active_trip_gps_km,
+                            distanceKm
+                        )
+                        binding.textActiveTripGps.visibility = View.VISIBLE
                     }
                 }
             }

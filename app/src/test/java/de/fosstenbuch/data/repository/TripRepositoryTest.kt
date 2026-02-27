@@ -1,13 +1,17 @@
 package de.fosstenbuch.data.repository
 
+import de.fosstenbuch.data.local.MonthlyDistance
 import de.fosstenbuch.data.local.TripDao
 import de.fosstenbuch.data.model.Trip
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
 import java.util.Date
@@ -76,5 +80,203 @@ class TripRepositoryTest {
         val result = tripRepository.getTripCountForVehicle(5L)
 
         assertEquals(3, result)
+    }
+
+    @Test
+    fun `getTripById should delegate to dao`() = runBlocking {
+        val trip = Trip(1, Date(), "Start", "End", 10.0, "Business", purposeId = 1L)
+        every { mockTripDao.getTripById(1L) } returns flowOf(trip)
+
+        val result = tripRepository.getTripById(1L).first()
+
+        assertEquals("Start", result?.startLocation)
+    }
+
+    @Test
+    fun `getBusinessTrips should delegate to dao`() = runBlocking {
+        val trips = listOf(Trip(1, Date(), "S", "E", 10.0, "B", purposeId = 1L))
+        every { mockTripDao.getBusinessTrips() } returns flowOf(trips)
+
+        val result = tripRepository.getBusinessTrips().first()
+
+        assertEquals(1, result.size)
+    }
+
+    @Test
+    fun `getPrivateTrips should delegate to dao`() = runBlocking {
+        val trips = listOf(Trip(1, Date(), "S", "E", 10.0, "P", purposeId = 2L))
+        every { mockTripDao.getPrivateTrips() } returns flowOf(trips)
+
+        val result = tripRepository.getPrivateTrips().first()
+
+        assertEquals(1, result.size)
+    }
+
+    @Test
+    fun `getTripsByDateRange should delegate to dao`() = runBlocking {
+        val trips = listOf(Trip(1, Date(), "S", "E", 10.0, "B", purposeId = 1L))
+        every { mockTripDao.getTripsByDateRange(100L, 200L) } returns flowOf(trips)
+
+        val result = tripRepository.getTripsByDateRange(100L, 200L).first()
+
+        assertEquals(1, result.size)
+    }
+
+    @Test
+    fun `deleteAllTrips should delegate to dao`() = runBlocking {
+        coEvery { mockTripDao.deleteAllTrips() } returns Unit
+
+        tripRepository.deleteAllTrips()
+
+        coVerify(exactly = 1) { mockTripDao.deleteAllTrips() }
+    }
+
+    @Test
+    fun `getTotalBusinessDistance should delegate to dao`() = runBlocking {
+        every { mockTripDao.getTotalBusinessDistance() } returns flowOf(5000.0)
+
+        val result = tripRepository.getTotalBusinessDistance().first()
+
+        assertEquals(5000.0, result!!, 0.001)
+    }
+
+    @Test
+    fun `getTotalPrivateDistance should delegate to dao`() = runBlocking {
+        every { mockTripDao.getTotalPrivateDistance() } returns flowOf(3000.0)
+
+        val result = tripRepository.getTotalPrivateDistance().first()
+
+        assertEquals(3000.0, result!!, 0.001)
+    }
+
+    @Test
+    fun `getTotalDistance should delegate to dao`() = runBlocking {
+        every { mockTripDao.getTotalDistance() } returns flowOf(8000.0)
+
+        val result = tripRepository.getTotalDistance().first()
+
+        assertEquals(8000.0, result!!, 0.001)
+    }
+
+    @Test
+    fun `getTripCountByDateRange should delegate to dao`() = runBlocking {
+        every { mockTripDao.getTripCountByDateRange(100L, 200L) } returns flowOf(5)
+
+        val result = tripRepository.getTripCountByDateRange(100L, 200L).first()
+
+        assertEquals(5, result)
+    }
+
+    @Test
+    fun `getMonthlyDistanceSummary should delegate to dao`() = runBlocking {
+        val summary = listOf(MonthlyDistance(1, 500.0))
+        every { mockTripDao.getMonthlyDistanceSummary(2024) } returns flowOf(summary)
+
+        val result = tripRepository.getMonthlyDistanceSummary(2024).first()
+
+        assertEquals(1, result.size)
+        assertEquals(500.0, result[0].totalDistance, 0.001)
+    }
+
+    @Test
+    fun `getBusinessDistanceForYear should delegate to dao`() = runBlocking {
+        every { mockTripDao.getBusinessDistanceForYear(2024) } returns flowOf(4000.0)
+
+        val result = tripRepository.getBusinessDistanceForYear(2024).first()
+
+        assertEquals(4000.0, result!!, 0.001)
+    }
+
+    @Test
+    fun `getBusinessTripCountForYear should delegate to dao`() = runBlocking {
+        every { mockTripDao.getBusinessTripCountForYear(2024) } returns flowOf(150)
+
+        val result = tripRepository.getBusinessTripCountForYear(2024).first()
+
+        assertEquals(150, result)
+    }
+
+    @Test
+    fun `getTotalDistance returns null when no trips`() = runBlocking {
+        every { mockTripDao.getTotalDistance() } returns flowOf(null)
+
+        val result = tripRepository.getTotalDistance().first()
+
+        assertNull(result)
+    }
+
+    @Test
+    fun `getActiveTrip should return flow of active trip`() = runBlocking {
+        val activeTrip = Trip(1, Date(), "Start", "End", 10.0, "Business", purposeId = 1L, isActive = true)
+        every { mockTripDao.getActiveTrip() } returns flowOf(activeTrip)
+
+        val result = tripRepository.getActiveTrip().first()
+
+        assertEquals(1L, result?.id)
+        assertEquals(true, result?.isActive)
+    }
+
+    @Test
+    fun `getActiveTrip returns null when no active trip`() = runBlocking {
+        every { mockTripDao.getActiveTrip() } returns flowOf(null)
+
+        val result = tripRepository.getActiveTrip().first()
+
+        assertNull(result)
+    }
+
+    @Test
+    fun `getLastEndOdometerForVehicle should delegate to dao`() = runBlocking {
+        coEvery { mockTripDao.getLastEndOdometerForVehicle(5L) } returns 50280
+
+        val result = tripRepository.getLastEndOdometerForVehicle(5L)
+
+        assertEquals(50280, result)
+    }
+
+    @Test
+    fun `getLastEndOdometerForVehicle returns null when no trips`() = runBlocking {
+        coEvery { mockTripDao.getLastEndOdometerForVehicle(5L) } returns null
+
+        val result = tripRepository.getLastEndOdometerForVehicle(5L)
+
+        assertNull(result)
+    }
+
+    @Test
+    fun `getLastEndOdometer should delegate to dao`() = runBlocking {
+        coEvery { mockTripDao.getLastEndOdometer() } returns 75000
+
+        val result = tripRepository.getLastEndOdometer()
+
+        assertEquals(75000, result)
+    }
+
+    @Test
+    fun `getLastEndOdometer returns null when no trips`() = runBlocking {
+        coEvery { mockTripDao.getLastEndOdometer() } returns null
+
+        val result = tripRepository.getLastEndOdometer()
+
+        assertNull(result)
+    }
+
+    @Test
+    fun `getLastCompletedTrip should delegate to dao`() = runBlocking {
+        val trip = Trip(1, Date(), "Start", "End", 10.0, "Business", purposeId = 1L)
+        coEvery { mockTripDao.getLastCompletedTrip() } returns trip
+
+        val result = tripRepository.getLastCompletedTrip()
+
+        assertEquals(1L, result?.id)
+    }
+
+    @Test
+    fun `getLastCompletedTrip returns null when no completed trips`() = runBlocking {
+        coEvery { mockTripDao.getLastCompletedTrip() } returns null
+
+        val result = tripRepository.getLastCompletedTrip()
+
+        assertNull(result)
     }
 }
