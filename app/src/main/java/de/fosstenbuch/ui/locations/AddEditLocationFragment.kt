@@ -132,6 +132,7 @@ class AddEditLocationFragment : Fragment() {
         binding.buttonSave.setOnClickListener {
             val name = binding.editName.text.toString().trim()
             val address = binding.editAddress.text.toString().trim().ifEmpty { null }
+            val businessPartner = binding.editBusinessPartner.text.toString().trim().ifEmpty { null }
             val latitude = binding.editLatitude.text.toString().toDoubleOrNull()
             val longitude = binding.editLongitude.text.toString().toDoubleOrNull()
 
@@ -163,7 +164,8 @@ class AddEditLocationFragment : Fragment() {
                 latitude = latitude!!,
                 longitude = longitude!!,
                 address = address,
-                usageCount = existingLocation?.usageCount ?: 0
+                usageCount = existingLocation?.usageCount ?: 0,
+                businessPartner = businessPartner
             )
             viewModel.saveLocation(location)
         }
@@ -201,6 +203,7 @@ class AddEditLocationFragment : Fragment() {
 
         binding.editName.setText(location.name)
         binding.editAddress.setText(location.address ?: "")
+        binding.editBusinessPartner.setText(location.businessPartner ?: "")
         binding.editLatitude.setText(String.format(Locale.US, "%.6f", location.latitude))
         binding.editLongitude.setText(String.format(Locale.US, "%.6f", location.longitude))
     }

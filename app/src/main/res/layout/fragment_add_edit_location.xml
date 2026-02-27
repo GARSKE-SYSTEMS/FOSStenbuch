@@ -48,6 +48,25 @@
 
         </com.google.android.material.textfield.TextInputLayout>
 
+        <!-- Business Partner (optional) -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/layout_business_partner"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            android:hint="@string/business_partner"
+            app:helperText="@string/location_business_partner_hint">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/edit_business_partner"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="text"
+                android:maxLength="200" />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
         <!-- GPS Coordinates -->
         <LinearLayout
             android:layout_width="match_parent"

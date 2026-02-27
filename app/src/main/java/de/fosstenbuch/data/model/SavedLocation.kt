@@ -10,5 +10,6 @@ data class SavedLocation(
     val latitude: Double,
     val longitude: Double,
     val address: String? = null,
-    val usageCount: Int = 0
+    val usageCount: Int = 0,
+    val businessPartner: String? = null
 )

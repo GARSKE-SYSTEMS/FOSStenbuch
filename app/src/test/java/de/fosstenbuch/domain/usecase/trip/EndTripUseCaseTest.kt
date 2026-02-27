@@ -69,23 +69,23 @@ class EndTripUseCaseTest {
     }
 
     @Test
-    fun `blank purpose returns validation error`() = runBlocking {
+    fun `blank purpose passes validation`() = runBlocking {
         val trip = validEndTrip().copy(purpose = "")
+        coEvery { mockRepository.updateTrip(any()) } returns Unit
 
         val result = useCase(trip)
 
-        assertTrue(result is EndTripUseCase.Result.ValidationError)
-        coVerify(exactly = 0) { mockRepository.updateTrip(any()) }
+        assertTrue(result is EndTripUseCase.Result.Success)
     }
 
     @Test
-    fun `null purposeId returns validation error`() = runBlocking {
+    fun `null purposeId passes validation`() = runBlocking {
         val trip = validEndTrip().copy(purposeId = null)
+        coEvery { mockRepository.updateTrip(any()) } returns Unit
 
         val result = useCase(trip)
 
-        assertTrue(result is EndTripUseCase.Result.ValidationError)
-        coVerify(exactly = 0) { mockRepository.updateTrip(any()) }
+        assertTrue(result is EndTripUseCase.Result.Success)
     }
 
     @Test

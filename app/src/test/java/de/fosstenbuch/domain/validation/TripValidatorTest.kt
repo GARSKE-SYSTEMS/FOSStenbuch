@@ -75,10 +75,9 @@ class TripValidatorTest {
     }
 
     @Test
-    fun `blank purpose fails`() {
+    fun `blank purpose passes`() {
         val result = validator.validate(validTrip().copy(purpose = ""))
-        assertFalse(result.isValid)
-        assertNotNull(result.errorFor(TripValidator.FIELD_PURPOSE))
+        assertNull(result.errorFor(TripValidator.FIELD_PURPOSE))
     }
 
     @Test
@@ -127,7 +126,7 @@ class TripValidatorTest {
         )
         val result = validator.validate(trip)
         assertFalse(result.isValid)
-        assertTrue(result.errors.size >= 4)
+        assertTrue(result.errors.size >= 3)
     }
 
     @Test
@@ -155,10 +154,9 @@ class TripValidatorTest {
     }
 
     @Test
-    fun `null purposeId returns validation error`() {
+    fun `null purposeId passes validation`() {
         val result = validator.validate(validTrip().copy(purposeId = null))
-        assertFalse(result.isValid)
-        assertNotNull(result.errorFor(TripValidator.FIELD_PURPOSE_ID))
+        assertNull(result.errorFor(TripValidator.FIELD_PURPOSE_ID))
     }
 
     @Test

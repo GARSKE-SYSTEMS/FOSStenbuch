@@ -40,6 +40,12 @@ object AppModule {
         }
     }
 
+    private val MIGRATION_7_8 = object : Migration(7, 8) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE saved_locations ADD COLUMN businessPartner TEXT DEFAULT NULL")
+        }
+    }
+
     @Provides
     @Singleton
     fun provideAppDatabase(@ApplicationContext context: Context): AppDatabase {
@@ -48,7 +54,7 @@ object AppModule {
             AppDatabase::class.java,
             "fosstenbuch-database"
         )
-            .addMigrations(MIGRATION_6_7)
+            .addMigrations(MIGRATION_6_7, MIGRATION_7_8)
             .fallbackToDestructiveMigration()
             .addCallback(object : RoomDatabase.Callback() {
                 override fun onCreate(db: SupportSQLiteDatabase) {

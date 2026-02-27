@@ -25,6 +25,7 @@ import com.google.android.gms.tasks.CancellationTokenSource
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
 import de.fosstenbuch.R
+import de.fosstenbuch.data.model.SavedLocation
 import de.fosstenbuch.data.model.Trip
 import de.fosstenbuch.data.model.TripPurpose
 import de.fosstenbuch.data.model.TripTemplate
@@ -188,6 +189,8 @@ class AddEditTripFragment : Fragment() {
             val item = parent.getItemAtPosition(position)
             if (item is LocationSuggestion.AddNew) {
                 onAddNew(item.query)
+            } else if (item is LocationSuggestion.Saved) {
+                autoFillBusinessPartner(item.location)
             }
         }
 
@@ -697,6 +700,7 @@ class AddEditTripFragment : Fragment() {
                             TripPhase.END -> {
                                 if (binding.editEndLocation.text.isNullOrBlank()) {
                                     binding.editEndLocation.setText(nearest.name)
+                                    autoFillBusinessPartner(nearest)
                                     Snackbar.make(
                                         binding.root,
                                         getString(R.string.location_suggested, nearest.name),
@@ -713,6 +717,32 @@ class AddEditTripFragment : Fragment() {
             }
         }.addOnFailureListener { e ->
             Timber.d(e, "GPS location not available for suggestion")
+        }
+    }
+
+    // ========== Business Partner auto-fill ==========
+
+    /**
+     * Auto-fills the business partner field from the saved location,
+     * but only if the field is currently empty (so user input is not overwritten).
+     */
+    private fun autoFillBusinessPartner(location: SavedLocation) {
+        val partner = location.businessPartner
+        if (partner.isNullOrBlank()) return
+
+        val phase = viewModel.uiState.value.phase
+        when (phase) {
+            TripPhase.END -> {
+                if (binding.editBusinessPartner.text.isNullOrBlank()) {
+                    binding.editBusinessPartner.setText(partner)
+                }
+            }
+            TripPhase.EDIT -> {
+                if (binding.editBusinessPartnerEdit.text.isNullOrBlank()) {
+                    binding.editBusinessPartnerEdit.setText(partner)
+                }
+            }
+            else -> { /* START phase has no business partner field */ }
         }
     }
 

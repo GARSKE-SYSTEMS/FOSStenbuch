@@ -83,17 +83,13 @@ class TripValidator @Inject constructor() {
             errors[FIELD_DISTANCE] = "Distanz darf maximal $MAX_DISTANCE_KM km betragen"
         }
 
-        // Purpose (freetext description)
-        if (trip.purpose.isBlank()) {
-            errors[FIELD_PURPOSE] = "Zweck darf nicht leer sein"
-        } else if (trip.purpose.length > MAX_PURPOSE_LENGTH) {
+        // Purpose (freetext description) – optional, but limited in length
+        if (trip.purpose.length > MAX_PURPOSE_LENGTH) {
             errors[FIELD_PURPOSE] = "Zweck darf maximal $MAX_PURPOSE_LENGTH Zeichen lang sein"
         }
 
-        // Purpose category
-        if (trip.purposeId == null) {
-            errors[FIELD_PURPOSE_ID] = "Bitte wählen Sie eine Kategorie aus"
-        }
+        // Purpose category – optional
+        // (purposeId may be null if user didn't select a category)
 
         // Date (not in the future)
         if (trip.date.after(Date())) {

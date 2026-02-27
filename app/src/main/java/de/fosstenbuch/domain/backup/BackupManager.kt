@@ -191,6 +191,7 @@ class BackupManager @Inject constructor(
                     put("longitude", l.longitude)
                     put("address", l.address ?: JSONObject.NULL)
                     put("usageCount", l.usageCount)
+                    put("businessPartner", l.businessPartner ?: JSONObject.NULL)
                 })
             }
         }
@@ -273,7 +274,8 @@ class BackupManager @Inject constructor(
                 latitude = o.getDouble("latitude"),
                 longitude = o.getDouble("longitude"),
                 address = o.optStringOrNull("address"),
-                usageCount = o.optInt("usageCount", 0)
+                usageCount = o.optInt("usageCount", 0),
+                businessPartner = o.optStringOrNull("businessPartner")
             )
         }
     }

@@ -42,6 +42,7 @@
     <string name="notes">Notizen</string>
     <string name="business_partner">Geschäftspartner / Kunde</string>
     <string name="business_partner_hint">z.B. Firma Müller GmbH</string>
+    <string name="location_business_partner_hint">Wird automatisch beim Auswählen dieses Ortes eingetragen</string>
     <string name="route_description">Route / Umweg</string>
     <string name="route_description_hint">z.B. über A9, Umweg wegen Baustelle</string>
     <string name="save">Speichern</string>
