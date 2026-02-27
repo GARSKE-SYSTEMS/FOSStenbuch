@@ -32,6 +32,7 @@ class UpdateTripUseCaseTest {
         distanceKm = 280.0,
         purpose = "Kundentermin",
         purposeId = 1L,
+        vehicleId = 1L,
         startOdometer = 50000,
         endOdometer = 50280
     )

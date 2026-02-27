@@ -27,6 +27,7 @@ class TripValidatorTest {
         distanceKm = 280.0,
         purpose = "Kundentermin",
         purposeId = 1L,
+        vehicleId = 1L,
         startOdometer = 50000,
         endOdometer = 50280
     )
@@ -179,7 +180,8 @@ class TripValidatorTest {
     private fun validStartTrip() = Trip(
         date = Date(),
         startLocation = "Berlin",
-        startOdometer = 50000
+        startOdometer = 50000,
+        vehicleId = 1L
     )
 
     @Test
@@ -225,9 +227,9 @@ class TripValidatorTest {
 
     @Test
     fun `validateStart multiple errors returned`() {
-        val trip = validStartTrip().copy(startLocation = "", startOdometer = null)
+        val trip = validStartTrip().copy(startLocation = "", startOdometer = null, vehicleId = null)
         val result = validator.validateStart(trip)
         assertFalse(result.isValid)
-        assertEquals(2, result.errors.size)
+        assertEquals(3, result.errors.size)
     }
 }

@@ -121,9 +121,9 @@ class CsvTripExporterTest {
         val file = exporter.export(createConfig(), listOf(trip), emptyMap(), emptyMap(), emptyMap())
 
         val lines = file.readLines()
-        // Last field of data row should be "Ja" (cancelled)
+        // Data row should contain "STORNIERT" in the cancellation column
         val dataLine = lines[1]
-        assertTrue(dataLine.endsWith("Ja"))
+        assertTrue(dataLine.contains("STORNIERT"))
     }
 
     @Test

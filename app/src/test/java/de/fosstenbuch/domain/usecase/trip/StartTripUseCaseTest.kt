@@ -27,7 +27,8 @@ class StartTripUseCaseTest {
     private fun validStartTrip() = Trip(
         date = Date(),
         startLocation = "Berlin",
-        startOdometer = 50000
+        startOdometer = 50000,
+        vehicleId = 1L
     )
 
     @Test
