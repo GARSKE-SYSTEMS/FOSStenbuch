@@ -1,3 +1,6 @@
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -81,6 +84,12 @@ koverReport {
     }
 }
 
+// --- Automated versioning ---
+// versionName: date-based (yyyy.MM.dd), e.g. "2026.02.27"
+// versionCode: set by CI via VERSION_CODE env var, falls back to 1 for local builds
+val autoVersionName: String = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy.MM.dd"))
+val autoVersionCode: Int = System.getenv("VERSION_CODE")?.toIntOrNull() ?: 1
+
 android {
     namespace = "de.fosstenbuch"
     compileSdk = 34
@@ -89,8 +98,8 @@ android {
         applicationId = "de.garsys.fosstenbuch"
         minSdk = 26
         targetSdk = 34
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = autoVersionCode
+        versionName = autoVersionName
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
