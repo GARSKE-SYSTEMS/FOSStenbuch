@@ -27,37 +27,31 @@ jobs:
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
 
+    - name: Decode release keystore
+      run: echo "${{ secrets.ANDROID_KEYSTORE_FILE }}" | base64 --decode > ${{ github.workspace }}/release.keystore
+
     - name: Run unit tests
+      env:
+        RELEASE_KEYSTORE_PATH: ${{ github.workspace }}/release.keystore
+        RELEASE_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+        RELEASE_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        RELEASE_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
       run: ./gradlew test
 
-    - name: Build release APK
+    - name: Build signed release APK
+      env:
+        RELEASE_KEYSTORE_PATH: ${{ github.workspace }}/release.keystore
+        RELEASE_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+        RELEASE_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        RELEASE_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
       run: ./gradlew assembleRelease
 
-    - name: Sign and align APK
-      run: |
-        echo "${{ secrets.ANDROID_KEYSTORE_FILE }}" | base64 --decode > keystore.jks
-        
-        # Find the latest build-tools version
-        BUILD_TOOLS_DIR=$(ls -d ${ANDROID_HOME}/build-tools/*/ | sort -V | tail -1)
-        
-        # Zipalign first (required before apksigner)
-        ${BUILD_TOOLS_DIR}zipalign -v 4 \
-          app/build/outputs/apk/release/app-release-unsigned.apk \
-          FOSStenbuch-release.apk
-        
-        # Sign with apksigner (v2/v3 signing)
-        ${BUILD_TOOLS_DIR}apksigner sign \
-          --ks keystore.jks \
-          --ks-pass pass:${{ secrets.ANDROID_KEYSTORE_PASSWORD }} \
-          --ks-key-alias ${{ secrets.ANDROID_KEY_ALIAS }} \
-          --key-pass pass:${{ secrets.ANDROID_KEY_PASSWORD }} \
-          FOSStenbuch-release.apk
-        
-        # Verify signature
-        ${BUILD_TOOLS_DIR}apksigner verify --verbose FOSStenbuch-release.apk
-        
-        # Clean up keystore
-        rm keystore.jks
+    - name: Rename release APK
+      run: cp app/build/outputs/apk/release/app-release.apk FOSStenbuch-release.apk
+
+    - name: Clean up keystore
+      if: always()
+      run: rm -f ${{ github.workspace }}/release.keystore
 
     - name: Upload Release APK
       uses: actions/upload-artifact@v4

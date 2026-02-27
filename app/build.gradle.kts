@@ -95,10 +95,38 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        // Use a consistent debug keystore from CI secrets so debug APK updates
+        // work without uninstalling. Falls back to default local debug keystore.
+        getByName("debug") {
+            val debugKsPath = System.getenv("DEBUG_KEYSTORE_PATH")
+            if (debugKsPath != null) {
+                storeFile = file(debugKsPath)
+                storePassword = System.getenv("DEBUG_KEYSTORE_PASSWORD") ?: "android"
+                keyAlias = System.getenv("DEBUG_KEY_ALIAS") ?: "androiddebugkey"
+                keyPassword = System.getenv("DEBUG_KEY_PASSWORD") ?: "android"
+            }
+        }
+        // Release signing via CI secrets so Gradle produces a signed APK directly.
+        create("release") {
+            val releaseKsPath = System.getenv("RELEASE_KEYSTORE_PATH")
+            if (releaseKsPath != null) {
+                storeFile = file(releaseKsPath)
+                storePassword = System.getenv("RELEASE_KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("RELEASE_KEY_ALIAS")
+                keyPassword = System.getenv("RELEASE_KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
+        debug {
+            signingConfig = signingConfigs.getByName("debug")
+        }
         release {
             isMinifyEnabled = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            signingConfig = signingConfigs.getByName("release")
         }
     }
 
