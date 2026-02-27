@@ -279,4 +279,83 @@ class TripRepositoryTest {
 
         assertNull(result)
     }
+
+    @Test
+    fun `markTripsAsExported should delegate to dao`() = runBlocking {
+        val tripIds = listOf(1L, 2L, 3L)
+        coEvery { mockTripDao.markTripsAsExported(tripIds) } returns Unit
+
+        tripRepository.markTripsAsExported(tripIds)
+
+        coVerify(exactly = 1) { mockTripDao.markTripsAsExported(tripIds) }
+    }
+
+    @Test
+    fun `getUnexportedTripsByDateRange should delegate to dao`() = runBlocking {
+        val trips = listOf(Trip(1, Date(), "S", "E", 10.0, "B", purposeId = 1L))
+        coEvery { mockTripDao.getUnexportedTripsByDateRange(100L, 200L) } returns trips
+
+        val result = tripRepository.getUnexportedTripsByDateRange(100L, 200L)
+
+        assertEquals(1, result.size)
+        assertEquals("S", result[0].startLocation)
+    }
+
+    @Test
+    fun `getUnexportedTripsByDateRange returns empty when no trips`() = runBlocking {
+        coEvery { mockTripDao.getUnexportedTripsByDateRange(100L, 200L) } returns emptyList()
+
+        val result = tripRepository.getUnexportedTripsByDateRange(100L, 200L)
+
+        assertEquals(0, result.size)
+    }
+
+    @Test
+    fun `getCompletedTripsByDateRange should delegate to dao`() = runBlocking {
+        val trips = listOf(
+            Trip(1, Date(), "S", "E", 10.0, "B", purposeId = 1L),
+            Trip(2, Date(), "S2", "E2", 20.0, "P", purposeId = 2L)
+        )
+        coEvery { mockTripDao.getCompletedTripsByDateRange(100L, 200L) } returns trips
+
+        val result = tripRepository.getCompletedTripsByDateRange(100L, 200L)
+
+        assertEquals(2, result.size)
+    }
+
+    @Test
+    fun `getTotalDistanceByDateRange should delegate to dao`() = runBlocking {
+        every { mockTripDao.getTotalDistanceByDateRange(100L, 200L) } returns flowOf(1500.0)
+
+        val result = tripRepository.getTotalDistanceByDateRange(100L, 200L).first()
+
+        assertEquals(1500.0, result!!, 0.001)
+    }
+
+    @Test
+    fun `getTotalDistanceByDateRange returns null when no trips`() = runBlocking {
+        every { mockTripDao.getTotalDistanceByDateRange(100L, 200L) } returns flowOf(null)
+
+        val result = tripRepository.getTotalDistanceByDateRange(100L, 200L).first()
+
+        assertNull(result)
+    }
+
+    @Test
+    fun `getBusinessDistanceByDateRange should delegate to dao`() = runBlocking {
+        every { mockTripDao.getBusinessDistanceByDateRange(100L, 200L) } returns flowOf(800.0)
+
+        val result = tripRepository.getBusinessDistanceByDateRange(100L, 200L).first()
+
+        assertEquals(800.0, result!!, 0.001)
+    }
+
+    @Test
+    fun `getPrivateDistanceByDateRange should delegate to dao`() = runBlocking {
+        every { mockTripDao.getPrivateDistanceByDateRange(100L, 200L) } returns flowOf(700.0)
+
+        val result = tripRepository.getPrivateDistanceByDateRange(100L, 200L).first()
+
+        assertEquals(700.0, result!!, 0.001)
+    }
 }

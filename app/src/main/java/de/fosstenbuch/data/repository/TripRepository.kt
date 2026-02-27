@@ -26,4 +26,10 @@ interface TripRepository {
     suspend fun getLastEndOdometerForVehicle(vehicleId: Long): Int?
     suspend fun getLastEndOdometer(): Int?
     suspend fun getLastCompletedTrip(): Trip?
+    suspend fun markTripsAsExported(tripIds: List<Long>)
+    suspend fun getUnexportedTripsByDateRange(startDate: Long, endDate: Long): List<Trip>
+    suspend fun getCompletedTripsByDateRange(startDate: Long, endDate: Long): List<Trip>
+    fun getTotalDistanceByDateRange(startDate: Long, endDate: Long): Flow<Double?>
+    fun getBusinessDistanceByDateRange(startDate: Long, endDate: Long): Flow<Double?>
+    fun getPrivateDistanceByDateRange(startDate: Long, endDate: Long): Flow<Double?>
 }

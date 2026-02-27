@@ -39,4 +39,16 @@ class TripRepositoryImpl @Inject constructor(
         tripDao.getLastEndOdometer()
     override suspend fun getLastCompletedTrip(): Trip? =
         tripDao.getLastCompletedTrip()
+    override suspend fun markTripsAsExported(tripIds: List<Long>) =
+        tripDao.markTripsAsExported(tripIds)
+    override suspend fun getUnexportedTripsByDateRange(startDate: Long, endDate: Long): List<Trip> =
+        tripDao.getUnexportedTripsByDateRange(startDate, endDate)
+    override suspend fun getCompletedTripsByDateRange(startDate: Long, endDate: Long): List<Trip> =
+        tripDao.getCompletedTripsByDateRange(startDate, endDate)
+    override fun getTotalDistanceByDateRange(startDate: Long, endDate: Long): Flow<Double?> =
+        tripDao.getTotalDistanceByDateRange(startDate, endDate)
+    override fun getBusinessDistanceByDateRange(startDate: Long, endDate: Long): Flow<Double?> =
+        tripDao.getBusinessDistanceByDateRange(startDate, endDate)
+    override fun getPrivateDistanceByDateRange(startDate: Long, endDate: Long): Flow<Double?> =
+        tripDao.getPrivateDistanceByDateRange(startDate, endDate)
 }

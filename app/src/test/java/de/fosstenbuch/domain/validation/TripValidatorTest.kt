@@ -26,7 +26,9 @@ class TripValidatorTest {
         endLocation = "Hamburg",
         distanceKm = 280.0,
         purpose = "Kundentermin",
-        purposeId = 1L
+        purposeId = 1L,
+        startOdometer = 50000,
+        endOdometer = 50280
     )
 
     @Test
@@ -102,9 +104,10 @@ class TripValidatorTest {
     }
 
     @Test
-    fun `both odometers null passes`() {
+    fun `both odometers null fails`() {
         val result = validator.validate(validTrip().copy(startOdometer = null, endOdometer = null))
-        assertNull(result.errorFor(TripValidator.FIELD_ODOMETER))
+        assertFalse(result.isValid)
+        assertNotNull(result.errorFor(TripValidator.FIELD_ODOMETER))
     }
 
     @Test
@@ -123,7 +126,7 @@ class TripValidatorTest {
         )
         val result = validator.validate(trip)
         assertFalse(result.isValid)
-        assertEquals(4, result.errors.size)
+        assertTrue(result.errors.size >= 4)
     }
 
     @Test

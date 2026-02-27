@@ -40,5 +40,6 @@ data class Trip(
     val cancellationReason: String? = null,
     val isActive: Boolean = false,
     val endTime: Date? = null,
-    val gpsDistanceKm: Double? = null
+    val gpsDistanceKm: Double? = null,
+    val isExported: Boolean = false
 )

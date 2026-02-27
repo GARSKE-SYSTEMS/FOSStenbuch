@@ -178,22 +178,46 @@ class AddEditTripFragment : Fragment() {
     // ========== Auto-calculate distance from odometer ==========
 
     private fun setupOdometerAutoCalculation() {
+        // END phase: endOdometer changes → recalculate distance
         binding.editEndOdometer.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
             override fun afterTextChanged(s: Editable?) {
-                autoCalculateDistance()
+                autoCalculateDistanceEnd()
             }
         })
+        // EDIT phase: both odometer fields → recalculate distance
+        val editOdometerWatcher = object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: Editable?) {
+                autoCalculateDistanceEdit()
+            }
+        }
+        binding.editStartOdometerEdit.addTextChangedListener(editOdometerWatcher)
+        binding.editEndOdometerEdit.addTextChangedListener(editOdometerWatcher)
     }
 
-    private fun autoCalculateDistance() {
+    private fun autoCalculateDistanceEnd() {
         val state = viewModel.uiState.value
         val startOdo = state.trip?.startOdometer ?: return
         val endOdo = binding.editEndOdometer.text.toString().toIntOrNull() ?: return
         if (endOdo > startOdo) {
             val distanceKm = (endOdo - startOdo).toDouble()
             binding.editDistance.setText(distanceKm.toString())
+        } else {
+            binding.editDistance.setText("")
+        }
+    }
+
+    private fun autoCalculateDistanceEdit() {
+        val startOdo = binding.editStartOdometerEdit.text.toString().toIntOrNull() ?: return
+        val endOdo = binding.editEndOdometerEdit.text.toString().toIntOrNull() ?: return
+        if (endOdo > startOdo) {
+            val distanceKm = (endOdo - startOdo).toDouble()
+            binding.editDistanceEdit.setText(distanceKm.toString())
+        } else {
+            binding.editDistanceEdit.setText("")
         }
     }
 

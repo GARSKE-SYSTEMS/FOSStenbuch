@@ -31,7 +31,9 @@ class UpdateTripUseCaseTest {
         endLocation = "Hamburg",
         distanceKm = 280.0,
         purpose = "Kundentermin",
-        purposeId = 1L
+        purposeId = 1L,
+        startOdometer = 50000,
+        endOdometer = 50280
     )
 
     @Test

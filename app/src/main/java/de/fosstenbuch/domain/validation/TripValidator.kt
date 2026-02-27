@@ -94,15 +94,13 @@ class TripValidator @Inject constructor() {
             errors[FIELD_DATE] = "Datum darf nicht in der Zukunft liegen"
         }
 
-        // Odometer consistency
+        // Odometer: both must be set (distance is computed from odometers)
         val start = trip.startOdometer
         val end = trip.endOdometer
-        if (start != null && end != null) {
-            if (end <= start) {
-                errors[FIELD_ODOMETER] = "Endkilometerstand muss größer als Startkilometerstand sein"
-            }
-        } else if ((start == null) != (end == null)) {
-            errors[FIELD_ODOMETER] = "Start- und Endkilometerstand müssen beide angegeben werden oder beide leer sein"
+        if (start == null || end == null) {
+            errors[FIELD_ODOMETER] = "Start- und Endkilometerstand müssen angegeben werden"
+        } else if (end <= start) {
+            errors[FIELD_ODOMETER] = "Endkilometerstand muss größer als Startkilometerstand sein"
         }
 
         return ValidationResult(errors)

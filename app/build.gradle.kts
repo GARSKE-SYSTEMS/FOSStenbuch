@@ -35,6 +35,7 @@ koverReport {
                 "de.fosstenbuch.ui.trips.TripFilter",
                 "de.fosstenbuch.ui.trips.TripSort",
                 "de.fosstenbuch.ui.trips.TripPhase",
+                "de.fosstenbuch.ui.stats.StatsFilterMode",
                 "de.fosstenbuch.ui.common.*",
                 // DI modules
                 "*Module",

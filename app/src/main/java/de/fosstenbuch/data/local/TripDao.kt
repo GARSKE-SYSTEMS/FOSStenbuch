@@ -112,6 +112,34 @@ interface TripDao {
 
     @Query("SELECT * FROM trips WHERE isActive = 0 ORDER BY date DESC LIMIT 1")
     suspend fun getLastCompletedTrip(): Trip?
+
+    @Query("UPDATE trips SET isExported = 1 WHERE id IN (:tripIds)")
+    suspend fun markTripsAsExported(tripIds: List<Long>)
+
+    @Query("SELECT * FROM trips WHERE date BETWEEN :startDate AND :endDate AND isExported = 0 AND isActive = 0 ORDER BY date ASC")
+    suspend fun getUnexportedTripsByDateRange(startDate: Long, endDate: Long): List<Trip>
+
+    @Query("SELECT * FROM trips WHERE date BETWEEN :startDate AND :endDate AND isActive = 0 ORDER BY date ASC")
+    suspend fun getCompletedTripsByDateRange(startDate: Long, endDate: Long): List<Trip>
+
+    @Query("SELECT SUM(distanceKm) FROM trips WHERE date BETWEEN :startDate AND :endDate AND isActive = 0")
+    fun getTotalDistanceByDateRange(startDate: Long, endDate: Long): Flow<Double?>
+
+    @Query("""
+        SELECT SUM(trips.distanceKm) FROM trips 
+        INNER JOIN trip_purposes ON trips.purposeId = trip_purposes.id 
+        WHERE trip_purposes.isBusinessRelevant = 1 
+        AND trips.date BETWEEN :startDate AND :endDate AND trips.isActive = 0
+    """)
+    fun getBusinessDistanceByDateRange(startDate: Long, endDate: Long): Flow<Double?>
+
+    @Query("""
+        SELECT SUM(trips.distanceKm) FROM trips 
+        INNER JOIN trip_purposes ON trips.purposeId = trip_purposes.id 
+        WHERE trip_purposes.isBusinessRelevant = 0 
+        AND trips.date BETWEEN :startDate AND :endDate AND trips.isActive = 0
+    """)
+    fun getPrivateDistanceByDateRange(startDate: Long, endDate: Long): Flow<Double?>
 }
 
 data class MonthlyDistance(
