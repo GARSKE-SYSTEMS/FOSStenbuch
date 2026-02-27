@@ -86,7 +86,7 @@ android {
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "de.garske_systems.FOSStenbuch"
+        applicationId = "de.garsys.fosstenbuch"
         minSdk = 26
         targetSdk = 34
         versionCode = 1
