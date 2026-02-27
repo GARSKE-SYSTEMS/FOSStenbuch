@@ -60,6 +60,7 @@ class AddEditTripFragment : Fragment() {
     private var selectedPurposeId: Long? = null
     private var vehicles: List<Vehicle> = emptyList()
     private var purposes: List<TripPurpose> = emptyList()
+    private var currentPhase: TripPhase? = null
 
     @Inject
     lateinit var findNearestSavedLocationUseCase: FindNearestSavedLocationUseCase
@@ -340,14 +341,18 @@ class AddEditTripFragment : Fragment() {
                         binding.editStartOdometer.setText(state.lastEndOdometer.toString())
                     }
 
+                    // Detect phase change (e.g. EDIT → END when active trip loads)
+                    val phaseChanged = state.phase != currentPhase
+                    currentPhase = state.phase
+
                     // Update vehicle dropdown
-                    if (state.vehicles != vehicles) {
+                    if (state.vehicles != vehicles || phaseChanged) {
                         vehicles = state.vehicles
                         setupVehicleDropdown(state.vehicles, state.phase)
                     }
 
                     // Update purposes dropdown
-                    if (state.purposes != purposes) {
+                    if (state.purposes != purposes || phaseChanged) {
                         purposes = state.purposes
                         setupPurposeCategoryDropdown(state.purposes, state.phase)
                     }
