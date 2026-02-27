@@ -18,6 +18,7 @@ import de.fosstenbuch.R
 import de.fosstenbuch.data.model.Vehicle
 import de.fosstenbuch.databinding.FragmentAddEditVehicleBinding
 import de.fosstenbuch.domain.validation.VehicleValidator
+import de.fosstenbuch.ui.common.safePopBackStack
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
@@ -42,7 +43,6 @@ class AddEditVehicleFragment : Fragment() {
         setupFuelTypeDropdown()
         setupAuditProtection()
         setupSaveButton()
-        setupDeleteButton()
         observeState()
     }
 
@@ -55,18 +55,19 @@ class AddEditVehicleFragment : Fragment() {
     private fun setupAuditProtection() {
         binding.switchAuditProtected.setOnCheckedChangeListener { _, isChecked ->
             if (isChecked) {
+                val ctx = context ?: return@setOnCheckedChangeListener
                 // Show warning dialog before enabling
-                MaterialAlertDialogBuilder(requireContext())
+                MaterialAlertDialogBuilder(ctx)
                     .setTitle(R.string.audit_protection_warning_title)
                     .setMessage(R.string.audit_protection_warning_message)
                     .setPositiveButton(R.string.enable) { _, _ ->
                         // Keep checked
                     }
                     .setNegativeButton(R.string.cancel) { _, _ ->
-                        binding.switchAuditProtected.isChecked = false
+                        _binding?.switchAuditProtected?.isChecked = false
                     }
                     .setOnCancelListener {
-                        binding.switchAuditProtected.isChecked = false
+                        _binding?.switchAuditProtected?.isChecked = false
                     }
                     .show()
             }
@@ -78,20 +79,6 @@ class AddEditVehicleFragment : Fragment() {
             clearErrors()
             val vehicle = buildVehicleFromForm()
             viewModel.saveVehicle(vehicle)
-        }
-    }
-
-    private fun setupDeleteButton() {
-        binding.buttonDelete.setOnClickListener {
-            val vehicle = viewModel.uiState.value.vehicle ?: return@setOnClickListener
-            MaterialAlertDialogBuilder(requireContext())
-                .setTitle(R.string.delete_vehicle_title)
-                .setMessage(R.string.delete_vehicle_message)
-                .setPositiveButton(R.string.delete) { _, _ ->
-                    viewModel.deleteVehicle(vehicle)
-                }
-                .setNegativeButton(R.string.cancel, null)
-                .show()
         }
     }
 
@@ -143,12 +130,7 @@ class AddEditVehicleFragment : Fragment() {
                     // Successfully saved
                     if (state.savedSuccessfully) {
                         viewModel.onSaveConsumed()
-                        findNavController().popBackStack()
-                    }
-
-                    // Successfully deleted
-                    if (state.deletedSuccessfully) {
-                        findNavController().popBackStack()
+                        safePopBackStack()
                     }
                 }
             }
@@ -167,9 +149,6 @@ class AddEditVehicleFragment : Fragment() {
         binding.spinnerFuelType.setText(vehicle.fuelType, false)
         binding.switchPrimary.isChecked = vehicle.isPrimary
         binding.editNotes.setText(vehicle.notes ?: "")
-
-        // Show delete button for existing vehicles
-        binding.buttonDelete.visibility = View.VISIBLE
 
         // Audit protection - once enabled, cannot be disabled
         if (vehicle.auditProtected) {

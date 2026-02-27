@@ -17,6 +17,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import de.fosstenbuch.R
 import de.fosstenbuch.data.model.TripPurpose
 import de.fosstenbuch.databinding.FragmentPurposesBinding
+import de.fosstenbuch.ui.common.safeNavigate
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
@@ -50,7 +51,7 @@ class PurposesFragment : Fragment() {
             onPurposeClick = { purpose ->
                 val action = PurposesFragmentDirections
                     .actionPurposesToAddEditPurpose(purposeId = purpose.id)
-                findNavController().navigate(action)
+                safeNavigate(action)
             },
             onPurposeLongClick = { purpose ->
                 if (!purpose.isDefault) {
@@ -66,6 +67,7 @@ class PurposesFragment : Fragment() {
     }
 
     private fun showDeleteConfirmation(purpose: TripPurpose) {
+        if (!isAdded) return
         MaterialAlertDialogBuilder(requireContext())
             .setTitle(R.string.delete_purpose_title)
             .setMessage(getString(R.string.delete_purpose_message, purpose.name))
@@ -80,7 +82,7 @@ class PurposesFragment : Fragment() {
         binding.fabAddPurpose.setOnClickListener {
             val action = PurposesFragmentDirections
                 .actionPurposesToAddEditPurpose(purposeId = 0L)
-            findNavController().navigate(action)
+            safeNavigate(action)
         }
     }
 

@@ -8,8 +8,6 @@ import de.fosstenbuch.data.model.Vehicle
 import de.fosstenbuch.domain.usecase.vehicle.GetVehicleByIdUseCase
 import de.fosstenbuch.domain.usecase.vehicle.InsertVehicleUseCase
 import de.fosstenbuch.domain.usecase.vehicle.UpdateVehicleUseCase
-import de.fosstenbuch.domain.usecase.vehicle.DeleteVehicleUseCase
-import de.fosstenbuch.data.repository.TripRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -24,9 +22,7 @@ class VehicleDetailViewModel @Inject constructor(
     private val savedStateHandle: SavedStateHandle,
     private val getVehicleByIdUseCase: GetVehicleByIdUseCase,
     private val insertVehicleUseCase: InsertVehicleUseCase,
-    private val updateVehicleUseCase: UpdateVehicleUseCase,
-    private val deleteVehicleUseCase: DeleteVehicleUseCase,
-    private val tripRepository: TripRepository
+    private val updateVehicleUseCase: UpdateVehicleUseCase
 ) : ViewModel() {
 
     private val vehicleId: Long? = savedStateHandle.get<Long>("vehicleId")?.takeIf { it > 0 }
@@ -125,27 +121,5 @@ class VehicleDetailViewModel @Inject constructor(
 
     fun onSaveConsumed() {
         _uiState.update { it.copy(savedSuccessfully = false) }
-    }
-
-    fun deleteVehicle(vehicle: Vehicle) {
-        viewModelScope.launch {
-            try {
-                if (vehicle.auditProtected) {
-                    val tripCount = tripRepository.getTripCountForVehicle(vehicle.id)
-                    if (tripCount > 0) {
-                        _uiState.update {
-                            it.copy(error = "Änderungssicher geschütztes Fahrzeug kann nicht gelöscht werden, " +
-                                "solange Fahrten zugeordnet sind ($tripCount Fahrten)")
-                        }
-                        return@launch
-                    }
-                }
-                deleteVehicleUseCase(vehicle)
-                _uiState.update { it.copy(deletedSuccessfully = true) }
-            } catch (e: Exception) {
-                Timber.e(e, "Failed to delete vehicle")
-                _uiState.update { it.copy(error = "Fahrzeug konnte nicht gelöscht werden") }
-            }
-        }
     }
 }

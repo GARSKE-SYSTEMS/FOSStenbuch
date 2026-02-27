@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <group android:checkableBehavior="single">
+
+        <item
+            android:id="@+id/navigation_trips"
+            android:icon="@drawable/ic_trips"
+            android:title="@string/title_trips" />
+
+        <item
+            android:id="@+id/navigation_stats"
+            android:icon="@drawable/ic_stats"
+            android:title="@string/title_stats" />
+
+        <item
+            android:id="@+id/navigation_vehicles"
+            android:icon="@drawable/ic_vehicle"
+            android:title="@string/title_vehicles" />
+
+        <item
+            android:id="@+id/navigation_purposes"
+            android:icon="@drawable/ic_purpose"
+            android:title="@string/title_purposes" />
+
+        <item
+            android:id="@+id/navigation_saved_locations"
+            android:icon="@drawable/ic_location"
+            android:title="@string/title_saved_locations" />
+
+    </group>
+
+    <item android:title="@string/settings_data_management">
+        <menu>
+
+            <item
+                android:id="@+id/navigation_export"
+                android:icon="@drawable/ic_export"
+                android:title="@string/title_export" />
+
+            <item
+                android:id="@+id/navigation_mileage_calculator"
+                android:icon="@drawable/ic_stats"
+                android:title="@string/title_mileage_calculator" />
+
+            <item
+                android:id="@+id/navigation_settings"
+                android:icon="@drawable/ic_settings"
+                android:title="@string/title_settings" />
+
+        </menu>
+    </item>
+
+</menu>

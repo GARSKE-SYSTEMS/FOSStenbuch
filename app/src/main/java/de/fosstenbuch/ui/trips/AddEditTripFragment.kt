@@ -35,6 +35,8 @@ import de.fosstenbuch.databinding.FragmentAddEditTripBinding
 import de.fosstenbuch.domain.service.LocationTrackingService
 import de.fosstenbuch.domain.usecase.location.FindNearestSavedLocationUseCase
 import de.fosstenbuch.domain.validation.TripValidator
+import de.fosstenbuch.ui.common.safeNavigate
+import de.fosstenbuch.ui.common.safePopBackStack
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -120,18 +122,20 @@ class AddEditTripFragment : Fragment() {
     }
 
     private fun showDateTimePicker(isStart: Boolean) {
+        val ctx = context ?: return
         val cal = Calendar.getInstance()
         cal.time = if (isStart) selectedDateTime else selectedEndTime
 
         DatePickerDialog(
-            requireContext(),
+            ctx,
             { _, year, month, day ->
                 cal.set(Calendar.YEAR, year)
                 cal.set(Calendar.MONTH, month)
                 cal.set(Calendar.DAY_OF_MONTH, day)
                 // Then show time picker
+                val innerCtx = context ?: return@DatePickerDialog
                 TimePickerDialog(
-                    requireContext(),
+                    innerCtx,
                     { _, hour, minute ->
                         cal.set(Calendar.HOUR_OF_DAY, hour)
                         cal.set(Calendar.MINUTE, minute)
@@ -161,7 +165,7 @@ class AddEditTripFragment : Fragment() {
 
     private fun setupLocationAutocomplete() {
         val onAddNew = { query: String ->
-            findNavController().navigate(R.id.action_add_edit_trip_to_add_edit_location)
+            safeNavigate(R.id.action_add_edit_trip_to_add_edit_location)
         }
 
         locationAdapterStart = LocationSuggestionAdapter(requireContext(), onAddNew)
@@ -368,6 +372,8 @@ class AddEditTripFragment : Fragment() {
                                     validation.errorFor(TripValidator.FIELD_START_LOCATION)
                                 binding.layoutStartOdometer.error =
                                     validation.errorFor(TripValidator.FIELD_START_ODOMETER)
+                                binding.layoutVehicle.error =
+                                    validation.errorFor(TripValidator.FIELD_VEHICLE)
                             }
                             TripPhase.END -> {
                                 binding.layoutEndLocation.error =
@@ -397,6 +403,8 @@ class AddEditTripFragment : Fragment() {
                                 val odometerError = validation.errorFor(TripValidator.FIELD_ODOMETER)
                                 binding.layoutStartOdometerEdit.error = odometerError
                                 binding.layoutEndOdometerEdit.error = odometerError
+                                binding.layoutVehicleEdit.error =
+                                    validation.errorFor(TripValidator.FIELD_VEHICLE)
                             }
                         }
                     }
@@ -411,10 +419,12 @@ class AddEditTripFragment : Fragment() {
                     if (state.savedSuccessfully) {
                         // If we just started a trip, start GPS tracking
                         if (state.phase == TripPhase.START && state.trip?.isActive == true) {
-                            LocationTrackingService.start(requireContext(), state.trip.id)
+                            context?.let { ctx ->
+                                LocationTrackingService.start(ctx, state.trip.id)
+                            }
                         }
                         viewModel.onSaveConsumed()
-                        findNavController().popBackStack()
+                        safePopBackStack()
                     }
                 }
             }
@@ -503,8 +513,9 @@ class AddEditTripFragment : Fragment() {
     // ========== Dropdowns ==========
 
     private fun setupVehicleDropdown(vehicleList: List<Vehicle>, phase: TripPhase) {
-        val items = listOf(getString(R.string.no_vehicle)) +
-            vehicleList.map { "${it.make} ${it.model} (${it.licensePlate})" }
+        if (vehicleList.isEmpty()) return
+
+        val items = vehicleList.map { "${it.make} ${it.model} (${it.licensePlate})" }
         val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_list_item_1, items)
 
         val spinner = when (phase) {
@@ -516,19 +527,26 @@ class AddEditTripFragment : Fragment() {
 
         // Set current selection
         val currentIndex = selectedVehicleId?.let { id ->
-            vehicleList.indexOfFirst { it.id == id } + 1
-        } ?: 0
+            vehicleList.indexOfFirst { it.id == id }
+        } ?: -1
         if (currentIndex in items.indices) {
-            spinner.setText(items[currentIndex], false)
+            spinner.post { spinner.setText(items[currentIndex], false) }
+        } else if (vehicleList.size == 1) {
+            // Auto-select if only one vehicle exists
+            selectedVehicleId = vehicleList[0].id
+            spinner.post { spinner.setText(items[0], false) }
+            viewModel.onVehicleChanged(selectedVehicleId)
         }
 
         spinner.setOnItemClickListener { _, _, position, _ ->
-            selectedVehicleId = if (position == 0) null else vehicleList[position - 1].id
+            selectedVehicleId = vehicleList[position].id
             viewModel.onVehicleChanged(selectedVehicleId)
         }
     }
 
     private fun setupPurposeCategoryDropdown(purposeList: List<TripPurpose>, phase: TripPhase) {
+        if (purposeList.isEmpty()) return
+
         val items = purposeList.map { it.name }
         val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_list_item_1, items)
 
@@ -539,12 +557,12 @@ class AddEditTripFragment : Fragment() {
         }
         spinner.setAdapter(adapter)
 
-        // Set current selection
+        // Set current selection — use post to ensure adapter is ready
         val currentIndex = selectedPurposeId?.let { id ->
             purposeList.indexOfFirst { it.id == id }
         } ?: -1
         if (currentIndex in items.indices) {
-            spinner.setText(items[currentIndex], false)
+            spinner.post { spinner.setText(items[currentIndex], false) }
         }
 
         spinner.setOnItemClickListener { _, _, position, _ ->
@@ -623,7 +641,8 @@ class AddEditTripFragment : Fragment() {
 
     @Suppress("MissingPermission")
     private fun suggestNearestLocation() {
-        val fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity())
+        val act = activity ?: return
+        val fusedLocationClient = LocationServices.getFusedLocationProviderClient(act)
         val cancellationToken = CancellationTokenSource()
 
         fusedLocationClient.getCurrentLocation(
@@ -677,12 +696,15 @@ class AddEditTripFragment : Fragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             val templates = tripTemplateRepository.getAllTemplates().first()
             if (templates.isEmpty()) {
-                Snackbar.make(binding.root, getString(R.string.no_templates), Snackbar.LENGTH_SHORT).show()
+                _binding?.let {
+                    Snackbar.make(it.root, getString(R.string.no_templates), Snackbar.LENGTH_SHORT).show()
+                }
                 return@launch
             }
 
-            val dialog = com.google.android.material.bottomsheet.BottomSheetDialog(requireContext())
-            val recyclerView = androidx.recyclerview.widget.RecyclerView(requireContext()).apply {
+            val ctx = context ?: return@launch
+            val dialog = com.google.android.material.bottomsheet.BottomSheetDialog(ctx)
+            val recyclerView = androidx.recyclerview.widget.RecyclerView(ctx).apply {
                 layoutManager = androidx.recyclerview.widget.LinearLayoutManager(context)
                 setPadding(0, 16, 0, 16)
             }
@@ -722,24 +744,24 @@ class AddEditTripFragment : Fragment() {
         }
         val vehicleIndex = vehicles.indexOfFirst { it.id == template.vehicleId }
         if (vehicleIndex >= 0) {
-            val items = listOf(getString(R.string.no_vehicle)) +
-                vehicles.map { "${it.make} ${it.model} (${it.licensePlate})" }
-            binding.spinnerVehicleEdit.setText(items[vehicleIndex + 1], false)
+            val items = vehicles.map { "${it.make} ${it.model} (${it.licensePlate})" }
+            binding.spinnerVehicleEdit.setText(items[vehicleIndex], false)
         }
 
         Snackbar.make(binding.root, getString(R.string.template_saved), Snackbar.LENGTH_SHORT).show()
     }
 
     private fun showSaveAsTemplateDialog() {
-        val editText = com.google.android.material.textfield.TextInputEditText(requireContext())
+        val ctx = context ?: return
+        val editText = com.google.android.material.textfield.TextInputEditText(ctx)
         editText.hint = getString(R.string.template_name)
 
-        val layout = com.google.android.material.textfield.TextInputLayout(requireContext()).apply {
+        val layout = com.google.android.material.textfield.TextInputLayout(ctx).apply {
             addView(editText)
             setPadding(48, 16, 48, 0)
         }
 
-        com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
+        com.google.android.material.dialog.MaterialAlertDialogBuilder(ctx)
             .setTitle(getString(R.string.save_as_template))
             .setView(layout)
             .setPositiveButton(getString(R.string.save)) { _, _ ->

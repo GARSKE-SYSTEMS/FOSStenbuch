@@ -24,6 +24,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import de.fosstenbuch.R
 import de.fosstenbuch.data.model.SavedLocation
 import de.fosstenbuch.databinding.FragmentAddEditLocationBinding
+import de.fosstenbuch.ui.common.safePopBackStack
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.util.Locale
@@ -185,7 +186,7 @@ class AddEditLocationFragment : Fragment() {
 
                     if (state.savedSuccessfully) {
                         viewModel.onSaveConsumed()
-                        findNavController().popBackStack()
+                        safePopBackStack()
                     }
                 }
             }

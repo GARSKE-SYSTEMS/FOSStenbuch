@@ -19,6 +19,7 @@ class TripValidator @Inject constructor() {
         const val FIELD_DATE = "date"
         const val FIELD_ODOMETER = "odometer"
         const val FIELD_START_ODOMETER = "startOdometer"
+        const val FIELD_VEHICLE = "vehicle"
 
         private const val MAX_DISTANCE_KM = 99_999.0
         private const val MAX_LOCATION_LENGTH = 200
@@ -44,6 +45,11 @@ class TripValidator @Inject constructor() {
             errors[FIELD_START_ODOMETER] = "Kilometerstand ist erforderlich"
         } else if (trip.startOdometer < 0) {
             errors[FIELD_START_ODOMETER] = "Kilometerstand darf nicht negativ sein"
+        }
+
+        // Vehicle is required
+        if (trip.vehicleId == null) {
+            errors[FIELD_VEHICLE] = "Bitte wählen Sie ein Fahrzeug aus"
         }
 
         return ValidationResult(errors)
@@ -101,6 +107,11 @@ class TripValidator @Inject constructor() {
             errors[FIELD_ODOMETER] = "Start- und Endkilometerstand müssen angegeben werden"
         } else if (end <= start) {
             errors[FIELD_ODOMETER] = "Endkilometerstand muss größer als Startkilometerstand sein"
+        }
+
+        // Vehicle is required
+        if (trip.vehicleId == null) {
+            errors[FIELD_VEHICLE] = "Bitte wählen Sie ein Fahrzeug aus"
         }
 
         return ValidationResult(errors)

@@ -94,9 +94,10 @@ class StatsFragment : Fragment() {
 
     private fun setupCustomDateRange() {
         binding.editDateFrom.setOnClickListener {
+            val ctx = context ?: return@setOnClickListener
             val cal = Calendar.getInstance()
             cal.timeInMillis = viewModel.uiState.value.customDateFromMs
-            DatePickerDialog(requireContext(), { _, year, month, day ->
+            DatePickerDialog(ctx, { _, year, month, day ->
                 val selected = Calendar.getInstance()
                 selected.set(year, month, day, 0, 0, 0)
                 selected.set(Calendar.MILLISECOND, 0)
@@ -104,9 +105,10 @@ class StatsFragment : Fragment() {
             }, cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH)).show()
         }
         binding.editDateTo.setOnClickListener {
+            val ctx = context ?: return@setOnClickListener
             val cal = Calendar.getInstance()
             cal.timeInMillis = viewModel.uiState.value.customDateToMs
-            DatePickerDialog(requireContext(), { _, year, month, day ->
+            DatePickerDialog(ctx, { _, year, month, day ->
                 val selected = Calendar.getInstance()
                 selected.set(year, month, day, 23, 59, 59)
                 selected.set(Calendar.MILLISECOND, 999)
@@ -122,6 +124,7 @@ class StatsFragment : Fragment() {
     }
 
     private fun showExportDialog() {
+        val ctx = context ?: return
         val dialogView = layoutInflater.inflate(R.layout.dialog_stats_export, null)
         val checkOnlyNew = dialogView.findViewById<com.google.android.material.switchmaterial.SwitchMaterial>(R.id.switch_only_new)
         val checkMarkExported = dialogView.findViewById<com.google.android.material.switchmaterial.SwitchMaterial>(R.id.switch_mark_exported)
@@ -138,7 +141,7 @@ class StatsFragment : Fragment() {
 
         checkOnlyNew.setOnCheckedChangeListener { _, _ -> updateCount() }
 
-        MaterialAlertDialogBuilder(requireContext())
+        MaterialAlertDialogBuilder(ctx)
             .setTitle(R.string.stats_export_dialog_title)
             .setView(dialogView)
             .setPositiveButton(R.string.export_button) { _, _ ->
@@ -197,7 +200,7 @@ class StatsFragment : Fragment() {
                     }
 
                     // Export success → share
-                    if (state.exportSuccess && state.exportedFilePath != null) {
+                    if (state.exportSuccess && state.exportedFilePath != null && isAdded) {
                         shareFile(File(state.exportedFilePath))
                         viewModel.consumeExportSuccess()
                     }
@@ -283,9 +286,10 @@ class StatsFragment : Fragment() {
     }
 
     private fun shareFile(file: File) {
+        val ctx = context ?: return
         val contentUri = FileProvider.getUriForFile(
-            requireContext(),
-            "${requireContext().packageName}.fileprovider",
+            ctx,
+            "${ctx.packageName}.fileprovider",
             file
         )
         val mimeType = if (file.extension == "pdf") "application/pdf" else "text/csv"

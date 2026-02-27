@@ -72,8 +72,9 @@ class ExportFragment : Fragment() {
     }
 
     private fun showDatePicker(current: LocalDate, onDateSelected: (LocalDate) -> Unit) {
+        val ctx = context ?: return
         DatePickerDialog(
-            requireContext(),
+            ctx,
             { _, year, month, day ->
                 onDateSelected(LocalDate.of(year, month + 1, day))
             },
@@ -148,7 +149,7 @@ class ExportFragment : Fragment() {
                     }
 
                     // Export success → share
-                    if (state.exportSuccess && state.exportedFilePath != null) {
+                    if (state.exportSuccess && state.exportedFilePath != null && isAdded) {
                         shareFile(File(state.exportedFilePath), state.format)
                         viewModel.consumeExportSuccess()
                     }
@@ -158,9 +159,10 @@ class ExportFragment : Fragment() {
     }
 
     private fun setupVehicleDropdown(state: ExportUiState) {
+        val ctx = context ?: return
         val items = listOf(getString(R.string.export_all_vehicles)) +
             state.vehicles.map { "${it.make} ${it.model} (${it.licensePlate})" }
-        val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_list_item_1, items)
+        val adapter = ArrayAdapter(ctx, android.R.layout.simple_list_item_1, items)
         binding.spinnerVehicle.setAdapter(adapter)
 
         val currentIndex = state.selectedVehicleId?.let { id ->
@@ -176,9 +178,10 @@ class ExportFragment : Fragment() {
     }
 
     private fun shareFile(file: File, format: ExportFormat) {
+        val ctx = context ?: return
         val contentUri = FileProvider.getUriForFile(
-            requireContext(),
-            "${requireContext().packageName}.fileprovider",
+            ctx,
+            "${ctx.packageName}.fileprovider",
             file
         )
 

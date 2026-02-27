@@ -1,6 +1,7 @@
 package de.fosstenbuch.ui.trips
 
 import android.graphics.Color
+import android.graphics.Paint
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -15,7 +16,8 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 
 class TripAdapter(
-    private val onTripClick: (Trip) -> Unit
+    private val onTripClick: (Trip) -> Unit,
+    private val onTripLongClick: (Trip) -> Boolean = { false }
 ) : ListAdapter<Trip, TripAdapter.TripViewHolder>(TripDiffCallback()) {
 
     private val dateTimeFormat = SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.GERMANY)
@@ -47,6 +49,12 @@ class TripAdapter(
                 if (position != RecyclerView.NO_POSITION) {
                     onTripClick(getItem(position))
                 }
+            }
+            binding.root.setOnLongClickListener {
+                val position = bindingAdapterPosition
+                if (position != RecyclerView.NO_POSITION) {
+                    onTripLongClick(getItem(position))
+                } else false
             }
         }
 
@@ -86,8 +94,32 @@ class TripAdapter(
                 binding.textTripType.setBackgroundColor(Color.GRAY)
             }
 
-            // Cancelled indicator
-            binding.textTripCancelled.visibility = if (trip.isCancelled) View.VISIBLE else View.GONE
+            // Cancelled indicator + strikethrough
+            if (trip.isCancelled) {
+                binding.textTripCancelled.visibility = View.VISIBLE
+                binding.textTripRoute.paintFlags = binding.textTripRoute.paintFlags or Paint.STRIKE_THRU_TEXT_FLAG
+                binding.textTripDistance.paintFlags = binding.textTripDistance.paintFlags or Paint.STRIKE_THRU_TEXT_FLAG
+                binding.textTripPurpose.paintFlags = binding.textTripPurpose.paintFlags or Paint.STRIKE_THRU_TEXT_FLAG
+                binding.textTripRoute.alpha = 0.5f
+                binding.textTripDistance.alpha = 0.5f
+                binding.textTripPurpose.alpha = 0.5f
+                // Show cancellation reason if available
+                if (!trip.cancellationReason.isNullOrBlank()) {
+                    binding.textTripCancelled.text = itemView.context.getString(
+                        R.string.cancel_trip_reason_format, trip.cancellationReason
+                    )
+                } else {
+                    binding.textTripCancelled.text = itemView.context.getString(R.string.trip_cancelled)
+                }
+            } else {
+                binding.textTripCancelled.visibility = View.GONE
+                binding.textTripRoute.paintFlags = binding.textTripRoute.paintFlags and Paint.STRIKE_THRU_TEXT_FLAG.inv()
+                binding.textTripDistance.paintFlags = binding.textTripDistance.paintFlags and Paint.STRIKE_THRU_TEXT_FLAG.inv()
+                binding.textTripPurpose.paintFlags = binding.textTripPurpose.paintFlags and Paint.STRIKE_THRU_TEXT_FLAG.inv()
+                binding.textTripRoute.alpha = 1.0f
+                binding.textTripDistance.alpha = 1.0f
+                binding.textTripPurpose.alpha = 1.0f
+            }
         }
     }
 

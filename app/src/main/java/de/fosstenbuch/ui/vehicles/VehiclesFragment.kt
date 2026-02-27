@@ -17,6 +17,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import de.fosstenbuch.R
 import de.fosstenbuch.data.model.Vehicle
 import de.fosstenbuch.databinding.FragmentVehiclesBinding
+import de.fosstenbuch.ui.common.safeNavigate
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
@@ -51,7 +52,7 @@ class VehiclesFragment : Fragment() {
                 val action = VehiclesFragmentDirections.actionVehiclesToAddEditVehicle(
                     vehicleId = vehicle.id
                 )
-                findNavController().navigate(action)
+                safeNavigate(action)
             },
             onVehicleLongClick = { vehicle ->
                 showVehicleOptions(vehicle)
@@ -65,6 +66,7 @@ class VehiclesFragment : Fragment() {
     }
 
     private fun showVehicleOptions(vehicle: Vehicle) {
+        if (!isAdded) return
         val options = mutableListOf<String>()
         val actions = mutableListOf<() -> Unit>()
 
@@ -91,6 +93,7 @@ class VehiclesFragment : Fragment() {
     }
 
     private fun showDeleteConfirmation(vehicle: Vehicle) {
+        if (!isAdded) return
         MaterialAlertDialogBuilder(requireContext())
             .setTitle(R.string.delete_vehicle_title)
             .setMessage(R.string.delete_vehicle_message)
@@ -104,7 +107,7 @@ class VehiclesFragment : Fragment() {
     private fun setupFab() {
         binding.fabAddVehicle.setOnClickListener {
             val action = VehiclesFragmentDirections.actionVehiclesToAddEditVehicle(vehicleId = 0L)
-            findNavController().navigate(action)
+            safeNavigate(action)
         }
     }
 

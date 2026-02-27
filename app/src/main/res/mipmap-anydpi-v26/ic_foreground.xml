@@ -4,7 +4,28 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
+    <!-- Road / path -->
     <path
-        android:fillColor="#FF000000"
-        android:pathData="M54,0C24.5,0 0,24.5 0,54s24.5,54 54,54 54,-24.5 54,-54S83.5,0 54,0zM54,102C30.1,102 12,83.9 12,54S30.1,6 54,6s42,24.1 42,54 -24.1,48 -42,48zM70.2,33.8L44.4,59.6c-1.2,1.2 -3.1,1.2 -4.2,0l-0.1,-0.1c-1.2,-1.2 -1.2,-3.1 0,-4.2l25.8,-25.8c1.2,-1.2 3.1,-1.2 4.2,0l0.1,0.1C71.4,30.7 71.4,32.6 70.2,33.8z"/>
+        android:fillColor="#FF455A64"
+        android:pathData="M30,78 L42,30 L66,30 L78,78 Z" />
+    <!-- Center road line -->
+    <path
+        android:fillColor="#FFFFD54F"
+        android:pathData="M51,38 L53,38 L56,68 L48,68 Z" />
+    <!-- Car body -->
+    <path
+        android:fillColor="#FF1565C0"
+        android:pathData="M40,58 C40,54 44,50 54,50 C64,50 68,54 68,58 L68,66 C68,68 66,70 64,70 L44,70 C42,70 40,68 40,66 Z" />
+    <!-- Windshield -->
+    <path
+        android:fillColor="#FFB3E5FC"
+        android:pathData="M45,54 L63,54 L61,58 L47,58 Z" />
+    <!-- Left headlight -->
+    <path
+        android:fillColor="#FFFFD54F"
+        android:pathData="M43,62 C43,60.9 43.9,60 45,60 C46.1,60 47,60.9 47,62 C47,63.1 46.1,64 45,64 C43.9,64 43,63.1 43,62 Z" />
+    <!-- Right headlight -->
+    <path
+        android:fillColor="#FFFFD54F"
+        android:pathData="M61,62 C61,60.9 61.9,60 63,60 C64.1,60 65,60.9 65,62 C65,63.1 64.1,64 63,64 C61.9,64 61,63.1 61,62 Z" />
 </vector>

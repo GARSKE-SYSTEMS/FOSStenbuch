@@ -18,6 +18,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import de.fosstenbuch.R
 import de.fosstenbuch.data.model.TripPurpose
 import de.fosstenbuch.databinding.FragmentAddEditPurposeBinding
+import de.fosstenbuch.ui.common.safePopBackStack
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
@@ -103,7 +104,7 @@ class AddEditPurposeFragment : Fragment() {
 
                     if (state.savedSuccessfully) {
                         viewModel.onSaveConsumed()
-                        findNavController().popBackStack()
+                        safePopBackStack()
                     }
                 }
             }

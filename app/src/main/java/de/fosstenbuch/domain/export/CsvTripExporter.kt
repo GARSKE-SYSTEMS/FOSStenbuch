@@ -54,7 +54,8 @@ class CsvTripExporter @Inject constructor(
                         "Km-Stand Start",
                         "Km-Stand Ende",
                         "Notizen",
-                        "Storniert"
+                        "Storniert",
+                        "Stornogrund"
                     )
                 )
 
@@ -77,7 +78,8 @@ class CsvTripExporter @Inject constructor(
                             trip.startOdometer?.toString() ?: "",
                             trip.endOdometer?.toString() ?: "",
                             trip.notes ?: "",
-                            if (trip.isCancelled) "Ja" else "Nein"
+                            if (trip.isCancelled) "STORNIERT" else "",
+                            trip.cancellationReason ?: ""
                         )
                     )
                 }

@@ -44,29 +44,7 @@
         android:id="@+id/navigation_settings"
         android:name="de.fosstenbuch.ui.settings.SettingsFragment"
         android:label="@string/title_settings"
-        tools:layout="@layout/fragment_settings">
-
-        <action
-            android:id="@+id/action_settings_to_vehicles"
-            app:destination="@id/navigation_vehicles" />
-
-        <action
-            android:id="@+id/action_settings_to_saved_locations"
-            app:destination="@id/navigation_saved_locations" />
-
-        <action
-            android:id="@+id/action_settings_to_purposes"
-            app:destination="@id/navigation_purposes" />
-
-        <action
-            android:id="@+id/action_settings_to_export"
-            app:destination="@id/navigation_export" />
-
-        <action
-            android:id="@+id/action_settings_to_mileage_calculator"
-            app:destination="@id/navigation_mileage_calculator" />
-
-    </fragment>
+        tools:layout="@layout/fragment_settings" />
 
     <fragment
         android:id="@+id/navigation_vehicles"

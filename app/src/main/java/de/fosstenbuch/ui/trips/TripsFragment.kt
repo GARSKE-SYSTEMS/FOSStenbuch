@@ -21,6 +21,8 @@ import de.fosstenbuch.R
 import de.fosstenbuch.data.model.Trip
 import de.fosstenbuch.databinding.FragmentTripsBinding
 import de.fosstenbuch.domain.service.LocationTrackingService
+import de.fosstenbuch.ui.common.safeNavigate
+import de.fosstenbuch.ui.common.safePopBackStack
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.text.SimpleDateFormat
@@ -56,10 +58,16 @@ class TripsFragment : Fragment() {
     }
 
     private fun setupRecyclerView() {
-        tripAdapter = TripAdapter { trip ->
-            val action = TripsFragmentDirections.actionTripsToAddEditTrip(tripId = trip.id)
-            findNavController().navigate(action)
-        }
+        tripAdapter = TripAdapter(
+            onTripClick = { trip ->
+                val action = TripsFragmentDirections.actionTripsToAddEditTrip(tripId = trip.id)
+                safeNavigate(action)
+            },
+            onTripLongClick = { trip ->
+                showTripContextMenu(trip)
+                true
+            }
+        )
         binding.recyclerTrips.apply {
             adapter = tripAdapter
             layoutManager = LinearLayoutManager(requireContext())
@@ -75,7 +83,8 @@ class TripsFragment : Fragment() {
 
             override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
                 val position = viewHolder.bindingAdapterPosition
-                val trip = tripAdapter.currentList[position]
+                if (position == RecyclerView.NO_POSITION) return
+                val trip = tripAdapter.currentList.getOrNull(position) ?: return
                 showDeleteConfirmation(trip, position)
             }
         }
@@ -83,6 +92,7 @@ class TripsFragment : Fragment() {
     }
 
     private fun showDeleteConfirmation(trip: Trip, position: Int) {
+        if (!isAdded) return
         MaterialAlertDialogBuilder(requireContext())
             .setTitle(R.string.delete_trip_title)
             .setMessage(R.string.delete_trip_message)
@@ -90,12 +100,74 @@ class TripsFragment : Fragment() {
                 viewModel.deleteTrip(trip)
             }
             .setNegativeButton(R.string.cancel) { _, _ ->
-                // Restore item in list
-                tripAdapter.notifyItemChanged(position)
+                // Re-submit current list to restore the swiped item
+                tripAdapter.submitList(tripAdapter.currentList.toList())
             }
             .setOnCancelListener {
-                tripAdapter.notifyItemChanged(position)
+                tripAdapter.submitList(tripAdapter.currentList.toList())
             }
+            .show()
+    }
+
+    private fun showTripContextMenu(trip: Trip) {
+        if (!isAdded) return
+        val options = mutableListOf<String>()
+        val actions = mutableListOf<() -> Unit>()
+
+        if (!trip.isCancelled && !trip.isActive) {
+            options.add(getString(R.string.cancel_trip_action))
+            actions.add { showCancelTripDialog(trip) }
+        }
+
+        if (!trip.isActive) {
+            options.add(getString(R.string.delete))
+            actions.add { showDeleteConfirmationFromContext(trip) }
+        }
+
+        if (options.isEmpty()) return
+
+        val dateFormat = SimpleDateFormat("dd.MM.yyyy", Locale.GERMANY)
+        val title = "${trip.startLocation} → ${trip.endLocation} (${dateFormat.format(trip.date)})"
+
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle(title)
+            .setItems(options.toTypedArray()) { _, which ->
+                actions[which]()
+            }
+            .show()
+    }
+
+    private fun showCancelTripDialog(trip: Trip) {
+        if (!isAdded) return
+        val editText = com.google.android.material.textfield.TextInputEditText(requireContext())
+        editText.hint = getString(R.string.cancel_trip_message)
+
+        val layout = com.google.android.material.textfield.TextInputLayout(requireContext()).apply {
+            addView(editText)
+            setPadding(48, 16, 48, 0)
+        }
+
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle(R.string.cancel_trip_title)
+            .setMessage(R.string.cancel_trip_message)
+            .setView(layout)
+            .setPositiveButton(R.string.cancel_trip_action) { _, _ ->
+                val reason = editText.text?.toString()?.trim()?.ifEmpty { null }
+                viewModel.cancelTrip(trip, reason)
+            }
+            .setNegativeButton(R.string.cancel, null)
+            .show()
+    }
+
+    private fun showDeleteConfirmationFromContext(trip: Trip) {
+        if (!isAdded) return
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle(R.string.delete_trip_title)
+            .setMessage(R.string.delete_trip_message)
+            .setPositiveButton(R.string.delete) { _, _ ->
+                viewModel.deleteTrip(trip)
+            }
+            .setNegativeButton(R.string.cancel, null)
             .show()
     }
 
@@ -126,7 +198,7 @@ class TripsFragment : Fragment() {
     private fun setupFab() {
         binding.fabAddTrip.setOnClickListener {
             val action = TripsFragmentDirections.actionTripsToAddEditTrip(tripId = 0L)
-            findNavController().navigate(action)
+            safeNavigate(action)
         }
     }
 
@@ -181,7 +253,7 @@ class TripsFragment : Fragment() {
             // GPS distance will be updated by observeGpsForBanner
             binding.buttonEndTrip.setOnClickListener {
                 val action = TripsFragmentDirections.actionTripsToAddEditTrip(tripId = activeTrip.id)
-                findNavController().navigate(action)
+                safeNavigate(action)
             }
         } else {
             binding.cardActiveTrip.visibility = View.GONE

@@ -3,13 +3,14 @@ package de.fosstenbuch.ui.main
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.drawerlayout.widget.DrawerLayout
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.navigateUp
 import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
-import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.google.android.material.navigation.NavigationView
 import dagger.hilt.android.AndroidEntryPoint
 import de.fosstenbuch.R
 import de.fosstenbuch.data.local.PreferencesManager
@@ -44,20 +45,36 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        val navView: BottomNavigationView = binding.navView
+        setSupportActionBar(binding.toolbar)
+
+        val drawerLayout: DrawerLayout = binding.drawerLayout
+        val navView: NavigationView = binding.navView
 
         val navController = findNavController(R.id.nav_host_fragment_activity_main)
-        // Passing each menu ID as a set of Ids because each
-        // menu should be considered as top level destinations.
+
+        // All top-level drawer destinations — these show the burger icon
         appBarConfiguration = AppBarConfiguration(
             setOf(
                 R.id.navigation_trips,
                 R.id.navigation_stats,
+                R.id.navigation_vehicles,
+                R.id.navigation_purposes,
+                R.id.navigation_saved_locations,
+                R.id.navigation_export,
+                R.id.navigation_mileage_calculator,
                 R.id.navigation_settings
-            )
+            ),
+            drawerLayout
         )
         setupActionBarWithNavController(navController, appBarConfiguration)
         navView.setupWithNavController(navController)
+
+        // Close drawer after navigation
+        navView.setNavigationItemSelectedListener { menuItem ->
+            navController.navigate(menuItem.itemId)
+            drawerLayout.closeDrawers()
+            true
+        }
     }
 
     override fun onSupportNavigateUp(): Boolean {

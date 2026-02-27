@@ -547,7 +547,8 @@
                 android:id="@+id/button_save_edit"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/save" />
+                android:text="@string/save"
+                app:icon="@drawable/ic_save" />
 
         </LinearLayout>
 

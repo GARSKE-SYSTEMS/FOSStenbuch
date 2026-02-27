@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import de.fosstenbuch.data.model.Trip
+import de.fosstenbuch.data.repository.TripRepository
 import de.fosstenbuch.domain.usecase.purpose.GetAllPurposesUseCase
 import de.fosstenbuch.domain.usecase.trip.DeleteTripUseCase
 import de.fosstenbuch.domain.usecase.trip.GetActiveTripUseCase
@@ -26,7 +27,8 @@ class TripsViewModel @Inject constructor(
     private val getPrivateTripsUseCase: GetPrivateTripsUseCase,
     private val deleteTripUseCase: DeleteTripUseCase,
     private val getAllPurposesUseCase: GetAllPurposesUseCase,
-    private val getActiveTripUseCase: GetActiveTripUseCase
+    private val getActiveTripUseCase: GetActiveTripUseCase,
+    private val tripRepository: TripRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(TripsUiState())
@@ -56,6 +58,22 @@ class TripsViewModel @Inject constructor(
             } catch (e: Exception) {
                 Timber.e(e, "Failed to delete trip")
                 _uiState.update { it.copy(error = "Fahrt konnte nicht gelöscht werden") }
+            }
+        }
+    }
+
+    fun cancelTrip(trip: Trip, reason: String?) {
+        viewModelScope.launch {
+            try {
+                val cancelledTrip = trip.copy(
+                    isCancelled = true,
+                    cancellationReason = reason
+                )
+                tripRepository.updateTrip(cancelledTrip)
+                // Flow will automatically update the list
+            } catch (e: Exception) {
+                Timber.e(e, "Failed to cancel trip")
+                _uiState.update { it.copy(error = "Fahrt konnte nicht storniert werden") }
             }
         }
     }

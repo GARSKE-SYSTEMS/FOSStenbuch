@@ -17,6 +17,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import de.fosstenbuch.R
 import de.fosstenbuch.data.model.SavedLocation
 import de.fosstenbuch.databinding.FragmentSavedLocationsBinding
+import de.fosstenbuch.ui.common.safeNavigate
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
@@ -50,7 +51,7 @@ class SavedLocationsFragment : Fragment() {
             onLocationClick = { location ->
                 val action = SavedLocationsFragmentDirections
                     .actionSavedLocationsToAddEditLocation(locationId = location.id)
-                findNavController().navigate(action)
+                safeNavigate(action)
             },
             onLocationLongClick = { location ->
                 showDeleteConfirmation(location)
@@ -64,6 +65,7 @@ class SavedLocationsFragment : Fragment() {
     }
 
     private fun showDeleteConfirmation(location: SavedLocation) {
+        if (!isAdded) return
         MaterialAlertDialogBuilder(requireContext())
             .setTitle(R.string.delete_location_title)
             .setMessage(getString(R.string.delete_location_message, location.name))
@@ -78,7 +80,7 @@ class SavedLocationsFragment : Fragment() {
         binding.fabAddLocation.setOnClickListener {
             val action = SavedLocationsFragmentDirections
                 .actionSavedLocationsToAddEditLocation(locationId = 0L)
-            findNavController().navigate(action)
+            safeNavigate(action)
         }
     }
 

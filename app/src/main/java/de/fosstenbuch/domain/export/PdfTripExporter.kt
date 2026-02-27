@@ -77,6 +77,17 @@ class PdfTripExporter @Inject constructor(
         strokeWidth = 0.5f
     }
 
+    private val cancelledPaint = Paint().apply {
+        color = Color.RED
+        textSize = FONT_SIZE_BODY
+        isAntiAlias = true
+    }
+
+    private val strikethroughPaint = Paint().apply {
+        color = Color.RED
+        strokeWidth = 1f
+    }
+
     // Column widths (landscape A4: 842 - 80 margin = 762 usable)
     private val colWidths = floatArrayOf(
         65f,  // Datum
@@ -225,13 +236,36 @@ class PdfTripExporter @Inject constructor(
 
             var xPos = MARGIN + 4f
             for (i in rowData.indices) {
-                canvas.drawText(rowData[i], xPos, yPos + LINE_HEIGHT - 4f, bodyPaint)
+                val paint = if (trip.isCancelled && i < rowData.size - 1) cancelledPaint else bodyPaint
+                canvas.drawText(rowData[i], xPos, yPos + LINE_HEIGHT - 4f, paint)
                 xPos += colWidths[i]
+            }
+
+            // Strikethrough line for cancelled trips
+            if (trip.isCancelled) {
+                val lineY = yPos + LINE_HEIGHT / 2f
+                canvas.drawLine(MARGIN + 4f, lineY, xPos - 4f, lineY, strikethroughPaint)
             }
 
             // Row bottom line
             canvas.drawLine(MARGIN, yPos + LINE_HEIGHT, PAGE_WIDTH - MARGIN, yPos + LINE_HEIGHT, linePaint)
             yPos += LINE_HEIGHT
+
+            // Cancellation reason as sub-row
+            if (trip.isCancelled && !trip.cancellationReason.isNullOrBlank()) {
+                if (yPos + LINE_HEIGHT > PAGE_HEIGHT - MARGIN - 20f) {
+                    finishPage(currentPage)
+                    val (newPage, newCanvas) = startNewPage()
+                    currentPage = newPage
+                    canvas = newCanvas
+                    yPos = MARGIN
+                    yPos = drawTableHeader(canvas, yPos, headers)
+                }
+                val reasonText = "    Stornogrund: ${trip.cancellationReason}"
+                canvas.drawText(reasonText, MARGIN + 4f, yPos + LINE_HEIGHT - 4f, cancelledPaint)
+                canvas.drawLine(MARGIN, yPos + LINE_HEIGHT, PAGE_WIDTH - MARGIN, yPos + LINE_HEIGHT, linePaint)
+                yPos += LINE_HEIGHT
+            }
         }
 
         // Audit log section

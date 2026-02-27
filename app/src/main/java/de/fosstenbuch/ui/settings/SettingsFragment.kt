@@ -65,13 +65,13 @@ class SettingsFragment : Fragment() {
 
     private fun setupExport() {
         binding.cardExport.setOnClickListener {
-            findNavController().navigate(R.id.action_settings_to_export)
+            findNavController().navigate(R.id.navigation_export)
         }
     }
 
     private fun setupMileageCalculator() {
         binding.cardMileageCalculator.setOnClickListener {
-            findNavController().navigate(R.id.action_settings_to_mileage_calculator)
+            findNavController().navigate(R.id.navigation_mileage_calculator)
         }
     }
 
@@ -109,19 +109,19 @@ class SettingsFragment : Fragment() {
 
     private fun setupVehicleManagement() {
         binding.cardVehicles.setOnClickListener {
-            findNavController().navigate(R.id.action_settings_to_vehicles)
+            findNavController().navigate(R.id.navigation_vehicles)
         }
     }
 
     private fun setupLocationManagement() {
         binding.cardLocations.setOnClickListener {
-            findNavController().navigate(R.id.action_settings_to_saved_locations)
+            findNavController().navigate(R.id.navigation_saved_locations)
         }
     }
 
     private fun setupPurposeManagement() {
         binding.cardPurposes.setOnClickListener {
-            findNavController().navigate(R.id.action_settings_to_purposes)
+            findNavController().navigate(R.id.navigation_purposes)
         }
     }
 
