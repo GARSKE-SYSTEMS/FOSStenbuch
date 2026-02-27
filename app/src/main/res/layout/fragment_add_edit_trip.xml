@@ -346,7 +346,7 @@
 
             </LinearLayout>
 
-            <!-- Date + Time -->
+            <!-- Date + Time (Start) -->
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/layout_date_edit"
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
@@ -358,6 +358,26 @@
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/edit_date_edit"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:clickable="true"
+                    android:focusable="false"
+                    android:inputType="none" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- End Date + Time -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/layout_end_time_edit"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                android:hint="@string/trip_end_time"
+                app:startIconDrawable="@drawable/ic_trips">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/edit_end_time_edit"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:clickable="true"

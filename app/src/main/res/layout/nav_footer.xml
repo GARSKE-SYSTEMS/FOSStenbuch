@@ -13,6 +13,52 @@
         android:layout_marginBottom="12dp"
         android:background="?android:attr/listDivider" />
 
+    <!-- GitHub link -->
+    <LinearLayout
+        android:id="@+id/layout_github"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:clickable="true"
+        android:focusable="true"
+        android:background="?attr/selectableItemBackground"
+        android:padding="4dp"
+        android:layout_marginBottom="8dp">
+
+        <ImageView
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginEnd="12dp"
+            android:contentDescription="@string/info_github_cd"
+            android:src="@drawable/ic_export"
+            android:padding="8dp" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/info_github_title"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/info_github_url"
+                android:textSize="11sp"
+                android:textColor="?attr/colorPrimary" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <!-- Garske Systems credit -->
     <LinearLayout
         android:id="@+id/layout_info"
         android:layout_width="match_parent"

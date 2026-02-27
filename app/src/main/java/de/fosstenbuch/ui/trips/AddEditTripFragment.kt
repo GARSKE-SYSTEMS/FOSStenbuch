@@ -120,6 +120,10 @@ class AddEditTripFragment : Fragment() {
         // Edit phase: date+time picker
         binding.editDateEdit.setText(dateTimeFormat.format(selectedDateTime))
         binding.editDateEdit.setOnClickListener { showDateTimePicker(isStart = true) }
+
+        // Edit phase: end time picker
+        binding.editEndTimeEdit.setText(dateTimeFormat.format(selectedEndTime))
+        binding.editEndTimeEdit.setOnClickListener { showDateTimePicker(isStart = false) }
     }
 
     private fun showDateTimePicker(isStart: Boolean) {
@@ -149,6 +153,7 @@ class AddEditTripFragment : Fragment() {
                         } else {
                             selectedEndTime = date
                             binding.editEndTime.setText(dateTimeFormat.format(date))
+                            binding.editEndTimeEdit.setText(dateTimeFormat.format(date))
                         }
                     },
                     cal.get(Calendar.HOUR_OF_DAY),
@@ -319,7 +324,7 @@ class AddEditTripFragment : Fragment() {
             vehicleId = selectedVehicleId,
             isCancelled = existingTrip?.isCancelled ?: false,
             cancellationReason = existingTrip?.cancellationReason,
-            endTime = existingTrip?.endTime,
+            endTime = selectedEndTime,
             gpsDistanceKm = existingTrip?.gpsDistanceKm
         )
     }
@@ -499,6 +504,10 @@ class AddEditTripFragment : Fragment() {
             TripPhase.EDIT -> {
                 selectedDateTime = trip.date
                 binding.editDateEdit.setText(dateTimeFormat.format(trip.date))
+                trip.endTime?.let {
+                    selectedEndTime = it
+                    binding.editEndTimeEdit.setText(dateTimeFormat.format(it))
+                }
                 binding.editStartLocationEdit.setText(trip.startLocation)
                 binding.editEndLocationEdit.setText(trip.endLocation)
                 binding.editDistanceEdit.setText(trip.distanceKm.toString())

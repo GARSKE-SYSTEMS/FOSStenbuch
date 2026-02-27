@@ -19,6 +19,7 @@ class CsvTripExporter @Inject constructor(
 ) : TripExporter {
 
     private val dateFormat = SimpleDateFormat("dd.MM.yyyy", Locale.GERMANY)
+    private val dateTimeFormat = SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.GERMANY)
 
     override suspend fun export(
         config: ExportConfig,
@@ -58,7 +59,8 @@ class CsvTripExporter @Inject constructor(
                 // Header row
                 writer.write(
                     csvLine(
-                        "Datum",
+                        "Startdatum/-zeit",
+                        "Enddatum/-zeit",
                         "Startort",
                         "Zielort",
                         "Distanz (km)",
@@ -82,7 +84,8 @@ class CsvTripExporter @Inject constructor(
 
                     writer.write(
                         csvLine(
-                            dateFormat.format(trip.date),
+                            dateTimeFormat.format(trip.date),
+                            trip.endTime?.let { dateTimeFormat.format(it) } ?: "",
                             trip.startLocation,
                             trip.endLocation,
                             "%.2f".format(trip.distanceKm),

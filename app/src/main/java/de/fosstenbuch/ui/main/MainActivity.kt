@@ -95,6 +95,12 @@ class MainActivity : AppCompatActivity() {
         }
         navView.addView(footerView, params)
 
+        footerView.findViewById<android.view.View>(R.id.layout_github).setOnClickListener {
+            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/GARSKE-SYSTEMS/FOSStenbuch"))
+            startActivity(intent)
+            drawerLayout.closeDrawers()
+        }
+
         footerView.findViewById<android.view.View>(R.id.layout_info).setOnClickListener {
             val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://garske-systems.de"))
             startActivity(intent)

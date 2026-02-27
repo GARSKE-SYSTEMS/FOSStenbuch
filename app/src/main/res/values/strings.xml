@@ -345,6 +345,9 @@
     <string name="add_new_location_suggestion">"%s" als neuen Standort speichern…</string>
 
     <!-- Info footer -->
+    <string name="info_github_title">GitHub</string>
+    <string name="info_github_url">github.com/GARSKE-SYSTEMS/FOSStenbuch</string>
+    <string name="info_github_cd">GitHub Logo</string>
     <string name="info_developed_by">Developed by Garske Systems</string>
     <string name="info_company_name">Garske Systems, Inh. Patrick Garske</string>
     <string name="info_website">garske-systems.de</string>

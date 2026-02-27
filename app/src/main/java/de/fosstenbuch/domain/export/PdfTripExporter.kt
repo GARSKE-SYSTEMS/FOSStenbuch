@@ -23,6 +23,7 @@ class PdfTripExporter @Inject constructor(
 ) : TripExporter {
 
     private val dateFormat = SimpleDateFormat("dd.MM.yyyy", Locale.GERMANY)
+    private val dateTimeFormat = SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.GERMANY)
 
     companion object {
         private const val PAGE_WIDTH = 842 // A4 landscape
@@ -90,16 +91,17 @@ class PdfTripExporter @Inject constructor(
 
     // Column widths (landscape A4: 842 - 80 margin = 762 usable)
     private val colWidths = floatArrayOf(
-        65f,  // Datum
-        90f,  // Startort
-        90f,  // Zielort
-        55f,  // Distanz
-        90f,  // Zweck
-        70f,  // Kategorie
-        90f,  // Fahrzeug
-        70f,  // Kennzeichen
-        55f,  // Km Start
-        55f,  // Km Ende
+        72f,  // Start
+        72f,  // Ende
+        80f,  // Startort
+        80f,  // Zielort
+        50f,  // Distanz
+        80f,  // Zweck
+        60f,  // Kategorie
+        75f,  // Fahrzeug
+        60f,  // Kennzeichen
+        50f,  // Km Start
+        50f,  // Km Ende
         32f   // Storniert
     )
 
@@ -208,7 +210,7 @@ class PdfTripExporter @Inject constructor(
 
         // Table header
         val headers = arrayOf(
-            "Datum", "Startort", "Zielort", "Distanz", "Zweck",
+            "Start", "Ende", "Startort", "Zielort", "Distanz", "Zweck",
             "Kategorie", "Fahrzeug", "Kennzeichen", "Km Start", "Km Ende", "Storno"
         )
         yPos = drawTableHeader(canvas, yPos, headers)
@@ -233,13 +235,14 @@ class PdfTripExporter @Inject constructor(
             }
 
             val rowData = arrayOf(
-                dateFormat.format(trip.date),
-                truncate(trip.startLocation, 14),
-                truncate(trip.endLocation, 14),
+                dateTimeFormat.format(trip.date),
+                trip.endTime?.let { dateTimeFormat.format(it) } ?: "-",
+                truncate(trip.startLocation, 12),
+                truncate(trip.endLocation, 12),
                 "%.1f km".format(trip.distanceKm),
-                truncate(trip.purpose, 14),
+                truncate(trip.purpose, 12),
                 purpose?.name ?: "-",
-                vehicle?.let { truncate("${it.make} ${it.model}", 14) } ?: "-",
+                vehicle?.let { truncate("${it.make} ${it.model}", 12) } ?: "-",
                 vehicle?.licensePlate ?: "-",
                 trip.startOdometer?.toString() ?: "-",
                 trip.endOdometer?.toString() ?: "-",
