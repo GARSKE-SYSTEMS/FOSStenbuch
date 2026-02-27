@@ -22,6 +22,9 @@ data class ExportUiState(
     val onlyNew: Boolean = false,
     val markAsExported: Boolean = false,
 
+    // Driver & confirmation
+    val driverName: String = "",
+
     // Available data
     val purposes: List<TripPurpose> = emptyList(),
     val selectedPurposeIds: Set<Long> = emptySet(),

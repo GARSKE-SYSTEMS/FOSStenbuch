@@ -94,6 +94,13 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    fun setDriverName(name: String) {
+        viewModelScope.launch {
+            preferencesManager.setDriverName(name)
+            _uiState.update { it.copy(driverName = name) }
+        }
+    }
+
     // --- Backup / Restore / Delete ---
 
     fun performBackup() {
@@ -219,6 +226,11 @@ class SettingsViewModel @Inject constructor(
                         it.copy(reminderEnabled = enabled, reminderTime = time)
                     }
                 }
+        }
+        viewModelScope.launch {
+            preferencesManager.driverName.collect { name ->
+                _uiState.update { it.copy(driverName = name) }
+            }
         }
     }
 }

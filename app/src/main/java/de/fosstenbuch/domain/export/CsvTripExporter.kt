@@ -39,6 +39,12 @@ class CsvTripExporter @Inject constructor(
                 fos.write(0xBB)
                 fos.write(0xBF)
 
+                // Driver name if set
+                if (config.driverName.isNotBlank()) {
+                    writer.write(csvLine("Fahrer", config.driverName))
+                    writer.write("\n")
+                }
+
                 // Header row
                 writer.write(
                     csvLine(

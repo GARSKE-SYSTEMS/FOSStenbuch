@@ -31,6 +31,7 @@ class PreferencesManager(private val context: Context) {
         private val KEY_DEFAULT_VEHICLE_ID = longPreferencesKey("default_vehicle_id")
         private val KEY_REMINDER_ENABLED = booleanPreferencesKey("reminder_enabled")
         private val KEY_REMINDER_TIME = stringPreferencesKey("reminder_time")
+        private val KEY_DRIVER_NAME = stringPreferencesKey("driver_name")
     }
 
     // --- Dark Mode ---
@@ -109,5 +110,15 @@ class PreferencesManager(private val context: Context) {
 
     suspend fun setReminderTime(time: String) {
         context.dataStore.edit { it[KEY_REMINDER_TIME] = time }
+    }
+
+    // --- Driver Name ---
+
+    val driverName: Flow<String> = context.dataStore.data.map { prefs ->
+        prefs[KEY_DRIVER_NAME] ?: ""
+    }
+
+    suspend fun setDriverName(name: String) {
+        context.dataStore.edit { it[KEY_DRIVER_NAME] = name }
     }
 }

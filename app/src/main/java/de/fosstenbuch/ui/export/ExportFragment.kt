@@ -13,6 +13,7 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
 import de.fosstenbuch.R
@@ -115,8 +116,19 @@ class ExportFragment : Fragment() {
 
     private fun setupExportButton() {
         binding.buttonExport.setOnClickListener {
-            viewModel.performExport()
+            showTruthfulnessConfirmation()
         }
+    }
+
+    private fun showTruthfulnessConfirmation() {
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle(R.string.export_confirm_title)
+            .setMessage(R.string.export_confirm_message)
+            .setPositiveButton(R.string.export_confirm_yes) { _, _ ->
+                viewModel.performExport()
+            }
+            .setNegativeButton(R.string.cancel, null)
+            .show()
     }
 
     private fun observeState() {

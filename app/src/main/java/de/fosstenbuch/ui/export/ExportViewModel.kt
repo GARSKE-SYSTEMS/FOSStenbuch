@@ -3,6 +3,7 @@ package de.fosstenbuch.ui.export
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import de.fosstenbuch.data.local.PreferencesManager
 import de.fosstenbuch.data.local.TripAuditLogDao
 import de.fosstenbuch.data.model.Trip
 import de.fosstenbuch.data.model.TripAuditLog
@@ -33,6 +34,7 @@ class ExportViewModel @Inject constructor(
     private val getAllPurposesUseCase: GetAllPurposesUseCase,
     private val getAllVehiclesUseCase: GetAllVehiclesUseCase,
     private val tripRepository: TripRepository,
+    private val preferencesManager: PreferencesManager,
     private val tripAuditLogDao: TripAuditLogDao,
     private val csvTripExporter: CsvTripExporter,
     private val pdfTripExporter: PdfTripExporter
@@ -43,6 +45,15 @@ class ExportViewModel @Inject constructor(
 
     init {
         loadFilterOptions()
+        loadDriverName()
+    }
+
+    private fun loadDriverName() {
+        viewModelScope.launch {
+            preferencesManager.driverName.collect { name ->
+                _uiState.update { it.copy(driverName = name) }
+            }
+        }
     }
 
     private fun loadFilterOptions() {
@@ -162,7 +173,9 @@ class ExportViewModel @Inject constructor(
                     selectedPurposeIds = state.selectedPurposeIds,
                     vehicleId = state.selectedVehicleId,
                     includeAuditLog = state.includeAuditLog,
-                    format = state.format
+                    format = state.format,
+                    driverName = state.driverName,
+                    truthfulnessConfirmed = true
                 )
 
                 val exporter = when (state.format) {

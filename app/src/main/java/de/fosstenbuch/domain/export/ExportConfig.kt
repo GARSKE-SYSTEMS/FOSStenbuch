@@ -8,5 +8,7 @@ data class ExportConfig(
     val selectedPurposeIds: Set<Long>,
     val vehicleId: Long?,
     val includeAuditLog: Boolean = false,
-    val format: ExportFormat = ExportFormat.CSV
+    val format: ExportFormat = ExportFormat.CSV,
+    val driverName: String = "",
+    val truthfulnessConfirmed: Boolean = false
 )

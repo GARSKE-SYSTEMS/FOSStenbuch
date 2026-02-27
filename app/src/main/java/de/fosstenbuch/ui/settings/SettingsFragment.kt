@@ -41,6 +41,7 @@ class SettingsFragment : Fragment() {
     private var lastDefaultPurposeId: Long? = -1L
     private var lastVehicles: List<de.fosstenbuch.data.model.Vehicle> = emptyList()
     private var lastDefaultVehicleId: Long? = -1L
+    private var lastDriverName: String? = null
 
     private val restoreFilePicker = registerForActivityResult(
         ActivityResultContracts.GetContent()
@@ -62,6 +63,7 @@ class SettingsFragment : Fragment() {
         setupExport()
         setupMileageCalculator()
         setupAppearance()
+        setupDriverName()
         setupGeneralPreferences()
         setupVehicleManagement()
         setupLocationManagement()
@@ -95,6 +97,15 @@ class SettingsFragment : Fragment() {
             val mode = PreferencesManager.DarkMode.entries[position]
             viewModel.setDarkMode(mode)
             applyDarkMode(mode)
+        }
+    }
+
+    private fun setupDriverName() {
+        binding.editDriverName.setOnFocusChangeListener { _, hasFocus ->
+            if (!hasFocus) {
+                val name = binding.editDriverName.text?.toString()?.trim() ?: ""
+                viewModel.setDriverName(name)
+            }
         }
     }
 
@@ -296,6 +307,14 @@ class SettingsFragment : Fragment() {
                     binding.switchReminder.isChecked = state.reminderEnabled
                     binding.buttonReminderTime.visibility = if (state.reminderEnabled) View.VISIBLE else View.GONE
                     binding.buttonReminderTime.text = getString(R.string.notification_time) + ": " + state.reminderTime
+
+                    // Driver name — only update when changed to avoid cursor jump
+                    if (state.driverName != lastDriverName) {
+                        lastDriverName = state.driverName
+                        if (binding.editDriverName.text?.toString() != state.driverName) {
+                            binding.editDriverName.setText(state.driverName)
+                        }
+                    }
                 }
             }
         }

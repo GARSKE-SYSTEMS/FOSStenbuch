@@ -201,6 +201,9 @@
     <string name="export_no_trips">Keine Fahrten im ausgewählten Zeitraum</string>
     <string name="export_success">Export erfolgreich erstellt</string>
     <string name="export_error">Fehler beim Exportieren: %s</string>
+    <string name="export_confirm_title">Export bestätigen</string>
+    <string name="export_confirm_message">Hiermit bestätige ich, dass alle Einträge in diesem Fahrtenbuch der Wahrheit entsprechen.</string>
+    <string name="export_confirm_yes">Bestätigen &amp; Exportieren</string>
     <string name="settings_export">Daten exportieren</string>
     <string name="settings_export_subtitle">Fahrten als CSV oder PDF exportieren</string>
 
@@ -211,6 +214,8 @@
     <string name="dark_mode_light">Hell</string>
     <string name="dark_mode_dark">Dunkel</string>
     <string name="settings_general">Allgemein</string>
+    <string name="settings_driver_name">Fahrername</string>
+    <string name="settings_driver_name_hint">Wird auf Exporten angezeigt</string>
     <string name="settings_distance_unit">Entfernungseinheit</string>
     <string name="settings_default_purpose">Standard-Kategorie</string>
     <string name="settings_default_vehicle">Standard-Fahrzeug</string>

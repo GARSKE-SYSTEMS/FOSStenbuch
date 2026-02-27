@@ -33,5 +33,8 @@ data class SettingsUiState(
 
     // Reminder
     val reminderEnabled: Boolean = false,
-    val reminderTime: String = "18:00"
+    val reminderTime: String = "18:00",
+
+    // Driver
+    val driverName: String = ""
 )

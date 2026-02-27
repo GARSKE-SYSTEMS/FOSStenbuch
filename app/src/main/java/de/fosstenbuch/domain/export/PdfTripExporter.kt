@@ -151,6 +151,12 @@ class PdfTripExporter @Inject constructor(
         canvas.drawText("Fahrtenbuch", MARGIN, yPos + FONT_SIZE_TITLE, titlePaint)
         yPos += FONT_SIZE_TITLE + 8f
 
+        // Driver name
+        if (config.driverName.isNotBlank()) {
+            canvas.drawText("Fahrer: ${config.driverName}", MARGIN, yPos + FONT_SIZE_BODY, bodyPaint)
+            yPos += LINE_HEIGHT
+        }
+
         // Date range
         val rangeText = "Zeitraum: ${config.dateFrom.format(DateTimeFormatter.ofPattern("dd.MM.yyyy"))} – " +
             config.dateTo.format(DateTimeFormatter.ofPattern("dd.MM.yyyy"))
@@ -299,6 +305,44 @@ class PdfTripExporter @Inject constructor(
                     canvas.drawText(logText, MARGIN, yPos + FONT_SIZE_BODY, smallPaint)
                     yPos += LINE_HEIGHT
                 }
+            }
+        }
+
+        // Truthfulness confirmation
+        if (config.truthfulnessConfirmed) {
+            yPos += LINE_HEIGHT
+
+            if (yPos + 60f > PAGE_HEIGHT - MARGIN) {
+                finishPage(currentPage)
+                val (newPage, newCanvas) = startNewPage()
+                currentPage = newPage
+                canvas = newCanvas
+                yPos = MARGIN
+            }
+
+            val confirmPaint = Paint(bodyPaint).apply {
+                typeface = Typeface.create(Typeface.DEFAULT, Typeface.ITALIC)
+            }
+            canvas.drawText(
+                "Ich bestätige hiermit, dass alle Angaben in diesem Fahrtenbuch der Wahrheit entsprechen.",
+                MARGIN, yPos + FONT_SIZE_BODY, confirmPaint
+            )
+            yPos += LINE_HEIGHT
+
+            if (config.driverName.isNotBlank()) {
+                yPos += LINE_HEIGHT
+                canvas.drawText(
+                    config.driverName,
+                    MARGIN, yPos + FONT_SIZE_BODY, bodyPaint
+                )
+                yPos += LINE_HEIGHT
+
+                val dateStr = config.dateTo.format(DateTimeFormatter.ofPattern("dd.MM.yyyy"))
+                canvas.drawText(
+                    dateStr,
+                    MARGIN, yPos + FONT_SIZE_BODY, smallPaint
+                )
+                yPos += LINE_HEIGHT
             }
         }
 
