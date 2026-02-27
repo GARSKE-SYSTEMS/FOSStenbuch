@@ -2,20 +2,12 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="160dp"
+    android:layout_height="100dp"
     android:background="?attr/colorPrimary"
-    android:gravity="bottom"
+    android:gravity="center_vertical"
     android:orientation="vertical"
     android:padding="16dp"
     android:theme="@style/ThemeOverlay.MaterialComponents.Dark">
-
-    <ImageView
-        android:layout_width="48dp"
-        android:layout_height="48dp"
-        android:layout_marginBottom="8dp"
-        android:contentDescription="@string/app_name"
-        app:srcCompat="@mipmap/ic_launcher"
-        app:tint="@color/white" />
 
     <TextView
         android:layout_width="wrap_content"

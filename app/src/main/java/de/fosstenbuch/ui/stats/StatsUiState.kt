@@ -24,12 +24,7 @@ data class StatsUiState(
     val businessDistanceKm: Double = 0.0,
     val privateDistanceKm: Double = 0.0,
     val tripCount: Int = 0,
-    val monthlyDistances: List<MonthlyDistance> = emptyList(),
-
-    // Export
-    val isExporting: Boolean = false,
-    val exportSuccess: Boolean = false,
-    val exportedFilePath: String? = null
+    val monthlyDistances: List<MonthlyDistance> = emptyList()
 ) {
     val averageDistancePerTrip: Double
         get() = if (tripCount > 0) totalDistanceKm / tripCount else 0.0

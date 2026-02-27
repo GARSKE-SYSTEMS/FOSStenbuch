@@ -33,6 +33,10 @@ class ExportFragment : Fragment() {
     private lateinit var purposeFilterAdapter: PurposeFilterAdapter
     private val dateFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy")
 
+    // Dropdown change tracking
+    private var lastExportVehicles: List<de.fosstenbuch.data.model.Vehicle> = emptyList()
+    private var lastSelectedVehicleId: Long? = -1L
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -47,6 +51,7 @@ class ExportFragment : Fragment() {
         setupPurposeFilter()
         setupDatePickers()
         setupFormatSelection()
+        setupExportTracking()
         setupExportButton()
         observeState()
     }
@@ -99,6 +104,15 @@ class ExportFragment : Fragment() {
         }
     }
 
+    private fun setupExportTracking() {
+        binding.switchOnlyNew.setOnCheckedChangeListener { _, isChecked ->
+            viewModel.setOnlyNew(isChecked)
+        }
+        binding.switchMarkExported.setOnCheckedChangeListener { _, isChecked ->
+            viewModel.setMarkAsExported(isChecked)
+        }
+    }
+
     private fun setupExportButton() {
         binding.buttonExport.setOnClickListener {
             viewModel.performExport()
@@ -122,8 +136,12 @@ class ExportFragment : Fragment() {
                     }
                     purposeFilterAdapter.submitList(filterItems)
 
-                    // Vehicle dropdown
-                    setupVehicleDropdown(state)
+                    // Vehicle dropdown — only rebuild when data changes
+                    if (state.vehicles != lastExportVehicles || state.selectedVehicleId != lastSelectedVehicleId) {
+                        lastExportVehicles = state.vehicles
+                        lastSelectedVehicleId = state.selectedVehicleId
+                        setupVehicleDropdown(state)
+                    }
 
                     // Trip count preview
                     binding.textTripCount.text = getString(
@@ -136,6 +154,8 @@ class ExportFragment : Fragment() {
                         ExportFormat.PDF -> binding.radioPdf.isChecked = true
                     }
                     binding.switchAuditLog.isChecked = state.includeAuditLog
+                    binding.switchOnlyNew.isChecked = state.onlyNew
+                    binding.switchMarkExported.isChecked = state.markAsExported
 
                     // Loading/exporting
                     binding.progressExporting.visibility =
@@ -168,8 +188,10 @@ class ExportFragment : Fragment() {
         val currentIndex = state.selectedVehicleId?.let { id ->
             state.vehicles.indexOfFirst { it.id == id } + 1
         } ?: 0
-        if (currentIndex in items.indices) {
-            binding.spinnerVehicle.setText(items[currentIndex], false)
+        binding.spinnerVehicle.post {
+            if (currentIndex in items.indices) {
+                binding.spinnerVehicle.setText(items[currentIndex], false)
+            }
         }
 
         binding.spinnerVehicle.setOnItemClickListener { _, _, position, _ ->

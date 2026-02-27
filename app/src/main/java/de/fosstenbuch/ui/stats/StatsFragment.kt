@@ -1,27 +1,22 @@
 package de.fosstenbuch.ui.stats
 
 import android.app.DatePickerDialog
-import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
 import de.fosstenbuch.R
 import de.fosstenbuch.databinding.FragmentStatsBinding
-import de.fosstenbuch.domain.export.ExportFormat
 import kotlinx.coroutines.launch
 import timber.log.Timber
-import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -53,7 +48,6 @@ class StatsFragment : Fragment() {
         setupYearSelector()
         setupMonthSelector()
         setupCustomDateRange()
-        setupExportButton()
         observeState()
     }
 
@@ -117,44 +111,6 @@ class StatsFragment : Fragment() {
         }
     }
 
-    private fun setupExportButton() {
-        binding.buttonExport.setOnClickListener {
-            showExportDialog()
-        }
-    }
-
-    private fun showExportDialog() {
-        val ctx = context ?: return
-        val dialogView = layoutInflater.inflate(R.layout.dialog_stats_export, null)
-        val checkOnlyNew = dialogView.findViewById<com.google.android.material.switchmaterial.SwitchMaterial>(R.id.switch_only_new)
-        val checkMarkExported = dialogView.findViewById<com.google.android.material.switchmaterial.SwitchMaterial>(R.id.switch_mark_exported)
-        val radioGroup = dialogView.findViewById<android.widget.RadioGroup>(R.id.radio_format)
-        val textTripCount = dialogView.findViewById<android.widget.TextView>(R.id.text_export_trip_count)
-
-        // Update trip count when toggle changes
-        fun updateCount() {
-            viewModel.getExportTripCount(checkOnlyNew.isChecked) { count ->
-                textTripCount.text = getString(R.string.stats_export_trip_count, count)
-            }
-        }
-        updateCount()
-
-        checkOnlyNew.setOnCheckedChangeListener { _, _ -> updateCount() }
-
-        MaterialAlertDialogBuilder(ctx)
-            .setTitle(R.string.stats_export_dialog_title)
-            .setView(dialogView)
-            .setPositiveButton(R.string.export_button) { _, _ ->
-                val format = when (radioGroup.checkedRadioButtonId) {
-                    R.id.radio_pdf -> ExportFormat.PDF
-                    else -> ExportFormat.CSV
-                }
-                viewModel.performExport(format, checkOnlyNew.isChecked, checkMarkExported.isChecked)
-            }
-            .setNegativeButton(R.string.cancel, null)
-            .show()
-    }
-
     private fun observeState() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -190,19 +146,10 @@ class StatsFragment : Fragment() {
                         statsAdapter.submitList(buildStatItems(state))
                     }
 
-                    // Export button enabled
-                    binding.buttonExport.isEnabled = !state.isExporting && state.tripCount > 0
-
                     // Error
                     state.error?.let { error ->
                         Snackbar.make(binding.root, error, Snackbar.LENGTH_LONG).show()
                         viewModel.clearError()
-                    }
-
-                    // Export success → share
-                    if (state.exportSuccess && state.exportedFilePath != null && isAdded) {
-                        shareFile(File(state.exportedFilePath))
-                        viewModel.consumeExportSuccess()
                     }
                 }
             }
@@ -283,23 +230,6 @@ class StatsFragment : Fragment() {
         )
 
         return items
-    }
-
-    private fun shareFile(file: File) {
-        val ctx = context ?: return
-        val contentUri = FileProvider.getUriForFile(
-            ctx,
-            "${ctx.packageName}.fileprovider",
-            file
-        )
-        val mimeType = if (file.extension == "pdf") "application/pdf" else "text/csv"
-        val shareIntent = Intent(Intent.ACTION_SEND).apply {
-            type = mimeType
-            putExtra(Intent.EXTRA_STREAM, contentUri)
-            putExtra(Intent.EXTRA_SUBJECT, getString(R.string.export_share_subject))
-            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        }
-        startActivity(Intent.createChooser(shareIntent, getString(R.string.export_share_title)))
     }
 
     override fun onDestroyView() {

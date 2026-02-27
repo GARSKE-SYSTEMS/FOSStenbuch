@@ -18,6 +18,10 @@ data class ExportUiState(
     val format: ExportFormat = ExportFormat.CSV,
     val includeAuditLog: Boolean = false,
 
+    // Export tracking
+    val onlyNew: Boolean = false,
+    val markAsExported: Boolean = false,
+
     // Available data
     val purposes: List<TripPurpose> = emptyList(),
     val selectedPurposeIds: Set<Long> = emptySet(),

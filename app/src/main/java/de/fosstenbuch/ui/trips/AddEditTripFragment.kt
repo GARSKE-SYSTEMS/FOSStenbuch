@@ -539,7 +539,9 @@ class AddEditTripFragment : Fragment() {
         } else if (vehicleList.size == 1) {
             // Auto-select if only one vehicle exists
             selectedVehicleId = vehicleList[0].id
-            spinner.post { spinner.setText(items[0], false) }
+            spinner.post {
+                spinner.setText(items[0], false)
+            }
             viewModel.onVehicleChanged(selectedVehicleId)
         }
 

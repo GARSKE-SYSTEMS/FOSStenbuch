@@ -34,6 +34,14 @@ class SettingsFragment : Fragment() {
 
     private val viewModel: SettingsViewModel by viewModels()
 
+    // Dropdown change tracking to avoid unnecessary adapter recreation
+    private var lastDarkMode: PreferencesManager.DarkMode? = null
+    private var lastDistanceUnit: PreferencesManager.DistanceUnit? = null
+    private var lastPurposes: List<de.fosstenbuch.data.model.TripPurpose> = emptyList()
+    private var lastDefaultPurposeId: Long? = -1L
+    private var lastVehicles: List<de.fosstenbuch.data.model.Vehicle> = emptyList()
+    private var lastDefaultVehicleId: Long? = -1L
+
     private val restoreFilePicker = registerForActivityResult(
         ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
@@ -223,25 +231,39 @@ class SettingsFragment : Fragment() {
                     // Loading
                     binding.progressBar.visibility = if (state.isLoading) View.VISIBLE else View.GONE
 
-                    // Dark mode dropdown
-                    val darkModeLabels = resources.getStringArray(R.array.dark_mode_options)
-                    binding.dropdownDarkMode.setText(
-                        darkModeLabels[state.darkMode.ordinal],
-                        false
-                    )
+                    // Dark mode dropdown — only update when changed
+                    if (state.darkMode != lastDarkMode) {
+                        lastDarkMode = state.darkMode
+                        val darkModeLabels = resources.getStringArray(R.array.dark_mode_options)
+                        binding.dropdownDarkMode.setText(
+                            darkModeLabels[state.darkMode.ordinal],
+                            false
+                        )
+                    }
 
-                    // Distance unit dropdown
-                    val unitLabels = resources.getStringArray(R.array.distance_unit_options)
-                    binding.dropdownDistanceUnit.setText(
-                        unitLabels[state.distanceUnit.ordinal],
-                        false
-                    )
+                    // Distance unit dropdown — only update when changed
+                    if (state.distanceUnit != lastDistanceUnit) {
+                        lastDistanceUnit = state.distanceUnit
+                        val unitLabels = resources.getStringArray(R.array.distance_unit_options)
+                        binding.dropdownDistanceUnit.setText(
+                            unitLabels[state.distanceUnit.ordinal],
+                            false
+                        )
+                    }
 
-                    // Default purpose dropdown
-                    updatePurposeDropdown(state)
+                    // Default purpose dropdown — only rebuild adapter when data changes
+                    if (state.purposes != lastPurposes || state.defaultPurposeId != lastDefaultPurposeId) {
+                        lastPurposes = state.purposes
+                        lastDefaultPurposeId = state.defaultPurposeId
+                        updatePurposeDropdown(state)
+                    }
 
-                    // Default vehicle dropdown
-                    updateVehicleDropdown(state)
+                    // Default vehicle dropdown — only rebuild adapter when data changes
+                    if (state.vehicles != lastVehicles || state.defaultVehicleId != lastDefaultVehicleId) {
+                        lastVehicles = state.vehicles
+                        lastDefaultVehicleId = state.defaultVehicleId
+                        updateVehicleDropdown(state)
+                    }
 
                     // Error
                     state.error?.let {
@@ -295,7 +317,9 @@ class SettingsFragment : Fragment() {
         binding.dropdownDefaultPurpose.setAdapter(purposeAdapter)
 
         val selectedIndex = purposeIds.indexOf(state.defaultPurposeId).takeIf { it >= 0 } ?: 0
-        binding.dropdownDefaultPurpose.setText(purposeNames[selectedIndex], false)
+        binding.dropdownDefaultPurpose.post {
+            binding.dropdownDefaultPurpose.setText(purposeNames[selectedIndex], false)
+        }
 
         binding.dropdownDefaultPurpose.setOnItemClickListener { _, _, position, _ ->
             viewModel.setDefaultPurpose(purposeIds[position])
@@ -318,7 +342,9 @@ class SettingsFragment : Fragment() {
         binding.dropdownDefaultVehicle.setAdapter(vehicleAdapter)
 
         val selectedIndex = vehicleIds.indexOf(state.defaultVehicleId).takeIf { it >= 0 } ?: 0
-        binding.dropdownDefaultVehicle.setText(vehicleNames[selectedIndex], false)
+        binding.dropdownDefaultVehicle.post {
+            binding.dropdownDefaultVehicle.setText(vehicleNames[selectedIndex], false)
+        }
 
         binding.dropdownDefaultVehicle.setOnItemClickListener { _, _, position, _ ->
             viewModel.setDefaultVehicle(vehicleIds[position])

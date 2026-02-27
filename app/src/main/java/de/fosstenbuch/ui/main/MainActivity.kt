@@ -1,6 +1,9 @@
 package de.fosstenbuch.ui.main
 
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
+import android.view.LayoutInflater
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.drawerlayout.widget.DrawerLayout
@@ -74,6 +77,28 @@ class MainActivity : AppCompatActivity() {
             navController.navigate(menuItem.itemId)
             drawerLayout.closeDrawers()
             true
+        }
+
+        // Add sticky footer with company info
+        setupDrawerFooter(navView, drawerLayout)
+    }
+
+    private fun setupDrawerFooter(navView: NavigationView, drawerLayout: DrawerLayout) {
+        val footerView = LayoutInflater.from(this).inflate(R.layout.nav_footer, navView, false)
+
+        // Make footer stick to the bottom
+        val params = android.widget.FrameLayout.LayoutParams(
+            android.widget.FrameLayout.LayoutParams.MATCH_PARENT,
+            android.widget.FrameLayout.LayoutParams.WRAP_CONTENT
+        ).apply {
+            gravity = android.view.Gravity.BOTTOM
+        }
+        navView.addView(footerView, params)
+
+        footerView.findViewById<android.view.View>(R.id.layout_info).setOnClickListener {
+            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://garske-systems.de"))
+            startActivity(intent)
+            drawerLayout.closeDrawers()
         }
     }
 

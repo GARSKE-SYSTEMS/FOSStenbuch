@@ -150,15 +150,6 @@
     <string name="stats_filter_custom">Zeitraum</string>
     <string name="stats_from">Von</string>
     <string name="stats_to">Bis</string>
-    <string name="stats_export">Exportieren</string>
-    <string name="stats_export_dialog_title">Export-Einstellungen</string>
-    <string name="stats_export_only_new">Nur neue Fahrten exportieren</string>
-    <string name="stats_export_only_new_hint">Nur Fahrten, die noch nicht exportiert wurden</string>
-    <string name="stats_export_mark_exported">Als exportiert markieren</string>
-    <string name="stats_export_mark_exported_hint">Exportierte Fahrten werden in zukünftigen Exporten nicht enthalten sein</string>
-    <string name="stats_export_format">Format</string>
-    <string name="stats_export_trip_count">%d Fahrten werden exportiert</string>
-    <string name="stats_export_no_trips">Keine Fahrten zum Exportieren</string>
     <string name="stats_month_label">%1$s %2$d</string>
 
     <!-- Month names -->
@@ -199,6 +190,11 @@
     <string name="export_format_pdf">PDF</string>
     <string name="export_include_audit_log">Änderungsprotokoll einschließen</string>
     <string name="export_trip_count_preview">%d Fahrten im ausgewählten Zeitraum</string>
+    <string name="export_tracking_title">Exportverlauf</string>
+    <string name="export_only_new">Nur neue Fahrten exportieren</string>
+    <string name="export_only_new_hint">Nur Fahrten, die noch nicht exportiert wurden</string>
+    <string name="export_mark_exported">Als exportiert markieren</string>
+    <string name="export_mark_exported_hint">Exportierte Fahrten werden in zukünftigen Exporten nicht enthalten sein</string>
     <string name="export_button">Exportieren</string>
     <string name="export_share_subject">FOSStenbuch Export</string>
     <string name="export_share_title">Export teilen</string>
@@ -342,4 +338,10 @@
 
     <!-- Location autocomplete -->
     <string name="add_new_location_suggestion">"%s" als neuen Standort speichern…</string>
+
+    <!-- Info footer -->
+    <string name="info_developed_by">Developed by Garske Systems</string>
+    <string name="info_company_name">Garske Systems, Inh. Patrick Garske</string>
+    <string name="info_website">garske-systems.de</string>
+    <string name="info_garske_logo_cd">Garske Systems Logo</string>
 </resources>

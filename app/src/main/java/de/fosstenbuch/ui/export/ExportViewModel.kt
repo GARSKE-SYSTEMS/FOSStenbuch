@@ -8,6 +8,7 @@ import de.fosstenbuch.data.model.Trip
 import de.fosstenbuch.data.model.TripAuditLog
 import de.fosstenbuch.data.model.TripPurpose
 import de.fosstenbuch.data.model.Vehicle
+import de.fosstenbuch.data.repository.TripRepository
 import de.fosstenbuch.domain.export.CsvTripExporter
 import de.fosstenbuch.domain.export.ExportConfig
 import de.fosstenbuch.domain.export.ExportFormat
@@ -31,6 +32,7 @@ class ExportViewModel @Inject constructor(
     private val getAllTripsUseCase: GetAllTripsUseCase,
     private val getAllPurposesUseCase: GetAllPurposesUseCase,
     private val getAllVehiclesUseCase: GetAllVehiclesUseCase,
+    private val tripRepository: TripRepository,
     private val tripAuditLogDao: TripAuditLogDao,
     private val csvTripExporter: CsvTripExporter,
     private val pdfTripExporter: PdfTripExporter
@@ -100,6 +102,15 @@ class ExportViewModel @Inject constructor(
         updateTripCount()
     }
 
+    fun setOnlyNew(onlyNew: Boolean) {
+        _uiState.update { it.copy(onlyNew = onlyNew) }
+        updateTripCount()
+    }
+
+    fun setMarkAsExported(mark: Boolean) {
+        _uiState.update { it.copy(markAsExported = mark) }
+    }
+
     fun clearError() {
         _uiState.update { it.copy(error = null) }
     }
@@ -161,6 +172,11 @@ class ExportViewModel @Inject constructor(
 
                 val file = exporter.export(config, trips, purposeMap, vehicleMap, auditLogs)
 
+                // Mark trips as exported if requested
+                if (state.markAsExported) {
+                    tripRepository.markTripsAsExported(trips.map { it.id })
+                }
+
                 _uiState.update {
                     it.copy(
                         isExporting = false,
@@ -182,12 +198,19 @@ class ExportViewModel @Inject constructor(
         val startMs = state.dateFrom.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
         val endMs = state.dateTo.atTime(23, 59, 59).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
 
-        val allTrips = getAllTripsUseCase().first()
+        // Use repository methods that respect isExported flag when onlyNew is set
+        val baseTrips = if (state.onlyNew) {
+            tripRepository.getUnexportedTripsByDateRange(startMs, endMs)
+        } else {
+            getAllTripsUseCase().first()
+                .filter { trip ->
+                    val tripMs = trip.date.time
+                    tripMs in startMs..endMs
+                }
+        }
 
-        return allTrips.filter { trip ->
-            val tripMs = trip.date.time
-            tripMs in startMs..endMs &&
-                (state.selectedPurposeIds.isEmpty() || trip.purposeId in state.selectedPurposeIds) &&
+        return baseTrips.filter { trip ->
+            (state.selectedPurposeIds.isEmpty() || trip.purposeId in state.selectedPurposeIds) &&
                 (state.selectedVehicleId == null || trip.vehicleId == state.selectedVehicleId)
         }.sortedBy { it.date }
     }
