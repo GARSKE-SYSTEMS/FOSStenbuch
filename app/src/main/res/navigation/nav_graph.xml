@@ -28,6 +28,10 @@
             app:argType="long"
             android:defaultValue="0L" />
 
+        <action
+            android:id="@+id/action_add_edit_trip_to_add_edit_location"
+            app:destination="@id/navigation_add_edit_location" />
+
     </fragment>
 
     <fragment

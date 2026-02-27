@@ -30,6 +30,7 @@ import de.fosstenbuch.data.model.TripPurpose
 import de.fosstenbuch.data.model.TripTemplate
 import de.fosstenbuch.data.model.Vehicle
 import de.fosstenbuch.data.repository.TripTemplateRepository
+import de.fosstenbuch.data.repository.SavedLocationRepository
 import de.fosstenbuch.databinding.FragmentAddEditTripBinding
 import de.fosstenbuch.domain.service.LocationTrackingService
 import de.fosstenbuch.domain.usecase.location.FindNearestSavedLocationUseCase
@@ -64,6 +65,14 @@ class AddEditTripFragment : Fragment() {
     @Inject
     lateinit var tripTemplateRepository: TripTemplateRepository
 
+    @Inject
+    lateinit var savedLocationRepository: SavedLocationRepository
+
+    private lateinit var locationAdapterStart: LocationSuggestionAdapter
+    private lateinit var locationAdapterEnd: LocationSuggestionAdapter
+    private lateinit var locationAdapterStartEdit: LocationSuggestionAdapter
+    private lateinit var locationAdapterEndEdit: LocationSuggestionAdapter
+
     private val locationPermissionRequest = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
@@ -88,6 +97,7 @@ class AddEditTripFragment : Fragment() {
         setupDateTimePickers()
         setupButtons()
         setupOdometerAutoCalculation()
+        setupLocationAutocomplete()
         observeState()
         observeGpsDistance()
         tryLocationSuggestion()
@@ -145,6 +155,46 @@ class AddEditTripFragment : Fragment() {
             cal.get(Calendar.MONTH),
             cal.get(Calendar.DAY_OF_MONTH)
         ).show()
+    }
+
+    // ========== Location Autocomplete ==========
+
+    private fun setupLocationAutocomplete() {
+        val onAddNew = { query: String ->
+            findNavController().navigate(R.id.action_add_edit_trip_to_add_edit_location)
+        }
+
+        locationAdapterStart = LocationSuggestionAdapter(requireContext(), onAddNew)
+        locationAdapterEnd = LocationSuggestionAdapter(requireContext(), onAddNew)
+        locationAdapterStartEdit = LocationSuggestionAdapter(requireContext(), onAddNew)
+        locationAdapterEndEdit = LocationSuggestionAdapter(requireContext(), onAddNew)
+
+        binding.editStartLocation.setAdapter(locationAdapterStart)
+        binding.editEndLocation.setAdapter(locationAdapterEnd)
+        binding.editStartLocationEdit.setAdapter(locationAdapterStartEdit)
+        binding.editEndLocationEdit.setAdapter(locationAdapterEndEdit)
+
+        val handleItemClick = { parent: android.widget.AdapterView<*>, position: Int ->
+            val item = parent.getItemAtPosition(position)
+            if (item is LocationSuggestion.AddNew) {
+                onAddNew(item.query)
+            }
+        }
+
+        binding.editStartLocation.setOnItemClickListener { parent, _, pos, _ -> handleItemClick(parent, pos) }
+        binding.editEndLocation.setOnItemClickListener { parent, _, pos, _ -> handleItemClick(parent, pos) }
+        binding.editStartLocationEdit.setOnItemClickListener { parent, _, pos, _ -> handleItemClick(parent, pos) }
+        binding.editEndLocationEdit.setOnItemClickListener { parent, _, pos, _ -> handleItemClick(parent, pos) }
+
+        // Load saved locations
+        viewLifecycleOwner.lifecycleScope.launch {
+            savedLocationRepository.getAllSavedLocations().collect { locations ->
+                locationAdapterStart.updateLocations(locations)
+                locationAdapterEnd.updateLocations(locations)
+                locationAdapterStartEdit.updateLocations(locations)
+                locationAdapterEndEdit.updateLocations(locations)
+            }
+        }
     }
 
     // ========== Button setup ==========
@@ -303,7 +353,12 @@ class AddEditTripFragment : Fragment() {
                         if (state.isSaving) View.VISIBLE else View.GONE
                     binding.buttonStartTrip.isEnabled = !state.isSaving
                     binding.buttonSave.isEnabled = !state.isSaving
-                    binding.buttonSaveEdit.isEnabled = !state.isSaving
+                    binding.buttonSaveEdit.isEnabled = !state.isSaving && !state.isAuditLocked
+
+                    // Audit-locked: disable all edit fields
+                    if (state.isAuditLocked && state.phase == TripPhase.EDIT) {
+                        applyAuditLock()
+                    }
 
                     // Validation errors
                     state.validationResult?.let { validation ->
@@ -495,6 +550,30 @@ class AddEditTripFragment : Fragment() {
         spinner.setOnItemClickListener { _, _, position, _ ->
             selectedPurposeId = purposeList[position].id
         }
+    }
+
+    // ========== Audit lock (edit phase) ==========
+
+    private var auditLockApplied = false
+
+    private fun applyAuditLock() {
+        if (auditLockApplied) return
+        auditLockApplied = true
+
+        binding.editDateEdit.isEnabled = false
+        binding.editStartLocationEdit.isEnabled = false
+        binding.editEndLocationEdit.isEnabled = false
+        binding.editDistanceEdit.isEnabled = false
+        binding.editStartOdometerEdit.isEnabled = false
+        binding.editEndOdometerEdit.isEnabled = false
+        binding.editPurposeEdit.isEnabled = false
+        binding.spinnerPurposeCategoryEdit.isEnabled = false
+        binding.spinnerVehicleEdit.isEnabled = false
+        binding.editNotesEdit.isEnabled = false
+        binding.buttonSaveEdit.isEnabled = false
+        binding.buttonSaveEdit.text = getString(R.string.audit_locked_hint)
+        binding.buttonUseTemplate.isEnabled = false
+        binding.buttonSaveAsTemplate.isEnabled = false
     }
 
     // ========== Error clearing ==========

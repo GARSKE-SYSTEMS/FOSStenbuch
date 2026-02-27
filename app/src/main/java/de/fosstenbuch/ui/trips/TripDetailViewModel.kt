@@ -13,6 +13,7 @@ import de.fosstenbuch.domain.usecase.trip.InsertTripUseCase
 import de.fosstenbuch.domain.usecase.trip.StartTripUseCase
 import de.fosstenbuch.domain.usecase.trip.UpdateTripUseCase
 import de.fosstenbuch.domain.usecase.vehicle.GetAllVehiclesUseCase
+import de.fosstenbuch.domain.usecase.audit.IsVehicleAuditProtectedUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -32,7 +33,8 @@ class TripDetailViewModel @Inject constructor(
     private val endTripUseCase: EndTripUseCase,
     private val getAllVehiclesUseCase: GetAllVehiclesUseCase,
     private val getAllPurposesUseCase: GetAllPurposesUseCase,
-    private val tripRepository: TripRepository
+    private val tripRepository: TripRepository,
+    private val isVehicleAuditProtectedUseCase: IsVehicleAuditProtectedUseCase
 ) : ViewModel() {
 
     private val tripId: Long? = savedStateHandle.get<Long>("tripId")?.takeIf { it > 0 }
@@ -91,6 +93,10 @@ class TripDetailViewModel @Inject constructor(
                     _uiState.update {
                         it.copy(isLoading = false, trip = trip, phase = phase)
                     }
+                    // Check audit protection for the trip's vehicle
+                    if (phase == TripPhase.EDIT && trip?.vehicleId != null) {
+                        checkAuditProtection(trip.vehicleId)
+                    }
                 }
         }
     }
@@ -103,6 +109,16 @@ class TripDetailViewModel @Inject constructor(
                 tripRepository.getLastEndOdometer()
             }
             _uiState.update { it.copy(lastEndOdometer = lastOdometer) }
+        }
+    }
+
+    private fun checkAuditProtection(vehicleId: Long) {
+        viewModelScope.launch {
+            isVehicleAuditProtectedUseCase(vehicleId)
+                .catch { e -> Timber.e(e, "Failed to check audit protection") }
+                .collect { isProtected ->
+                    _uiState.update { it.copy(isAuditLocked = isProtected) }
+                }
         }
     }
 

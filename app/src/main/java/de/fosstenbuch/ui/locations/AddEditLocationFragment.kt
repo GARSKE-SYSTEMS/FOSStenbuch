@@ -3,6 +3,8 @@ package de.fosstenbuch.ui.locations
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -24,6 +26,7 @@ import de.fosstenbuch.data.model.SavedLocation
 import de.fosstenbuch.databinding.FragmentAddEditLocationBinding
 import kotlinx.coroutines.launch
 import timber.log.Timber
+import java.util.Locale
 
 @AndroidEntryPoint
 class AddEditLocationFragment : Fragment() {
@@ -58,6 +61,7 @@ class AddEditLocationFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         setupGetLocationButton()
         setupSaveButton()
+        setupCommaToDotsWatcher()
         observeState()
     }
 
@@ -95,8 +99,8 @@ class AddEditLocationFragment : Fragment() {
             cancellationToken.token
         ).addOnSuccessListener { location ->
             if (location != null) {
-                binding.editLatitude.setText(String.format("%.6f", location.latitude))
-                binding.editLongitude.setText(String.format("%.6f", location.longitude))
+                binding.editLatitude.setText(String.format(Locale.US, "%.6f", location.latitude))
+                binding.editLongitude.setText(String.format(Locale.US, "%.6f", location.longitude))
             } else {
                 Snackbar.make(binding.root, R.string.location_not_available, Snackbar.LENGTH_SHORT).show()
             }
@@ -104,6 +108,23 @@ class AddEditLocationFragment : Fragment() {
             Timber.e(e, "Failed to get current location")
             Snackbar.make(binding.root, R.string.location_not_available, Snackbar.LENGTH_SHORT).show()
         }
+    }
+
+    private fun setupCommaToDotsWatcher() {
+        val commaWatcher = object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: Editable?) {
+                s ?: return
+                val text = s.toString()
+                if (',' in text) {
+                    val replaced = text.replace(',', '.')
+                    s.replace(0, s.length, replaced)
+                }
+            }
+        }
+        binding.editLatitude.addTextChangedListener(commaWatcher)
+        binding.editLongitude.addTextChangedListener(commaWatcher)
     }
 
     private fun setupSaveButton() {
@@ -179,8 +200,8 @@ class AddEditLocationFragment : Fragment() {
 
         binding.editName.setText(location.name)
         binding.editAddress.setText(location.address ?: "")
-        binding.editLatitude.setText(String.format("%.6f", location.latitude))
-        binding.editLongitude.setText(String.format("%.6f", location.longitude))
+        binding.editLatitude.setText(String.format(Locale.US, "%.6f", location.latitude))
+        binding.editLongitude.setText(String.format(Locale.US, "%.6f", location.longitude))
     }
 
     override fun onDestroyView() {

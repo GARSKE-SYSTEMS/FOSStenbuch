@@ -12,6 +12,7 @@ data class VehicleDetailUiState(
     val isEditing: Boolean = false,
     val isSaving: Boolean = false,
     val savedSuccessfully: Boolean = false,
+    val deletedSuccessfully: Boolean = false,
     val validationResult: ValidationResult? = null,
     val error: String? = null
 )

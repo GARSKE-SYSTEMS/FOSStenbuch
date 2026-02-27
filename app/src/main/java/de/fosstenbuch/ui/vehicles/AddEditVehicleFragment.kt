@@ -42,6 +42,7 @@ class AddEditVehicleFragment : Fragment() {
         setupFuelTypeDropdown()
         setupAuditProtection()
         setupSaveButton()
+        setupDeleteButton()
         observeState()
     }
 
@@ -77,6 +78,20 @@ class AddEditVehicleFragment : Fragment() {
             clearErrors()
             val vehicle = buildVehicleFromForm()
             viewModel.saveVehicle(vehicle)
+        }
+    }
+
+    private fun setupDeleteButton() {
+        binding.buttonDelete.setOnClickListener {
+            val vehicle = viewModel.uiState.value.vehicle ?: return@setOnClickListener
+            MaterialAlertDialogBuilder(requireContext())
+                .setTitle(R.string.delete_vehicle_title)
+                .setMessage(R.string.delete_vehicle_message)
+                .setPositiveButton(R.string.delete) { _, _ ->
+                    viewModel.deleteVehicle(vehicle)
+                }
+                .setNegativeButton(R.string.cancel, null)
+                .show()
         }
     }
 
@@ -130,6 +145,11 @@ class AddEditVehicleFragment : Fragment() {
                         viewModel.onSaveConsumed()
                         findNavController().popBackStack()
                     }
+
+                    // Successfully deleted
+                    if (state.deletedSuccessfully) {
+                        findNavController().popBackStack()
+                    }
                 }
             }
         }
@@ -147,6 +167,9 @@ class AddEditVehicleFragment : Fragment() {
         binding.spinnerFuelType.setText(vehicle.fuelType, false)
         binding.switchPrimary.isChecked = vehicle.isPrimary
         binding.editNotes.setText(vehicle.notes ?: "")
+
+        // Show delete button for existing vehicles
+        binding.buttonDelete.visibility = View.VISIBLE
 
         // Audit protection - once enabled, cannot be disabled
         if (vehicle.auditProtected) {

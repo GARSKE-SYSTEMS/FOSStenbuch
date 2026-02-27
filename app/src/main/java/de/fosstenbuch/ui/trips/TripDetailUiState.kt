@@ -32,5 +32,6 @@ data class TripDetailUiState(
     val vehicles: List<Vehicle> = emptyList(),
     val purposes: List<TripPurpose> = emptyList(),
     val lastEndOdometer: Int? = null,
-    val gpsDistanceKm: Double = 0.0
+    val gpsDistanceKm: Double = 0.0,
+    val isAuditLocked: Boolean = false
 )

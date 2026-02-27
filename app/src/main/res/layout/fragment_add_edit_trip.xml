@@ -51,12 +51,13 @@
                 android:hint="@string/start_location"
                 app:startIconDrawable="@drawable/ic_location">
 
-                <com.google.android.material.textfield.TextInputEditText
+                <AutoCompleteTextView
                     android:id="@+id/edit_start_location"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:inputType="text"
-                    android:maxLength="200" />
+                    android:maxLength="200"
+                    android:completionThreshold="1" />
 
             </com.google.android.material.textfield.TextInputLayout>
 
@@ -192,12 +193,13 @@
                 android:hint="@string/end_location"
                 app:startIconDrawable="@drawable/ic_location">
 
-                <com.google.android.material.textfield.TextInputEditText
+                <AutoCompleteTextView
                     android:id="@+id/edit_end_location"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:inputType="text"
-                    android:maxLength="200" />
+                    android:maxLength="200"
+                    android:completionThreshold="1" />
 
             </com.google.android.material.textfield.TextInputLayout>
 
@@ -373,12 +375,13 @@
                 android:layout_marginBottom="12dp"
                 android:hint="@string/start_location">
 
-                <com.google.android.material.textfield.TextInputEditText
+                <AutoCompleteTextView
                     android:id="@+id/edit_start_location_edit"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:inputType="text"
-                    android:maxLength="200" />
+                    android:maxLength="200"
+                    android:completionThreshold="1" />
 
             </com.google.android.material.textfield.TextInputLayout>
 
@@ -391,33 +394,13 @@
                 android:layout_marginBottom="12dp"
                 android:hint="@string/end_location">
 
-                <com.google.android.material.textfield.TextInputEditText
+                <AutoCompleteTextView
                     android:id="@+id/edit_end_location_edit"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:inputType="text"
-                    android:maxLength="200" />
-
-            </com.google.android.material.textfield.TextInputLayout>
-
-            <!-- Distance -->
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/layout_distance_edit"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="12dp"
-                android:hint="@string/distance_km"
-                app:suffixText="km">
-
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/edit_distance_edit"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:inputType="numberDecimal"
-                    android:focusable="false"
-                    android:clickable="false"
-                    android:cursorVisible="false" />
+                    android:maxLength="200"
+                    android:completionThreshold="1" />
 
             </com.google.android.material.textfield.TextInputLayout>
 
@@ -466,6 +449,27 @@
                 </com.google.android.material.textfield.TextInputLayout>
 
             </LinearLayout>
+
+            <!-- Distance (auto-calculated, below odometer) -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/layout_distance_edit"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                android:hint="@string/distance_km"
+                app:suffixText="km">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/edit_distance_edit"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="numberDecimal"
+                    android:focusable="false"
+                    android:clickable="false"
+                    android:cursorVisible="false" />
+
+            </com.google.android.material.textfield.TextInputLayout>
 
             <!-- Purpose description -->
             <com.google.android.material.textfield.TextInputLayout

@@ -328,4 +328,10 @@
     <string name="tracking_notification_title">Fahrt wird aufgezeichnet</string>
     <string name="tracking_notification_text">Gefahrene Strecke: %.1f km</string>
     <string name="trip_active">Aktiv</string>
+
+    <!-- Audit lock -->
+    <string name="audit_locked_hint">Änderungssicher — Bearbeitung gesperrt</string>
+
+    <!-- Location autocomplete -->
+    <string name="add_new_location_suggestion">"%s" als neuen Standort speichern…</string>
 </resources>
