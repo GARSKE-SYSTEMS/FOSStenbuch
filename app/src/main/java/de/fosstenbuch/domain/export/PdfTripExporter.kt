@@ -113,6 +113,7 @@ class PdfTripExporter @Inject constructor(
         fun startNewPage(): Pair<PdfDocument.Page, Canvas> {
             val pageInfo = PdfDocument.PageInfo.Builder(PAGE_WIDTH, PAGE_HEIGHT, pageNumber++).create()
             val page = document.startPage(pageInfo)
+            canvas = page.canvas
             return page to page.canvas
         }
 
