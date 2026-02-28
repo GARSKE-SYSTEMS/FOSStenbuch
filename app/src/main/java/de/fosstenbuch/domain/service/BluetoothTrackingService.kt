@@ -102,12 +102,13 @@ class BluetoothTrackingService : Service() {
     private val serviceScope  = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val mainHandler   = Handler(Looper.getMainLooper())
 
-    // ── Active-trip state ──────────────────────────────────────────────────
-    private var activeVehicleId      : Long?   = null
-    private var trackingStartTime    : Date?   = null
-    private var activeDeviceAddress  : String? = null
+    // ── Active-trip state (guarded by @Synchronized) ───────────────────────
+    private val lock = Any()
+    @Volatile private var activeVehicleId      : Long?   = null
+    @Volatile private var trackingStartTime    : Date?   = null
+    @Volatile private var activeDeviceAddress  : String? = null
     /** true = trip started via ACTION_FOUND (scanning), false = via ACL_CONNECTED */
-    private var discoveryBasedTracking = false
+    @Volatile private var discoveryBasedTracking = false
 
     private var notificationUpdateJob: Job? = null
 
@@ -172,8 +173,10 @@ class BluetoothTrackingService : Service() {
             addAction(BluetoothDevice.ACTION_FOUND)
             addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED)
         }
+        // RECEIVER_EXPORTED is required: these are system broadcasts from the BT stack,
+        // not from our own app. RECEIVER_NOT_EXPORTED silently drops them all.
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            registerReceiver(bluetoothReceiver, filter, RECEIVER_NOT_EXPORTED)
+            registerReceiver(bluetoothReceiver, filter, RECEIVER_EXPORTED)
         } else {
             @Suppress("UnspecifiedRegisterReceiverFlag")
             registerReceiver(bluetoothReceiver, filter)
@@ -223,39 +226,46 @@ class BluetoothTrackingService : Service() {
 
     /** Called when BT discovery finds a device nearby (no ACL connection required). */
     private fun handleDeviceFound(address: String, device: BluetoothDevice?) {
-        if (activeVehicleId != null) {
-            // If we see our currently tracked device → reset the watchdog
-            if (discoveryBasedTracking && address == activeDeviceAddress) {
-                mainHandler.removeCallbacks(watchdogRunnable)
-                mainHandler.postDelayed(watchdogRunnable, WATCHDOG_TIMEOUT_MS)
+        synchronized(lock) {
+            if (activeVehicleId != null) {
+                // If we see our currently tracked device → reset the watchdog
+                if (discoveryBasedTracking && address == activeDeviceAddress) {
+                    mainHandler.removeCallbacks(watchdogRunnable)
+                    mainHandler.postDelayed(watchdogRunnable, WATCHDOG_TIMEOUT_MS)
+                }
+                return
             }
-            return
         }
 
         serviceScope.launch {
             val vehicle = vehicleDao.getVehicleByBluetoothAddress(address) ?: return@launch
-            val name = readDeviceName(device)
-            Timber.i("BT found (scan): %s → vehicle '%s %s'", address, vehicle.make, vehicle.model)
-            startGhostTrip(vehicle.id, name, address, discoveryBased = true)
+            synchronized(lock) {
+                if (activeVehicleId != null) return@launch  // double-check after DB query
+                val name = readDeviceName(device)
+                Timber.i("BT found (scan): %s → vehicle '%s %s'", address, vehicle.make, vehicle.model)
+                startGhostTrip(vehicle.id, name, address, discoveryBased = true)
+            }
         }
     }
 
     /** Called when a device establishes a full ACL connection. */
     private fun handleConnected(address: String, device: BluetoothDevice?) {
         if (!hasBluetoothPermission()) {
-            Timber.w("BLUETOOTH_CONNECT permission missing")
+            Timber.w("BLUETOOTH_CONNECT permission missing – cannot process ACL_CONNECTED")
             return
         }
         serviceScope.launch {
             val vehicle = vehicleDao.getVehicleByBluetoothAddress(address) ?: return@launch
-            if (activeVehicleId != null) {
-                Timber.w("Already tracking vehicle %d – ignoring ACL_CONNECTED for %s",
-                    activeVehicleId, address)
-                return@launch
+            synchronized(lock) {
+                if (activeVehicleId != null) {
+                    Timber.w("Already tracking vehicle %d – ignoring ACL_CONNECTED for %s",
+                        activeVehicleId, address)
+                    return@launch
+                }
+                val name = readDeviceName(device)
+                Timber.i("BT connected (ACL): %s → vehicle '%s %s'", address, vehicle.make, vehicle.model)
+                startGhostTrip(vehicle.id, name, address, discoveryBased = false)
             }
-            val name = readDeviceName(device)
-            Timber.i("BT connected (ACL): %s → vehicle '%s %s'", address, vehicle.make, vehicle.model)
-            startGhostTrip(vehicle.id, name, address, discoveryBased = false)
         }
     }
 
@@ -288,7 +298,28 @@ class BluetoothTrackingService : Service() {
     }
 
     private fun endGhostTrip(address: String) {
-        val vehicleId = activeVehicleId ?: return
+        val vehicleId: Long
+        val startTime: Date
+        synchronized(lock) {
+            vehicleId = activeVehicleId ?: return
+            startTime = trackingStartTime ?: Date()
+
+            // Reset tracking state immediately to prevent double-end
+            activeVehicleId       = null
+            trackingStartTime     = null
+            activeDeviceAddress   = null
+            discoveryBasedTracking = false
+        }
+        _activeDeviceName.value = null
+        _recordingStartTimeMs.value = 0L
+
+        notificationUpdateJob?.cancel()
+        notificationUpdateJob = null
+        mainHandler.removeCallbacks(watchdogRunnable)
+        mainHandler.post { postNotification() }
+
+        // Resume idle discovery
+        scheduleNextDiscovery()
 
         serviceScope.launch {
             val vehicle = vehicleDao.getVehicleByBluetoothAddress(address)
@@ -297,28 +328,11 @@ class BluetoothTrackingService : Service() {
             Timber.i("Ghost trip ending for vehicle %d (address %s)", vehicleId, address)
 
             val endTime    = Date()
-            val startTime  = trackingStartTime ?: endTime
             val distanceKm = LocationTrackingService.gpsDistanceKm.value
             val startCoords = LocationTrackingService.startLocation.value
             val endCoords   = LocationTrackingService.currentLocation.value
 
             LocationTrackingService.stop(this@BluetoothTrackingService)
-
-            // Reset tracking state
-            activeVehicleId       = null
-            trackingStartTime     = null
-            activeDeviceAddress   = null
-            discoveryBasedTracking = false
-            _activeDeviceName.value = null
-            _recordingStartTimeMs.value = 0L
-
-            notificationUpdateJob?.cancel()
-            notificationUpdateJob = null
-            mainHandler.removeCallbacks(watchdogRunnable)
-            mainHandler.post { postNotification() }
-
-            // Resume idle discovery
-            scheduleNextDiscovery()
 
             if (startCoords == null) {
                 Timber.w("No GPS fix during session – ghost trip not saved")

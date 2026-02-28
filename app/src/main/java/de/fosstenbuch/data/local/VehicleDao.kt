@@ -38,6 +38,6 @@ interface VehicleDao {
     @Query("SELECT * FROM vehicles WHERE bluetoothDeviceAddress IS NOT NULL")
     suspend fun getVehiclesWithBluetooth(): List<Vehicle>
 
-    @Query("SELECT * FROM vehicles WHERE bluetoothDeviceAddress = :address LIMIT 1")
+    @Query("SELECT * FROM vehicles WHERE bluetoothDeviceAddress = :address COLLATE NOCASE LIMIT 1")
     suspend fun getVehicleByBluetoothAddress(address: String): Vehicle?
 }

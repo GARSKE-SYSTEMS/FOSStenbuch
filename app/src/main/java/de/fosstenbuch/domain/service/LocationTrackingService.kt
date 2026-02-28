@@ -92,6 +92,12 @@ class LocationTrackingService : Service() {
             ACTION_STOP -> {
                 stopTracking()
             }
+            else -> {
+                // System restarted the service with null intent (START_STICKY).
+                // We have no trip context, so shut down cleanly instead of running as zombie.
+                Timber.d("LocationTrackingService restarted with null intent – stopping")
+                stopSelf()
+            }
         }
         return START_STICKY
     }

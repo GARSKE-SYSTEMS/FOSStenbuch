@@ -77,8 +77,8 @@ class ResolveLocationNameUseCase @Inject constructor(
             Timber.w(e, "Nominatim reverse geocoding failed for (%.5f, %.5f)", lat, lng)
         }
 
-        // 3. Coordinate fallback
-        val fallback = "%.4f, %.4f".format(lat, lng)
+        // 3. Coordinate fallback (Locale.US ensures decimal dots, not commas)
+        val fallback = String.format(java.util.Locale.US, "%.4f, %.4f", lat, lng)
         Timber.d("Resolved (%.5f, %.5f) → coordinate fallback '%s'", lat, lng, fallback)
         fallback
     }
