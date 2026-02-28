@@ -45,6 +45,14 @@ class LocationTrackingService : Service() {
         private val _isTracking = MutableStateFlow(false)
         val isTracking: StateFlow<Boolean> = _isTracking.asStateFlow()
 
+        /** Lat/Lng of the very first GPS fix after tracking starts. */
+        private val _startLocation = MutableStateFlow<Pair<Double, Double>?>(null)
+        val startLocation: StateFlow<Pair<Double, Double>?> = _startLocation.asStateFlow()
+
+        /** Lat/Lng of the most recent GPS fix. */
+        private val _currentLocation = MutableStateFlow<Pair<Double, Double>?>(null)
+        val currentLocation: StateFlow<Pair<Double, Double>?> = _currentLocation.asStateFlow()
+
         fun start(context: Context, tripId: Long) {
             val intent = Intent(context, LocationTrackingService::class.java).apply {
                 action = ACTION_START
@@ -99,6 +107,8 @@ class LocationTrackingService : Service() {
         totalDistanceMeters = 0.0
         lastLocation = null
         _gpsDistanceKm.value = 0.0
+        _startLocation.value = null
+        _currentLocation.value = null
         _isTracking.value = true
 
         val notification = buildNotification(0.0)
@@ -145,6 +155,12 @@ class LocationTrackingService : Service() {
     }
 
     private fun processNewLocation(location: Location) {
+        // Record first fix as start location
+        if (_startLocation.value == null) {
+            _startLocation.value = Pair(location.latitude, location.longitude)
+        }
+        _currentLocation.value = Pair(location.latitude, location.longitude)
+
         val previous = lastLocation
         if (previous != null) {
             val distanceMeters = HaversineUtils.distanceInMeters(

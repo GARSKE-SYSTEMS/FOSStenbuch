@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import de.fosstenbuch.data.local.PreferencesManager
+import de.fosstenbuch.domain.service.BluetoothTrackingService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
@@ -13,7 +14,12 @@ import timber.log.Timber
 class BootReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action == Intent.ACTION_BOOT_COMPLETED) {
-            Timber.d("Boot completed, checking reminder schedule")
+            Timber.d("Boot completed, checking reminder schedule and BT tracking")
+
+            // Start the Bluetooth monitoring service unconditionally;
+            // it will silently do nothing if no vehicle has a BT device configured.
+            BluetoothTrackingService.start(context)
+
             val preferencesManager = PreferencesManager(context)
             CoroutineScope(Dispatchers.IO).launch {
                 val enabled = preferencesManager.reminderEnabled.first()
@@ -30,3 +36,4 @@ class BootReceiver : BroadcastReceiver() {
         }
     }
 }
+

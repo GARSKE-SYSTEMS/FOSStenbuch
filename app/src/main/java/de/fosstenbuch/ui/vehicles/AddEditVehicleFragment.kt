@@ -1,10 +1,18 @@
 package de.fosstenbuch.ui.vehicles
 
+import android.Manifest
+import android.bluetooth.BluetoothAdapter
+import android.bluetooth.BluetoothManager
+import android.content.Context
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
@@ -18,6 +26,7 @@ import de.fosstenbuch.R
 import de.fosstenbuch.data.model.Vehicle
 import de.fosstenbuch.databinding.FragmentAddEditVehicleBinding
 import de.fosstenbuch.domain.validation.VehicleValidator
+import de.fosstenbuch.domain.service.BluetoothTrackingService
 import de.fosstenbuch.ui.common.safePopBackStack
 import kotlinx.coroutines.launch
 
@@ -28,6 +37,22 @@ class AddEditVehicleFragment : Fragment() {
     private val binding get() = _binding!!
 
     private val viewModel: VehicleDetailViewModel by viewModels()
+
+    /** Currently selected Bluetooth device for automatic tracking. */
+    private var selectedBtAddress: String? = null
+    private var selectedBtName: String? = null
+
+    private val bluetoothPermissionRequest = registerForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        val granted = permissions.values.any { it }
+        if (granted) showBluetoothDevicePicker()
+        else Snackbar.make(
+            binding.root,
+            R.string.bluetooth_permission_denied,
+            Snackbar.LENGTH_LONG
+        ).show()
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -43,6 +68,7 @@ class AddEditVehicleFragment : Fragment() {
         setupFuelTypeDropdown()
         setupAuditProtection()
         setupSaveButton()
+        setupBluetoothSection()
         observeState()
     }
 
@@ -93,7 +119,9 @@ class AddEditVehicleFragment : Fragment() {
             isPrimary = binding.switchPrimary.isChecked,
             notes = binding.editNotes.text.toString().trim().ifEmpty { null },
             auditProtected = binding.switchAuditProtected.isChecked ||
-                (existingVehicle?.auditProtected ?: false) // Cannot uncheck once set
+                (existingVehicle?.auditProtected ?: false), // Cannot uncheck once set
+            bluetoothDeviceAddress = selectedBtAddress,
+            bluetoothDeviceName = selectedBtName
         )
     }
 
@@ -156,6 +184,13 @@ class AddEditVehicleFragment : Fragment() {
             binding.switchAuditProtected.isEnabled = false
             binding.textAuditHint.setText(R.string.audit_protection_active)
         }
+
+        // Restore Bluetooth device
+        if (vehicle.bluetoothDeviceAddress != null) {
+            selectedBtAddress = vehicle.bluetoothDeviceAddress
+            selectedBtName = vehicle.bluetoothDeviceName
+            showSelectedBtDevice(vehicle.bluetoothDeviceName ?: vehicle.bluetoothDeviceAddress, vehicle.bluetoothDeviceAddress)
+        }
     }
 
     private fun clearErrors() {
@@ -169,4 +204,75 @@ class AddEditVehicleFragment : Fragment() {
         super.onDestroyView()
         _binding = null
     }
-}
+
+    // ── Bluetooth device picker ───────────────────────────────────────────
+
+    private fun setupBluetoothSection() {
+        binding.buttonPickBtDevice.setOnClickListener {
+            requestBluetoothPermissionAndPick()
+        }
+        binding.buttonRemoveBtDevice.setOnClickListener {
+            selectedBtAddress = null
+            selectedBtName = null
+            binding.cardSelectedBtDevice.visibility = View.GONE
+            binding.buttonPickBtDevice.text = getString(R.string.bluetooth_pick_device)
+        }
+    }
+
+    private fun requestBluetoothPermissionAndPick() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val connectGranted = ContextCompat.checkSelfPermission(
+                requireContext(), Manifest.permission.BLUETOOTH_CONNECT
+            ) == PackageManager.PERMISSION_GRANTED
+            if (!connectGranted) {
+                bluetoothPermissionRequest.launch(
+                    arrayOf(Manifest.permission.BLUETOOTH_CONNECT, Manifest.permission.BLUETOOTH_SCAN)
+                )
+                return
+            }
+        }
+        showBluetoothDevicePicker()
+    }
+
+    @Suppress("MissingPermission")
+    private fun showBluetoothDevicePicker() {
+        val ctx = context ?: return
+        val bluetoothManager = ctx.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
+        val adapter = bluetoothManager.adapter
+        if (adapter == null || !adapter.isEnabled) {
+            Snackbar.make(binding.root, R.string.bluetooth_not_available, Snackbar.LENGTH_LONG).show()
+            return
+        }
+
+        val bonded = adapter.bondedDevices?.toList() ?: emptyList()
+        if (bonded.isEmpty()) {
+            Snackbar.make(binding.root, R.string.bluetooth_no_paired_devices, Snackbar.LENGTH_LONG).show()
+            return
+        }
+
+        val names = bonded.map { device ->
+            val name = try { device.name } catch (_: SecurityException) { null }
+            "${name ?: getString(R.string.bluetooth_unknown_device)} (${device.address})"
+        }.toTypedArray()
+
+        MaterialAlertDialogBuilder(ctx)
+            .setTitle(R.string.bluetooth_pick_title)
+            .setItems(names) { _, which ->
+                val device = bonded[which]
+                val name = try { device.name } catch (_: SecurityException) { null }
+                selectedBtAddress = device.address
+                selectedBtName = name
+                showSelectedBtDevice(name ?: device.address, device.address)
+                // Ensure BluetoothTrackingService is running after a device is configured
+                BluetoothTrackingService.start(requireContext())
+            }
+            .setNegativeButton(R.string.cancel, null)
+            .show()
+    }
+
+    private fun showSelectedBtDevice(name: String, address: String) {
+        binding.textBtDeviceName.text = name
+        binding.textBtDeviceAddress.text = address
+        binding.cardSelectedBtDevice.visibility = View.VISIBLE
+        binding.buttonPickBtDevice.text = getString(R.string.bluetooth_change_device)
+    }}

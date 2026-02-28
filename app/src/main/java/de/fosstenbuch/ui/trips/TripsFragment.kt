@@ -55,6 +55,13 @@ class TripsFragment : Fragment() {
         setupFab()
         observeState()
         observeGpsForBanner()
+        setupGhostBanner()
+    }
+
+    private fun setupGhostBanner() {
+        binding.buttonShowGhostTrips.setOnClickListener {
+            safeNavigate(TripsFragmentDirections.actionTripsToGhostTrips())
+        }
     }
 
     private fun setupRecyclerView() {
@@ -229,6 +236,18 @@ class TripsFragment : Fragment() {
 
                     // Active trip banner
                     updateActiveTripBanner(state.activeTrip)
+
+                    // Ghost trips banner
+                    if (state.hasGhostTrips) {
+                        binding.cardGhostTrips.visibility = View.VISIBLE
+                        binding.textGhostTripsInfo.text = resources.getQuantityString(
+                            R.plurals.ghost_trips_banner_text,
+                            state.ghostTripCount,
+                            state.ghostTripCount
+                        )
+                    } else {
+                        binding.cardGhostTrips.visibility = View.GONE
+                    }
 
                     // Hide FAB when a trip is already active
                     binding.fabAddTrip.visibility =

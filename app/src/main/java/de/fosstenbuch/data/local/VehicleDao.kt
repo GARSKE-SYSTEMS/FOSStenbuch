@@ -34,4 +34,10 @@ interface VehicleDao {
 
     @Query("UPDATE vehicles SET isPrimary = 0 WHERE isPrimary = 1")
     suspend fun clearPrimaryVehicle()
+
+    @Query("SELECT * FROM vehicles WHERE bluetoothDeviceAddress IS NOT NULL")
+    suspend fun getVehiclesWithBluetooth(): List<Vehicle>
+
+    @Query("SELECT * FROM vehicles WHERE bluetoothDeviceAddress = :address LIMIT 1")
+    suspend fun getVehicleByBluetoothAddress(address: String): Vehicle?
 }

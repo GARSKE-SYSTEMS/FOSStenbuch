@@ -12,10 +12,10 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface TripDao {
-    @Query("SELECT * FROM trips ORDER BY date DESC")
+    @Query("SELECT * FROM trips WHERE isGhost = 0 ORDER BY date DESC")
     fun getAllTrips(): Flow<List<Trip>>
 
-    @Query("SELECT * FROM trips ORDER BY date DESC")
+    @Query("SELECT * FROM trips WHERE isGhost = 0 ORDER BY date DESC")
     fun getAllTripsPaged(): PagingSource<Int, Trip>
 
     @Query("SELECT * FROM trips WHERE id = :id")
@@ -24,7 +24,7 @@ interface TripDao {
     @Query("""
         SELECT trips.* FROM trips 
         INNER JOIN trip_purposes ON trips.purposeId = trip_purposes.id 
-        WHERE trip_purposes.isBusinessRelevant = 1 
+        WHERE trip_purposes.isBusinessRelevant = 1 AND trips.isGhost = 0
         ORDER BY trips.date DESC
     """)
     fun getBusinessTrips(): Flow<List<Trip>>
@@ -32,7 +32,7 @@ interface TripDao {
     @Query("""
         SELECT trips.* FROM trips 
         INNER JOIN trip_purposes ON trips.purposeId = trip_purposes.id 
-        WHERE trip_purposes.isBusinessRelevant = 0 
+        WHERE trip_purposes.isBusinessRelevant = 0 AND trips.isGhost = 0
         ORDER BY trips.date DESC
     """)
     fun getPrivateTrips(): Flow<List<Trip>>
@@ -146,6 +146,15 @@ interface TripDao {
 
     @Query("UPDATE trips SET chainHash = :chainHash WHERE id = :tripId")
     suspend fun updateTripChainHash(tripId: Long, chainHash: String?)
+
+    @Query("SELECT * FROM trips WHERE isGhost = 1 ORDER BY date DESC")
+    fun getGhostTrips(): Flow<List<Trip>>
+
+    @Query("SELECT COUNT(*) FROM trips WHERE isGhost = 1")
+    fun countGhostTrips(): Flow<Int>
+
+    @Query("SELECT * FROM trips WHERE id = :id AND isGhost = 1 LIMIT 1")
+    suspend fun getGhostTripByIdOnce(id: Long): Trip?
 }
 
 data class MonthlyDistance(

@@ -3,6 +3,7 @@ package de.fosstenbuch.ui.trips
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import de.fosstenbuch.data.local.TripDao
 import de.fosstenbuch.data.model.Trip
 import de.fosstenbuch.data.repository.TripRepository
 import de.fosstenbuch.domain.usecase.purpose.GetAllPurposesUseCase
@@ -30,7 +31,8 @@ class TripsViewModel @Inject constructor(
     private val getAllPurposesUseCase: GetAllPurposesUseCase,
     private val getActiveTripUseCase: GetActiveTripUseCase,
     private val getAllVehiclesUseCase: GetAllVehiclesUseCase,
-    private val tripRepository: TripRepository
+    private val tripRepository: TripRepository,
+    private val tripDao: TripDao
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(TripsUiState())
@@ -41,6 +43,7 @@ class TripsViewModel @Inject constructor(
         loadTrips()
         loadActiveTrip()
         loadAuditProtectedVehicleIds()
+        loadGhostTripCount()
     }
 
     fun setFilter(filter: TripFilter) {
@@ -173,5 +176,15 @@ class TripsViewModel @Inject constructor(
     fun isTripDeletionBlocked(trip: Trip): Boolean {
         val vehicleId = trip.vehicleId ?: return false
         return vehicleId in _uiState.value.auditProtectedVehicleIds
+    }
+
+    private fun loadGhostTripCount() {
+        viewModelScope.launch {
+            tripDao.countGhostTrips()
+                .catch { e -> Timber.e(e, "Failed to load ghost trip count") }
+                .collect { count ->
+                    _uiState.update { it.copy(ghostTripCount = count) }
+                }
+        }
     }
 }

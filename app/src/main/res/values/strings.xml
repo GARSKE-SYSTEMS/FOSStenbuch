@@ -118,7 +118,7 @@
     <string name="delete_location_message">Möchten Sie diesen Standort wirklich löschen?</string>
     <string name="location_suggested">Standort vorgeschlagen: %s</string>
     <string name="usage_count_format">× %d</string>
-    <string name="coordinates_format">%s, %s</string>
+    <string name="coordinates_format">%1$s, %2$s</string>
 
     <!-- Trip Purposes -->
     <string name="title_purposes">Fahrt-Kategorien</string>
@@ -372,4 +372,43 @@
     <string name="info_company_name">Garske Systems, Inh. Patrick Garske</string>
     <string name="info_website">garske-systems.de</string>
     <string name="info_garske_logo_cd">Garske Systems Logo</string>
+
+    <!-- Bluetooth Tracking -->
+    <string name="bluetooth_tracking_section">Automatisches Tracking</string>
+    <string name="bluetooth_tracking_hint">Wenn ein Bluetooth-Gerät des Fahrzeugs verbunden wird, startet das Tracking automatisch. Beim Trennen wird eine automatische Fahrt erstellt.</string>
+    <string name="bluetooth_pick_device">Bluetooth-Gerät auswählen</string>
+    <string name="bluetooth_change_device">Anderes Gerät wählen</string>
+    <string name="bluetooth_remove">Entfernen</string>
+    <string name="bluetooth_pick_title">Gekoppeltes Gerät auswählen</string>
+    <string name="bluetooth_unknown_device">Unbekanntes Gerät</string>
+    <string name="bluetooth_no_paired_devices">Keine gekoppelten Geräte gefunden</string>
+    <string name="bluetooth_not_available">Bluetooth ist nicht verfügbar oder deaktiviert</string>
+    <string name="bluetooth_permission_denied">Bluetooth-Berechtigung wurde verweigert</string>
+    <string name="bt_tracking_channel_name">Automatisches Tracking</string>
+    <string name="bt_tracking_channel_desc">Überwacht Bluetooth-Verbindungen für automatisches Fahrt-Tracking</string>
+    <string name="bt_tracking_notification_title">Automatisches Tracking aktiv</string>
+    <string name="bt_tracking_notification_text">Verbindung zum Fahrzeug wird überwacht</string>
+
+    <!-- Ghost Trips -->
+    <string name="title_ghost_trips">Automatische Fahrten</string>
+    <string name="title_ghost_trip_detail">Fahrt übernehmen</string>
+    <string name="ghost_trips_show">Anzeigen</string>
+    <string name="ghost_trips_empty">Keine automatischen Fahrten</string>
+    <string name="ghost_trips_empty_hint">Verbinden Sie ein Bluetooth-Gerät mit Ihrem Fahrzeug, um automatisch Fahrten aufzuzeichnen.</string>
+    <string name="ghost_no_distance">Distanz unbekannt</string>
+    <string name="ghost_duration_format">bis %s</string>
+    <string name="ghost_detail_hint">Diese Fahrt wurde automatisch erkannt. Bitte prüfen Sie die Angaben und übernehmen Sie die Fahrt ins Fahrtenbuch.</string>
+    <string name="ghost_distance_helper">Aus GPS-Aufzeichnung vorausgefüllt – bitte prüfen</string>
+    <string name="ghost_accept">Fahrt übernehmen</string>
+    <string name="ghost_discard">Verwerfen</string>
+    <string name="ghost_discard_title">Fahrt verwerfen?</string>
+    <string name="ghost_discard_message">Möchten Sie diese automatisch erkannte Fahrt wirklich verwerfen? Die Fahrt wird dauerhaft gelöscht.</string>
+    <string name="ghost_discard_confirm">Verwerfen</string>
+    <string name="ghost_accepted_success">Fahrt erfolgreich übernommen</string>
+
+    <plurals name="ghost_trips_banner_text">
+        <item quantity="one">%d neue automatische Fahrt verfügbar</item>
+        <item quantity="other">%d neue automatische Fahrten verfügbar</item>
+    </plurals>
+
 </resources>
