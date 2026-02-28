@@ -237,7 +237,7 @@ class TripsFragment : Fragment() {
                     // Active trip banner
                     updateActiveTripBanner(state.activeTrip)
 
-                    // Ghost trips banner
+                    // Ghost trips banner (pending reviews)
                     if (state.hasGhostTrips) {
                         binding.cardGhostTrips.visibility = View.VISIBLE
                         binding.textGhostTripsInfo.text = resources.getQuantityString(
@@ -247,6 +247,22 @@ class TripsFragment : Fragment() {
                         )
                     } else {
                         binding.cardGhostTrips.visibility = View.GONE
+                    }
+
+                    // Ghost-trip recording banner (live while auto-recording)
+                    if (state.isGhostTripRecording) {
+                        binding.cardGhostRecording.visibility = View.VISIBLE
+                        binding.textGhostRecordingDevice.text = getString(
+                            R.string.ghost_recording_banner_device,
+                            state.activeGhostTripDeviceName
+                        )
+                        binding.textGhostRecordingDistance.text = getString(
+                            R.string.ghost_recording_banner_distance,
+                            state.activeGhostTripDistanceKm,
+                            state.activeGhostTripElapsedMin
+                        )
+                    } else {
+                        binding.cardGhostRecording.visibility = View.GONE
                     }
 
                     // Hide FAB when a trip is already active

@@ -53,6 +53,57 @@
 
         </com.google.android.material.card.MaterialCardView>
 
+        <!-- Ghost-trip recording banner (shown while auto-recording is active) -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/card_ghost_recording"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="16dp"
+            android:layout_marginTop="4dp"
+            android:layout_marginBottom="4dp"
+            android:visibility="gone"
+            app:cardBackgroundColor="#FFFFF8E1"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="4dp"
+            tools:visibility="visible">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="12dp">
+
+                <TextView
+                    android:id="@+id/text_ghost_recording_title"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/ghost_recording_banner_title"
+                    android:textColor="#FF5D4037"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/text_ghost_recording_device"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:textColor="#FF5D4037"
+                    android:textSize="13sp"
+                    tools:text="Gerät: Audi BT" />
+
+                <TextView
+                    android:id="@+id/text_ghost_recording_distance"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:textColor="#FF5D4037"
+                    android:textSize="13sp"
+                    tools:text="1.2 km · 5 min" />
+
+            </LinearLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
         <!-- Active trip banner -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/card_active_trip"

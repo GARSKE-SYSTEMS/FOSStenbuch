@@ -13,10 +13,13 @@ import de.fosstenbuch.domain.usecase.trip.GetAllTripsUseCase
 import de.fosstenbuch.domain.usecase.trip.GetBusinessTripsUseCase
 import de.fosstenbuch.domain.usecase.trip.GetPrivateTripsUseCase
 import de.fosstenbuch.domain.usecase.vehicle.GetAllVehiclesUseCase
+import de.fosstenbuch.domain.service.BluetoothTrackingService
+import de.fosstenbuch.domain.service.LocationTrackingService
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -44,6 +47,7 @@ class TripsViewModel @Inject constructor(
         loadActiveTrip()
         loadAuditProtectedVehicleIds()
         loadGhostTripCount()
+        observeGhostTripRecording()
     }
 
     fun setFilter(filter: TripFilter) {
@@ -185,6 +189,33 @@ class TripsViewModel @Inject constructor(
                 .collect { count ->
                     _uiState.update { it.copy(ghostTripCount = count) }
                 }
+        }
+    }
+
+    /**
+     * Mirrors BluetoothTrackingService.activeDeviceName + GPS distance + start time
+     * into the UiState so the Trips screen can show the live recording banner.
+     */
+    private fun observeGhostTripRecording() {
+        viewModelScope.launch {
+            combine(
+                BluetoothTrackingService.activeDeviceName,
+                LocationTrackingService.gpsDistanceKm,
+                BluetoothTrackingService.recordingStartTimeMs
+            ) { deviceName, distKm, startMs ->
+                Triple(deviceName, distKm, startMs)
+            }.collect { (deviceName, distKm, startMs) ->
+                val elapsedMin = if (startMs > 0L)
+                    (System.currentTimeMillis() - startMs) / 60_000L
+                else 0L
+                _uiState.update {
+                    it.copy(
+                        activeGhostTripDeviceName  = deviceName,
+                        activeGhostTripDistanceKm  = distKm,
+                        activeGhostTripElapsedMin  = elapsedMin
+                    )
+                }
+            }
         }
     }
 }

@@ -34,9 +34,14 @@ data class TripsUiState(
     val sort: TripSort = TripSort.DATE_DESC,
     val activeTrip: Trip? = null,
     val auditProtectedVehicleIds: Set<Long> = emptySet(),
-    val ghostTripCount: Int = 0
+    val ghostTripCount: Int = 0,
+    /** Non-null while a ghost trip is being auto-recorded; contains the BT device name. */
+    val activeGhostTripDeviceName: String? = null,
+    val activeGhostTripDistanceKm: Double = 0.0,
+    val activeGhostTripElapsedMin: Long = 0L
 ) {
     val isEmpty: Boolean get() = !isLoading && error == null && trips.isEmpty()
     val hasActiveTrip: Boolean get() = activeTrip != null
     val hasGhostTrips: Boolean get() = ghostTripCount > 0
+    val isGhostTripRecording: Boolean get() = activeGhostTripDeviceName != null
 }
