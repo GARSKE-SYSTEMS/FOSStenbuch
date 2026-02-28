@@ -21,9 +21,9 @@ class DeleteTripUseCase @Inject constructor(
     }
 
     suspend operator fun invoke(trip: Trip): Result {
-        // Check if the trip's vehicle is audit-protected
+        // Ghost trips can always be deleted – audit protection only applies to accepted trips
         val vehicleId = trip.vehicleId
-        if (vehicleId != null) {
+        if (!trip.isGhost && vehicleId != null) {
             val vehicle = vehicleRepository.getVehicleById(vehicleId).first()
             if (vehicle?.auditProtected == true) {
                 return Result.AuditProtected
