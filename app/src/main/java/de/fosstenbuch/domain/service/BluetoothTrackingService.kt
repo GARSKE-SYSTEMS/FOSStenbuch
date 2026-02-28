@@ -277,11 +277,16 @@ class BluetoothTrackingService : Service() {
 
         serviceScope.launch {
             val vehicle = vehicleDao.getVehicleByBluetoothAddress(address) ?: return@launch
-            synchronized(lock) {
-                if (activeVehicleId != null) return@launch  // double-check after DB query
-                val name = readDeviceName(device)
-                Timber.i("BT found (scan): %s → vehicle '%s %s'", address, vehicle.make, vehicle.model)
-                startGhostTrip(vehicle.id, name, address, discoveryBased = true)
+            // Switch to main thread for startGhostTrip – it calls startForeground(),
+            // requestLocationUpdates() and cancelDiscovery() which all require the main
+            // thread / a Looper.
+            mainHandler.post {
+                synchronized(lock) {
+                    if (activeVehicleId != null) return@post  // double-check after DB query
+                    val name = readDeviceName(device)
+                    Timber.i("BT found (scan): %s → vehicle '%s %s'", address, vehicle.make, vehicle.model)
+                    startGhostTrip(vehicle.id, name, address, discoveryBased = true)
+                }
             }
         }
     }
@@ -294,15 +299,20 @@ class BluetoothTrackingService : Service() {
         }
         serviceScope.launch {
             val vehicle = vehicleDao.getVehicleByBluetoothAddress(address) ?: return@launch
-            synchronized(lock) {
-                if (activeVehicleId != null) {
-                    Timber.w("Already tracking vehicle %d – ignoring ACL_CONNECTED for %s",
-                        activeVehicleId, address)
-                    return@launch
+            // Switch to main thread for startGhostTrip – it calls startForeground(),
+            // requestLocationUpdates() and cancelDiscovery() which all require the main
+            // thread / a Looper.
+            mainHandler.post {
+                synchronized(lock) {
+                    if (activeVehicleId != null) {
+                        Timber.w("Already tracking vehicle %d – ignoring ACL_CONNECTED for %s",
+                            activeVehicleId, address)
+                        return@post
+                    }
+                    val name = readDeviceName(device)
+                    Timber.i("BT connected (ACL): %s → vehicle '%s %s'", address, vehicle.make, vehicle.model)
+                    startGhostTrip(vehicle.id, name, address, discoveryBased = false)
                 }
-                val name = readDeviceName(device)
-                Timber.i("BT connected (ACL): %s → vehicle '%s %s'", address, vehicle.make, vehicle.model)
-                startGhostTrip(vehicle.id, name, address, discoveryBased = false)
             }
         }
     }
@@ -324,7 +334,11 @@ class BluetoothTrackingService : Service() {
 
         // Stop discovery while we are recording
         mainHandler.removeCallbacks(discoveryRunnable)
-        btAdapter()?.cancelDiscovery()
+        try {
+            btAdapter()?.cancelDiscovery()
+        } catch (e: SecurityException) {
+            Timber.w(e, "BLUETOOTH_SCAN not granted – cannot cancel discovery")
+        }
 
         if (discoveryBased) {
             mainHandler.postDelayed(watchdogRunnable, WATCHDOG_TIMEOUT_MS)
@@ -453,7 +467,11 @@ class BluetoothTrackingService : Service() {
             }
         }
 
-        lm.requestLocationUpdates(provider, GPS_INTERVAL_MS, GPS_MIN_DISPLACEMENT_M, listener)
+        // Must supply a Looper explicitly because this method is called from
+        // Dispatchers.IO (via serviceScope.launch) which has no Looper.
+        // Without it → RuntimeException: "Can't create handler inside thread
+        // that has not called Looper.prepare()"
+        lm.requestLocationUpdates(provider, GPS_INTERVAL_MS, GPS_MIN_DISPLACEMENT_M, listener, Looper.getMainLooper())
         Timber.d("Internal GPS tracking started (provider: %s)", provider)
     }
 
