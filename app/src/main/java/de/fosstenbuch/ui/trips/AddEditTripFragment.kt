@@ -56,7 +56,7 @@ class AddEditTripFragment : Fragment() {
     private val viewModel: TripDetailViewModel by viewModels()
     private val dateTimeFormat = SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.GERMANY)
     private var selectedDateTime: Date = Date()
-    private var selectedEndTime: Date = Date()
+    private var selectedEndTime: Date? = null
     private var selectedVehicleId: Long? = null
     private var selectedPurposeId: Long? = null
     private var vehicles: List<Vehicle> = emptyList()
@@ -114,23 +114,21 @@ class AddEditTripFragment : Fragment() {
         binding.editDate.setText(dateTimeFormat.format(selectedDateTime))
         binding.editDate.setOnClickListener { showDateTimePicker(isStart = true) }
 
-        // End phase: arrival time picker
-        binding.editEndTime.setText(dateTimeFormat.format(selectedEndTime))
+        // End phase: arrival time picker (populated later by populateForm)
         binding.editEndTime.setOnClickListener { showDateTimePicker(isStart = false) }
 
         // Edit phase: date+time picker
         binding.editDateEdit.setText(dateTimeFormat.format(selectedDateTime))
         binding.editDateEdit.setOnClickListener { showDateTimePicker(isStart = true) }
 
-        // Edit phase: end time picker
-        binding.editEndTimeEdit.setText(dateTimeFormat.format(selectedEndTime))
+        // Edit phase: end time picker (populated later by populateForm)
         binding.editEndTimeEdit.setOnClickListener { showDateTimePicker(isStart = false) }
     }
 
     private fun showDateTimePicker(isStart: Boolean) {
         val ctx = context ?: return
         val cal = Calendar.getInstance()
-        cal.time = if (isStart) selectedDateTime else selectedEndTime
+        cal.time = if (isStart) selectedDateTime else (selectedEndTime ?: Date())
 
         DatePickerDialog(
             ctx,
@@ -305,7 +303,7 @@ class AddEditTripFragment : Fragment() {
             purpose = binding.editPurpose.text.toString().trim(),
             purposeId = selectedPurposeId,
             notes = binding.editNotes.text.toString().trim().ifEmpty { null },
-            endTime = selectedEndTime,
+            endTime = selectedEndTime ?: Date(),
             gpsDistanceKm = viewModel.uiState.value.gpsDistanceKm.takeIf { it > 0 },
             isActive = false,
             businessPartner = binding.editBusinessPartner.text.toString().trim().ifEmpty { null },
@@ -440,6 +438,12 @@ class AddEditTripFragment : Fragment() {
                                 LocationTrackingService.start(ctx, state.trip.id)
                             }
                         }
+                        // If we just ended a trip, stop GPS tracking
+                        if (state.phase == TripPhase.END) {
+                            context?.let { ctx ->
+                                LocationTrackingService.stop(ctx)
+                            }
+                        }
                         viewModel.onSaveConsumed()
                         safePopBackStack()
                     }
@@ -495,8 +499,9 @@ class AddEditTripFragment : Fragment() {
                 binding.textStartSummary.text = startInfo
 
                 // Pre-fill end time with current time
-                selectedEndTime = Date()
-                binding.editEndTime.setText(dateTimeFormat.format(selectedEndTime))
+                val now = Date()
+                selectedEndTime = now
+                binding.editEndTime.setText(dateTimeFormat.format(now))
 
                 // Pre-fill end odometer from GPS if available
                 val gpsKm = LocationTrackingService.gpsDistanceKm.value
@@ -515,9 +520,11 @@ class AddEditTripFragment : Fragment() {
             TripPhase.EDIT -> {
                 selectedDateTime = trip.date
                 binding.editDateEdit.setText(dateTimeFormat.format(trip.date))
-                trip.endTime?.let {
-                    selectedEndTime = it
-                    binding.editEndTimeEdit.setText(dateTimeFormat.format(it))
+                selectedEndTime = trip.endTime
+                if (trip.endTime != null) {
+                    binding.editEndTimeEdit.setText(dateTimeFormat.format(trip.endTime))
+                } else {
+                    binding.editEndTimeEdit.setText("")
                 }
                 binding.editStartLocationEdit.setText(trip.startLocation)
                 binding.editEndLocationEdit.setText(trip.endLocation)
