@@ -406,7 +406,7 @@
     <string name="ghost_no_distance">Distanz unbekannt</string>
     <string name="ghost_duration_format">bis %s</string>
     <string name="ghost_detail_hint">Diese Fahrt wurde automatisch erkannt. Bitte prüfen Sie die Angaben und übernehmen Sie die Fahrt ins Fahrtenbuch.</string>
-    <string name="ghost_distance_helper">Aus GPS-Aufzeichnung vorausgefüllt – bitte prüfen</string>
+    <string name="ghost_distance_helper">Wird automatisch aus Start- und Endkilometerstand berechnet</string>
     <string name="ghost_accept">Fahrt übernehmen</string>
     <string name="ghost_discard">Verwerfen</string>
     <string name="ghost_discard_title">Fahrt verwerfen?</string>

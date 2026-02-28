@@ -119,7 +119,7 @@
 
             </com.google.android.material.textfield.TextInputLayout>
 
-            <!-- Distance (km) -->
+            <!-- Distance (km) — read-only, auto-computed from odometer readings -->
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/layout_distance_km"
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
@@ -133,7 +133,9 @@
                     android:id="@+id/edit_distance_km"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:inputType="numberDecimal" />
+                    android:enabled="false"
+                    android:focusable="false"
+                    android:inputType="none" />
 
             </com.google.android.material.textfield.TextInputLayout>
 

@@ -3,6 +3,8 @@ package de.fosstenbuch.ui.trips.ghost
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -67,6 +69,15 @@ class GhostTripDetailFragment : Fragment() {
     private fun setupButtons() {
         binding.buttonAccept.setOnClickListener { onAcceptClicked() }
 
+        // Auto-compute distance whenever either odometer field changes
+        val odometerWatcher = object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: Editable?) { updateComputedDistance() }
+        }
+        binding.editStartOdometer.addTextChangedListener(odometerWatcher)
+        binding.editEndOdometer.addTextChangedListener(odometerWatcher)
+
         binding.buttonDiscard.setOnClickListener {
             if (!isAdded) return@setOnClickListener
             MaterialAlertDialogBuilder(requireContext())
@@ -88,8 +99,14 @@ class GhostTripDetailFragment : Fragment() {
         clearErrors()
 
         val startOdometer = binding.editStartOdometer.text.toString().trim().toIntOrNull()
-        val endOdometer = binding.editEndOdometer.text.toString().trim().toIntOrNull()
-        val distanceKm = binding.editDistanceKm.text.toString().trim().toDoubleOrNull() ?: 0.0
+        val endOdometer   = binding.editEndOdometer.text.toString().trim().toIntOrNull()
+
+        // Distance is always derived from odometer readings; GPS distance is only informational.
+        val distanceKm: Double = if (startOdometer != null && endOdometer != null) {
+            (endOdometer - startOdometer).toDouble()
+        } else {
+            0.0  // Validator will reject this, prompting the user to fill in the odometer fields
+        }
 
         val updatedTrip = trip.copy(
             date = selectedStartTime,
@@ -106,6 +123,22 @@ class GhostTripDetailFragment : Fragment() {
         )
 
         viewModel.accept(updatedTrip)
+    }
+
+    /**
+     * Recomputes the read-only distance field from the current odometer inputs.
+     * Falls back to the GPS distance when odometer fields are not yet filled.
+     */
+    private fun updateComputedDistance() {
+        val start = binding.editStartOdometer.text.toString().trim().toIntOrNull()
+        val end   = binding.editEndOdometer.text.toString().trim().toIntOrNull()
+        val displayKm: Double? = when {
+            start != null && end != null -> (end - start).toDouble()
+            else -> viewModel.uiState.value.trip?.gpsDistanceKm
+        }
+        binding.editDistanceKm.setText(
+            if (displayKm != null && displayKm > 0.0) "%.1f".format(displayKm) else ""
+        )
     }
 
     private fun pickDateTime(isStart: Boolean) {
@@ -199,11 +232,14 @@ class GhostTripDetailFragment : Fragment() {
         binding.editEndLocation.setText(trip.endLocation)
         binding.editStartTime.setText(dateTimeFormat.format(selectedStartTime))
         binding.editEndTime.setText(dateTimeFormat.format(selectedEndTime))
-        binding.editDistanceKm.setText(
-            if ((trip.gpsDistanceKm ?: 0.0) > 0.0) "%.1f".format(trip.gpsDistanceKm) else ""
-        )
+        // Odometer fields first — the TextWatcher will auto-compute distance
         trip.startOdometer?.let { binding.editStartOdometer.setText(it.toString()) }
         trip.endOdometer?.let { binding.editEndOdometer.setText(it.toString()) }
+        // If no odometer stored yet, show GPS distance as initial hint in the read-only field
+        if (trip.startOdometer == null || trip.endOdometer == null) {
+            val gps = trip.gpsDistanceKm ?: 0.0
+            binding.editDistanceKm.setText(if (gps > 0.0) "%.1f".format(gps) else "")
+        }
         trip.notes?.let { binding.editNotes.setText(it) }
 
         // Pre-select vehicle from spinner after vehicles are loaded
