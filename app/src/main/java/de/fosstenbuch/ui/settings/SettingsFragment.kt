@@ -291,6 +291,10 @@ class SettingsFragment : Fragment() {
                             darkModeLabels[state.darkMode.ordinal],
                             false
                         )
+                        // Reset filter so all options remain visible when the dropdown opens next time
+                        binding.dropdownDarkMode.post {
+                            (binding.dropdownDarkMode.adapter as? ArrayAdapter<*>)?.filter?.filter(null)
+                        }
                     }
 
                     // Distance unit dropdown — only update when changed
@@ -301,6 +305,10 @@ class SettingsFragment : Fragment() {
                             unitLabels[state.distanceUnit.ordinal],
                             false
                         )
+                        // Reset filter so all options remain visible when the dropdown opens next time
+                        binding.dropdownDistanceUnit.post {
+                            (binding.dropdownDistanceUnit.adapter as? ArrayAdapter<*>)?.filter?.filter(null)
+                        }
                     }
 
                     // Default purpose dropdown — only rebuild adapter when data changes
@@ -378,7 +386,8 @@ class SettingsFragment : Fragment() {
 
         val selectedIndex = purposeIds.indexOf(state.defaultPurposeId).takeIf { it >= 0 } ?: 0
         binding.dropdownDefaultPurpose.post {
-            binding.dropdownDefaultPurpose.setText(purposeNames[selectedIndex], false)
+            _binding?.dropdownDefaultPurpose?.setText(purposeNames[selectedIndex], false)
+            (_binding?.dropdownDefaultPurpose?.adapter as? ArrayAdapter<*>)?.filter?.filter(null)
         }
 
         binding.dropdownDefaultPurpose.setOnItemClickListener { _, _, position, _ ->
@@ -403,7 +412,8 @@ class SettingsFragment : Fragment() {
 
         val selectedIndex = vehicleIds.indexOf(state.defaultVehicleId).takeIf { it >= 0 } ?: 0
         binding.dropdownDefaultVehicle.post {
-            binding.dropdownDefaultVehicle.setText(vehicleNames[selectedIndex], false)
+            _binding?.dropdownDefaultVehicle?.setText(vehicleNames[selectedIndex], false)
+            (_binding?.dropdownDefaultVehicle?.adapter as? ArrayAdapter<*>)?.filter?.filter(null)
         }
 
         binding.dropdownDefaultVehicle.setOnItemClickListener { _, _, position, _ ->

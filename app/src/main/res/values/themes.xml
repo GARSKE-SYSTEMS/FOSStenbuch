@@ -9,6 +9,10 @@
         <item name="colorSecondary">@color/colorAccent</item>
         <item name="colorSecondaryVariant">@color/teal_700</item>
         <item name="colorOnSecondary">@color/black</item>
+        <!-- Material3 container colors (not provided by Theme.MaterialComponents – defined manually) -->
+        <item name="colorSecondaryContainer">#FFB2EBE9</item>
+        <item name="colorOnSecondaryContainer">#FF004D40</item>
+        <item name="colorSurfaceVariant">#FFE0F2F1</item>
         <!-- Status bar color -->
         <item name="android:statusBarColor" tools:targetApi="l">?attr/colorPrimaryVariant</item>
         <!-- Customize your theme here. -->
