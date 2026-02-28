@@ -14,7 +14,6 @@ import de.fosstenbuch.domain.usecase.trip.GetBusinessTripsUseCase
 import de.fosstenbuch.domain.usecase.trip.GetPrivateTripsUseCase
 import de.fosstenbuch.domain.usecase.vehicle.GetAllVehiclesUseCase
 import de.fosstenbuch.domain.service.BluetoothTrackingService
-import de.fosstenbuch.domain.service.LocationTrackingService
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -200,7 +199,7 @@ class TripsViewModel @Inject constructor(
         viewModelScope.launch {
             combine(
                 BluetoothTrackingService.activeDeviceName,
-                LocationTrackingService.gpsDistanceKm,
+                BluetoothTrackingService.ghostGpsDistanceKm,
                 BluetoothTrackingService.recordingStartTimeMs
             ) { deviceName, distKm, startMs ->
                 Triple(deviceName, distKm, startMs)

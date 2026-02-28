@@ -69,7 +69,7 @@
             android:name=".domain.service.BluetoothTrackingService"
             android:exported="false"
             android:stopWithTask="false"
-            android:foregroundServiceType="connectedDevice" />
+            android:foregroundServiceType="connectedDevice|location" />
 
         <receiver
             android:name=".domain.notification.BootReceiver"
