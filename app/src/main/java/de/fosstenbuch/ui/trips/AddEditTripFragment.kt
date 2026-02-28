@@ -433,13 +433,13 @@ class AddEditTripFragment : Fragment() {
                     // Successfully saved
                     if (state.savedSuccessfully) {
                         // If we just started a trip, start GPS tracking
-                        if (state.phase == TripPhase.START && state.trip?.isActive == true) {
+                        if (state.trip?.isActive == true) {
                             context?.let { ctx ->
                                 LocationTrackingService.start(ctx, state.trip.id)
                             }
                         }
-                        // If we just ended a trip, stop GPS tracking
-                        if (state.phase == TripPhase.END) {
+                        // If the trip is no longer active, stop GPS tracking
+                        if (state.trip?.isActive == false) {
                             context?.let { ctx ->
                                 LocationTrackingService.stop(ctx)
                             }

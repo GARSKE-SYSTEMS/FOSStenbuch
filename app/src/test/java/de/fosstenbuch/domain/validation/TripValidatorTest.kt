@@ -122,11 +122,11 @@ class TripValidatorTest {
             startLocation = "",
             endLocation = "",
             distanceKm = -1.0,
-            purpose = ""
+            purposeId = null
         )
         val result = validator.validate(trip)
         assertFalse(result.isValid)
-        assertTrue(result.errors.size >= 3)
+        assertTrue(result.errors.size >= 4)
     }
 
     @Test
@@ -154,9 +154,10 @@ class TripValidatorTest {
     }
 
     @Test
-    fun `null purposeId passes validation`() {
+    fun `null purposeId fails validation`() {
         val result = validator.validate(validTrip().copy(purposeId = null))
-        assertNull(result.errorFor(TripValidator.FIELD_PURPOSE_ID))
+        assertFalse(result.isValid)
+        assertNotNull(result.errorFor(TripValidator.FIELD_PURPOSE_ID))
     }
 
     @Test
