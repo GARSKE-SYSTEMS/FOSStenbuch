@@ -102,6 +102,13 @@
     <string name="latitude">Breitengrad</string>
     <string name="longitude">Längengrad</string>
     <string name="get_current_location">Aktuellen Standort ermitteln</string>
+    <string name="search_address">Adresse suchen (OpenStreetMap)</string>
+    <string name="search_address_title">Adresse suchen</string>
+    <string name="search_address_hint">Straße, Ort, PLZ…</string>
+    <string name="search_address_no_results">Keine Ergebnisse gefunden</string>
+    <string name="search_address_error">Fehler bei der Adresssuche: %s</string>
+    <string name="search_address_searching">Suche läuft…</string>
+    <string name="search_address_no_internet">Keine Internetverbindung</string>
     <string name="location_permission_denied">Standortberechtigung wurde verweigert</string>
     <string name="location_not_available">Standort nicht verfügbar</string>
     <string name="error_name_required">Name ist erforderlich</string>

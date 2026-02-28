@@ -117,9 +117,20 @@
             style="@style/Widget.MaterialComponents.Button.OutlinedButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
+            android:layout_marginBottom="8dp"
             android:text="@string/get_current_location"
             app:icon="@drawable/ic_location"
+            app:iconGravity="textStart" />
+
+        <!-- Search address via Nominatim (OpenStreetMap) -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/button_search_address"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:text="@string/search_address"
+            app:icon="@drawable/ic_search"
             app:iconGravity="textStart" />
 
         <!-- Save button -->
