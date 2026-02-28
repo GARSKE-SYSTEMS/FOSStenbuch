@@ -173,7 +173,7 @@ class BluetoothTrackingService : Service() {
             addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED)
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            registerReceiver(bluetoothReceiver, filter, RECEIVER_EXPORTED)
+            registerReceiver(bluetoothReceiver, filter, RECEIVER_NOT_EXPORTED)
         } else {
             @Suppress("UnspecifiedRegisterReceiverFlag")
             registerReceiver(bluetoothReceiver, filter)

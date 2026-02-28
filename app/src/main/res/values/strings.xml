@@ -391,7 +391,7 @@
     <string name="bt_standby_notification_text">Bereit zur automatischen Fahrterkennung</string>
     <!-- %1$s = Gerätename, %2$.1f = km, %3$d = Minuten -->
     <string name="ghost_recording_notification_title">Fahrt wird aufgezeichnet · %1$s</string>
-    <string name="ghost_recording_notification_text">%2$.1f km · %3$d min</string>
+    <string name="ghost_recording_notification_text">%1$.1f km · %2$d min</string>
     <!-- Recording banner in trips list -->
     <string name="ghost_recording_banner_title">● Automatische Aufzeichnung läuft</string>
     <string name="ghost_recording_banner_device">Gerät: %1$s</string>
