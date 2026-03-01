@@ -104,10 +104,10 @@ interface TripDao {
     @Query("SELECT * FROM trips WHERE isActive = 1 LIMIT 1")
     fun getActiveTrip(): Flow<Trip?>
 
-    @Query("SELECT endOdometer FROM trips WHERE isActive = 0 AND vehicleId = :vehicleId ORDER BY date DESC LIMIT 1")
+    @Query("SELECT endOdometer FROM trips WHERE isActive = 0 AND vehicleId = :vehicleId AND endOdometer IS NOT NULL ORDER BY date DESC LIMIT 1")
     suspend fun getLastEndOdometerForVehicle(vehicleId: Long): Int?
 
-    @Query("SELECT endOdometer FROM trips WHERE isActive = 0 ORDER BY date DESC LIMIT 1")
+    @Query("SELECT endOdometer FROM trips WHERE isActive = 0 AND endOdometer IS NOT NULL ORDER BY date DESC LIMIT 1")
     suspend fun getLastEndOdometer(): Int?
 
     @Query("SELECT * FROM trips WHERE isActive = 0 ORDER BY date DESC LIMIT 1")

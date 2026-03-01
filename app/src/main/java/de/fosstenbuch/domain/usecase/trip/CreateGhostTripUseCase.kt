@@ -3,6 +3,7 @@ package de.fosstenbuch.domain.usecase.trip
 import de.fosstenbuch.data.model.Trip
 import de.fosstenbuch.data.repository.TripRepository
 import de.fosstenbuch.domain.usecase.location.ResolveLocationNameUseCase
+import kotlin.math.roundToInt
 import timber.log.Timber
 import java.util.Date
 import javax.inject.Inject
@@ -19,10 +20,10 @@ class CreateGhostTripUseCase @Inject constructor(
         val vehicleId: Long,
         val startTime: Date,
         val endTime: Date,
-        val startLat: Double,
-        val startLng: Double,
-        val endLat: Double,
-        val endLng: Double,
+        val startLat: Double?,
+        val startLng: Double?,
+        val endLat: Double?,
+        val endLng: Double?,
         val gpsDistanceKm: Double
     )
 
@@ -33,8 +34,25 @@ class CreateGhostTripUseCase @Inject constructor(
 
     suspend operator fun invoke(input: GhostTripInput): Result {
         return try {
-            val startName = resolveLocationNameUseCase(input.startLat, input.startLng)
-            val endName = resolveLocationNameUseCase(input.endLat, input.endLng)
+            val startName = if (input.startLat != null && input.startLng != null) {
+                resolveLocationNameUseCase(input.startLat, input.startLng)
+            } else {
+                "Unbekannt"
+            }
+            val endName = if (input.endLat != null && input.endLng != null) {
+                resolveLocationNameUseCase(input.endLat, input.endLng)
+            } else {
+                "Unbekannt"
+            }
+
+            // Pre-fill odometer from last completed trip for this vehicle
+            val lastEndOdometer = tripRepository.getLastEndOdometerForVehicle(input.vehicleId)
+            val startOdometer = lastEndOdometer
+            val endOdometer = if (lastEndOdometer != null && input.gpsDistanceKm > 0.0) {
+                lastEndOdometer + input.gpsDistanceKm.roundToInt()
+            } else {
+                lastEndOdometer
+            }
 
             val ghost = Trip(
                 date = input.startTime,
@@ -47,6 +65,8 @@ class CreateGhostTripUseCase @Inject constructor(
                 endLongitude = input.endLng,
                 gpsDistanceKm = input.gpsDistanceKm,
                 distanceKm = 0.0,
+                startOdometer = startOdometer,
+                endOdometer = endOdometer,
                 vehicleId = input.vehicleId,
                 isActive = false,
                 isGhost = true

@@ -402,12 +402,13 @@ class BluetoothTrackingService : Service() {
             val endTime = Date()
 
             if (startCoords == null) {
-                Timber.w("No GPS fix during session – ghost trip not saved")
-                return@launch
+                Timber.w("No GPS fix during session – ghost trip will have no location data")
             }
 
-            val (startLat, startLng) = startCoords
-            val (endLat,   endLng  ) = endCoords ?: startCoords
+            val startLat = startCoords?.first
+            val startLng = startCoords?.second
+            val endLat   = (endCoords ?: startCoords)?.first
+            val endLng   = (endCoords ?: startCoords)?.second
 
             val input = CreateGhostTripUseCase.GhostTripInput(
                 vehicleId     = vehicleId,

@@ -13,5 +13,6 @@ data class GhostTripDetailUiState(
     val error: String? = null,
     val acceptedSuccessfully: Boolean = false,
     val discardedSuccessfully: Boolean = false,
-    val validationErrors: Map<String, String> = emptyMap()
+    val validationErrors: Map<String, String> = emptyMap(),
+    val lastEndOdometer: Int? = null
 )

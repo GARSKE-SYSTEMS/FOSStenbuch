@@ -7,6 +7,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import de.fosstenbuch.data.model.Trip
 import de.fosstenbuch.data.repository.TripRepository
 import de.fosstenbuch.domain.usecase.purpose.GetAllPurposesUseCase
+import kotlin.math.roundToInt
 import de.fosstenbuch.domain.usecase.trip.AcceptGhostTripUseCase
 import de.fosstenbuch.domain.usecase.trip.DeleteTripUseCase
 import de.fosstenbuch.domain.usecase.trip.GetTripByIdUseCase
@@ -28,7 +29,8 @@ class GhostTripDetailViewModel @Inject constructor(
     private val acceptGhostTripUseCase: AcceptGhostTripUseCase,
     private val deleteTripUseCase: DeleteTripUseCase,
     private val getAllVehiclesUseCase: GetAllVehiclesUseCase,
-    private val getAllPurposesUseCase: GetAllPurposesUseCase
+    private val getAllPurposesUseCase: GetAllPurposesUseCase,
+    private val tripRepository: TripRepository
 ) : ViewModel() {
 
     private val tripId: Long = savedStateHandle.get<Long>("tripId") ?: 0L
@@ -51,6 +53,7 @@ class GhostTripDetailViewModel @Inject constructor(
                 }
                 .collect { trip ->
                     _uiState.update { it.copy(isLoading = false, trip = trip) }
+                    trip?.vehicleId?.let { loadLastEndOdometer(it) }
                 }
         }
     }
@@ -113,6 +116,13 @@ class GhostTripDetailViewModel @Inject constructor(
                 is DeleteTripUseCase.Result.Error ->
                     _uiState.update { it.copy(error = "Fahrt konnte nicht verworfen werden") }
             }
+        }
+    }
+
+    private fun loadLastEndOdometer(vehicleId: Long) {
+        viewModelScope.launch {
+            val lastOdometer = tripRepository.getLastEndOdometerForVehicle(vehicleId)
+            _uiState.update { it.copy(lastEndOdometer = lastOdometer) }
         }
     }
 

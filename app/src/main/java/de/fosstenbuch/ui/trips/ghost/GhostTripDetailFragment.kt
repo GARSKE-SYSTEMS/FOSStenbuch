@@ -25,6 +25,7 @@ import de.fosstenbuch.data.model.Vehicle
 import de.fosstenbuch.databinding.FragmentGhostTripDetailBinding
 import de.fosstenbuch.domain.validation.TripValidator
 import de.fosstenbuch.ui.common.safePopBackStack
+import kotlin.math.roundToInt
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.text.SimpleDateFormat
@@ -50,6 +51,7 @@ class GhostTripDetailFragment : Fragment() {
     private var vehicles: List<Vehicle> = emptyList()
     private var purposes: List<TripPurpose> = emptyList()
     private var formPopulated = false
+    private var odometerPreFilled = false
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -194,6 +196,15 @@ class GhostTripDetailFragment : Fragment() {
 
                     state.trip?.let { if (!formPopulated) populateForm(it) }
 
+                    // Pre-fill odometer when lastEndOdometer arrives after form was already populated
+                    if (formPopulated && !odometerPreFilled && state.lastEndOdometer != null) {
+                        state.trip?.let { trip ->
+                            if (trip.startOdometer == null && binding.editStartOdometer.text.isNullOrEmpty()) {
+                                prefillOdometerFromLastEnd(state.lastEndOdometer, trip.gpsDistanceKm ?: 0.0)
+                            }
+                        }
+                    }
+
                     applyValidationErrors(state.validationErrors)
 
                     state.error?.let { error ->
@@ -232,12 +243,23 @@ class GhostTripDetailFragment : Fragment() {
         binding.editEndLocation.setText(trip.endLocation)
         binding.editStartTime.setText(dateTimeFormat.format(selectedStartTime))
         binding.editEndTime.setText(dateTimeFormat.format(selectedEndTime))
-        // Odometer fields first — the TextWatcher will auto-compute distance
-        trip.startOdometer?.let { binding.editStartOdometer.setText(it.toString()) }
-        trip.endOdometer?.let { binding.editEndOdometer.setText(it.toString()) }
-        // If no odometer stored yet, show GPS distance as initial hint in the read-only field
-        if (trip.startOdometer == null || trip.endOdometer == null) {
-            val gps = trip.gpsDistanceKm ?: 0.0
+        // Odometer fields: prefer stored values, fall back to last known end odometer + GPS distance
+        val lastEndOdo = viewModel.uiState.value.lastEndOdometer
+        val startOdo = trip.startOdometer ?: lastEndOdo
+        val gps = trip.gpsDistanceKm ?: 0.0
+        val endOdo = trip.endOdometer ?: if (startOdo != null && gps > 0.0) {
+            startOdo + gps.roundToInt()
+        } else {
+            startOdo
+        }
+
+        startOdo?.let {
+            binding.editStartOdometer.setText(it.toString())
+            odometerPreFilled = true
+        }
+        endOdo?.let { binding.editEndOdometer.setText(it.toString()) }
+        // If still no odometer, show GPS distance as initial hint in the read-only field
+        if (startOdo == null || endOdo == null) {
             binding.editDistanceKm.setText(if (gps > 0.0) "%.1f".format(gps) else "")
         }
         trip.notes?.let { binding.editNotes.setText(it) }
@@ -245,6 +267,21 @@ class GhostTripDetailFragment : Fragment() {
         // Pre-select vehicle from spinner after vehicles are loaded
         setVehicleSelection()
         setPurposeSelection()
+    }
+
+    /**
+     * Called when [GhostTripDetailUiState.lastEndOdometer] arrives after the form
+     * was already populated but the trip had no stored odometer values.
+     */
+    private fun prefillOdometerFromLastEnd(lastEndOdometer: Int, gpsDistanceKm: Double) {
+        odometerPreFilled = true
+        binding.editStartOdometer.setText(lastEndOdometer.toString())
+        val endOdo = if (gpsDistanceKm > 0.0) {
+            lastEndOdometer + gpsDistanceKm.roundToInt()
+        } else {
+            lastEndOdometer
+        }
+        binding.editEndOdometer.setText(endOdo.toString())
     }
 
     private fun populateDropdowns() {

@@ -22,6 +22,7 @@ class CreateGhostTripUseCaseTest {
     @Before
     fun setup() {
         useCase = CreateGhostTripUseCase(mockTripRepository, mockResolveLocationName)
+        coEvery { mockTripRepository.getLastEndOdometerForVehicle(any()) } returns null
     }
 
     private fun validInput() = CreateGhostTripUseCase.GhostTripInput(
@@ -38,8 +39,8 @@ class CreateGhostTripUseCaseTest {
     @Test
     fun `creates ghost trip with resolved location names`() = runBlocking {
         val input = validInput()
-        coEvery { mockResolveLocationName(input.startLat, input.startLng) } returns "Berlin Mitte"
-        coEvery { mockResolveLocationName(input.endLat, input.endLng) } returns "Hamburg Altstadt"
+        coEvery { mockResolveLocationName(input.startLat!!, input.startLng!!) } returns "Berlin Mitte"
+        coEvery { mockResolveLocationName(input.endLat!!, input.endLng!!) } returns "Hamburg Altstadt"
         coEvery { mockTripRepository.insertTrip(any()) } returns 42L
 
         val result = useCase(input)
@@ -64,8 +65,8 @@ class CreateGhostTripUseCaseTest {
     @Test
     fun `ghost trip has correct resolved start and end location names`() = runBlocking {
         val input = validInput()
-        coEvery { mockResolveLocationName(input.startLat, input.startLng) } returns "Start City"
-        coEvery { mockResolveLocationName(input.endLat, input.endLng) } returns "End City"
+        coEvery { mockResolveLocationName(input.startLat!!, input.startLng!!) } returns "Start City"
+        coEvery { mockResolveLocationName(input.endLat!!, input.endLng!!) } returns "End City"
         coEvery { mockTripRepository.insertTrip(any()) } returns 1L
 
         useCase(input)
