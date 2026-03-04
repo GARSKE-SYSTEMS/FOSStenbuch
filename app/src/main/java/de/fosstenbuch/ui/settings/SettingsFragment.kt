@@ -1,6 +1,8 @@
 package de.fosstenbuch.ui.settings
 
+import android.Manifest
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -47,6 +49,27 @@ class SettingsFragment : Fragment() {
         ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
         uri?.let { confirmRestore(it) }
+    }
+
+    /**
+     * Launcher for the POST_NOTIFICATIONS runtime permission (API 33+).
+     * On grant: enable the reminder switch and schedule the alarm.
+     * On deny: turn the switch back off and show a hint.
+     */
+    private val notificationPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) {
+            enableReminderAfterPermissionGrant()
+        } else {
+            binding.switchReminder.isChecked = false
+            viewModel.setReminderEnabled(false)
+            Toast.makeText(
+                requireContext(),
+                R.string.notification_permission_required,
+                Toast.LENGTH_LONG
+            ).show()
+        }
     }
 
     override fun onCreateView(
@@ -162,15 +185,19 @@ class SettingsFragment : Fragment() {
         TripReminderReceiver.createNotificationChannel(requireContext())
 
         binding.switchReminder.setOnCheckedChangeListener { _, isChecked ->
-            viewModel.setReminderEnabled(isChecked)
-            binding.buttonReminderTime.visibility = if (isChecked) View.VISIBLE else View.GONE
             if (isChecked) {
-                val time = viewModel.uiState.value.reminderTime
-                val parts = time.split(":")
-                val hour = parts.getOrNull(0)?.toIntOrNull() ?: 18
-                val minute = parts.getOrNull(1)?.toIntOrNull() ?: 0
-                TripReminderReceiver.scheduleReminder(requireContext(), hour, minute)
+                // On API 33+ we need POST_NOTIFICATIONS at runtime
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                    !TripReminderReceiver.hasNotificationPermission(requireContext())
+                ) {
+                    // Don't persist yet – wait for the permission callback
+                    notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                    return@setOnCheckedChangeListener
+                }
+                enableReminderAfterPermissionGrant()
             } else {
+                viewModel.setReminderEnabled(false)
+                binding.buttonReminderTime.visibility = View.GONE
                 TripReminderReceiver.cancelReminder(requireContext())
             }
         }
@@ -194,6 +221,20 @@ class SettingsFragment : Fragment() {
                 true
             ).show()
         }
+    }
+
+    /**
+     * Called after we know the notification permission is available (API < 33 or granted).
+     */
+    private fun enableReminderAfterPermissionGrant() {
+        viewModel.setReminderEnabled(true)
+        binding.switchReminder.isChecked = true
+        binding.buttonReminderTime.visibility = View.VISIBLE
+        val time = viewModel.uiState.value.reminderTime
+        val parts = time.split(":")
+        val hour = parts.getOrNull(0)?.toIntOrNull() ?: 18
+        val minute = parts.getOrNull(1)?.toIntOrNull() ?: 0
+        TripReminderReceiver.scheduleReminder(requireContext(), hour, minute)
     }
 
     private fun confirmRestore(uri: Uri) {
@@ -250,6 +291,10 @@ class SettingsFragment : Fragment() {
                             darkModeLabels[state.darkMode.ordinal],
                             false
                         )
+                        // Reset filter so all options remain visible when the dropdown opens next time
+                        binding.dropdownDarkMode.post {
+                            (binding.dropdownDarkMode.adapter as? ArrayAdapter<*>)?.filter?.filter(null)
+                        }
                     }
 
                     // Distance unit dropdown — only update when changed
@@ -260,6 +305,10 @@ class SettingsFragment : Fragment() {
                             unitLabels[state.distanceUnit.ordinal],
                             false
                         )
+                        // Reset filter so all options remain visible when the dropdown opens next time
+                        binding.dropdownDistanceUnit.post {
+                            (binding.dropdownDistanceUnit.adapter as? ArrayAdapter<*>)?.filter?.filter(null)
+                        }
                     }
 
                     // Default purpose dropdown — only rebuild adapter when data changes
@@ -337,7 +386,8 @@ class SettingsFragment : Fragment() {
 
         val selectedIndex = purposeIds.indexOf(state.defaultPurposeId).takeIf { it >= 0 } ?: 0
         binding.dropdownDefaultPurpose.post {
-            binding.dropdownDefaultPurpose.setText(purposeNames[selectedIndex], false)
+            _binding?.dropdownDefaultPurpose?.setText(purposeNames[selectedIndex], false)
+            (_binding?.dropdownDefaultPurpose?.adapter as? ArrayAdapter<*>)?.filter?.filter(null)
         }
 
         binding.dropdownDefaultPurpose.setOnItemClickListener { _, _, position, _ ->
@@ -362,7 +412,8 @@ class SettingsFragment : Fragment() {
 
         val selectedIndex = vehicleIds.indexOf(state.defaultVehicleId).takeIf { it >= 0 } ?: 0
         binding.dropdownDefaultVehicle.post {
-            binding.dropdownDefaultVehicle.setText(vehicleNames[selectedIndex], false)
+            _binding?.dropdownDefaultVehicle?.setText(vehicleNames[selectedIndex], false)
+            (_binding?.dropdownDefaultVehicle?.adapter as? ArrayAdapter<*>)?.filter?.filter(null)
         }
 
         binding.dropdownDefaultVehicle.setOnItemClickListener { _, _, position, _ ->

@@ -88,8 +88,10 @@ class TripValidator @Inject constructor() {
             errors[FIELD_PURPOSE] = "Zweck darf maximal $MAX_PURPOSE_LENGTH Zeichen lang sein"
         }
 
-        // Purpose category – optional
-        // (purposeId may be null if user didn't select a category)
+        // Purpose category – required
+        if (trip.purposeId == null) {
+            errors[FIELD_PURPOSE_ID] = "Bitte wählen Sie eine Kategorie aus"
+        }
 
         // Date (not in the future)
         if (trip.date.after(Date())) {

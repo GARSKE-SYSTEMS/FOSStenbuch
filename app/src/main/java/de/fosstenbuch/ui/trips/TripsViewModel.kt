@@ -3,6 +3,7 @@ package de.fosstenbuch.ui.trips
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import de.fosstenbuch.data.local.TripDao
 import de.fosstenbuch.data.model.Trip
 import de.fosstenbuch.data.repository.TripRepository
 import de.fosstenbuch.domain.usecase.purpose.GetAllPurposesUseCase
@@ -11,10 +12,13 @@ import de.fosstenbuch.domain.usecase.trip.GetActiveTripUseCase
 import de.fosstenbuch.domain.usecase.trip.GetAllTripsUseCase
 import de.fosstenbuch.domain.usecase.trip.GetBusinessTripsUseCase
 import de.fosstenbuch.domain.usecase.trip.GetPrivateTripsUseCase
+import de.fosstenbuch.domain.usecase.vehicle.GetAllVehiclesUseCase
+import de.fosstenbuch.domain.service.BluetoothTrackingService
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -28,7 +32,9 @@ class TripsViewModel @Inject constructor(
     private val deleteTripUseCase: DeleteTripUseCase,
     private val getAllPurposesUseCase: GetAllPurposesUseCase,
     private val getActiveTripUseCase: GetActiveTripUseCase,
-    private val tripRepository: TripRepository
+    private val getAllVehiclesUseCase: GetAllVehiclesUseCase,
+    private val tripRepository: TripRepository,
+    private val tripDao: TripDao
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(TripsUiState())
@@ -38,6 +44,9 @@ class TripsViewModel @Inject constructor(
         loadPurposes()
         loadTrips()
         loadActiveTrip()
+        loadAuditProtectedVehicleIds()
+        loadGhostTripCount()
+        observeGhostTripRecording()
     }
 
     fun setFilter(filter: TripFilter) {
@@ -53,8 +62,20 @@ class TripsViewModel @Inject constructor(
     fun deleteTrip(trip: Trip) {
         viewModelScope.launch {
             try {
-                deleteTripUseCase(trip)
-                // Flow will automatically update the list
+                when (val result = deleteTripUseCase(trip)) {
+                    is DeleteTripUseCase.Result.Success -> {
+                        // Flow will automatically update the list
+                    }
+                    is DeleteTripUseCase.Result.AuditProtected -> {
+                        _uiState.update {
+                            it.copy(error = "Fahrten von änderungssicheren Fahrzeugen können nicht gelöscht werden")
+                        }
+                    }
+                    is DeleteTripUseCase.Result.Error -> {
+                        Timber.e(result.exception, "Failed to delete trip")
+                        _uiState.update { it.copy(error = "Fahrt konnte nicht gelöscht werden") }
+                    }
+                }
             } catch (e: Exception) {
                 Timber.e(e, "Failed to delete trip")
                 _uiState.update { it.copy(error = "Fahrt konnte nicht gelöscht werden") }
@@ -134,6 +155,66 @@ class TripsViewModel @Inject constructor(
             TripSort.DATE_ASC -> trips.sortedBy { it.date }
             TripSort.DISTANCE_DESC -> trips.sortedByDescending { it.distanceKm }
             TripSort.DISTANCE_ASC -> trips.sortedBy { it.distanceKm }
+        }
+    }
+
+    private fun loadAuditProtectedVehicleIds() {
+        viewModelScope.launch {
+            getAllVehiclesUseCase()
+                .catch { e -> Timber.e(e, "Failed to load vehicles for audit check") }
+                .collect { vehicles ->
+                    val protectedIds = vehicles
+                        .filter { it.auditProtected }
+                        .map { it.id }
+                        .toSet()
+                    _uiState.update { it.copy(auditProtectedVehicleIds = protectedIds) }
+                }
+        }
+    }
+
+    /**
+     * Returns true if the trip belongs to an audit-protected vehicle
+     * and therefore cannot be deleted.
+     */
+    fun isTripDeletionBlocked(trip: Trip): Boolean {
+        val vehicleId = trip.vehicleId ?: return false
+        return vehicleId in _uiState.value.auditProtectedVehicleIds
+    }
+
+    private fun loadGhostTripCount() {
+        viewModelScope.launch {
+            tripDao.countGhostTrips()
+                .catch { e -> Timber.e(e, "Failed to load ghost trip count") }
+                .collect { count ->
+                    _uiState.update { it.copy(ghostTripCount = count) }
+                }
+        }
+    }
+
+    /**
+     * Mirrors BluetoothTrackingService.activeDeviceName + GPS distance + start time
+     * into the UiState so the Trips screen can show the live recording banner.
+     */
+    private fun observeGhostTripRecording() {
+        viewModelScope.launch {
+            combine(
+                BluetoothTrackingService.activeDeviceName,
+                BluetoothTrackingService.ghostGpsDistanceKm,
+                BluetoothTrackingService.recordingStartTimeMs
+            ) { deviceName, distKm, startMs ->
+                Triple(deviceName, distKm, startMs)
+            }.collect { (deviceName, distKm, startMs) ->
+                val elapsedMin = if (startMs > 0L)
+                    (System.currentTimeMillis() - startMs) / 60_000L
+                else 0L
+                _uiState.update {
+                    it.copy(
+                        activeGhostTripDeviceName  = deviceName,
+                        activeGhostTripDistanceKm  = distKm,
+                        activeGhostTripElapsedMin  = elapsedMin
+                    )
+                }
+            }
         }
     }
 }

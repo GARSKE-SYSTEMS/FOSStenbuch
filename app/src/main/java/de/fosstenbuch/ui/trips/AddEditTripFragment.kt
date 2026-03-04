@@ -19,9 +19,9 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
-import com.google.android.gms.location.LocationServices
-import com.google.android.gms.location.Priority
-import com.google.android.gms.tasks.CancellationTokenSource
+import android.content.Context
+import android.location.LocationManager
+import android.os.CancellationSignal
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
 import de.fosstenbuch.R
@@ -56,7 +56,7 @@ class AddEditTripFragment : Fragment() {
     private val viewModel: TripDetailViewModel by viewModels()
     private val dateTimeFormat = SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.GERMANY)
     private var selectedDateTime: Date = Date()
-    private var selectedEndTime: Date = Date()
+    private var selectedEndTime: Date? = null
     private var selectedVehicleId: Long? = null
     private var selectedPurposeId: Long? = null
     private var vehicles: List<Vehicle> = emptyList()
@@ -114,23 +114,21 @@ class AddEditTripFragment : Fragment() {
         binding.editDate.setText(dateTimeFormat.format(selectedDateTime))
         binding.editDate.setOnClickListener { showDateTimePicker(isStart = true) }
 
-        // End phase: arrival time picker
-        binding.editEndTime.setText(dateTimeFormat.format(selectedEndTime))
+        // End phase: arrival time picker (populated later by populateForm)
         binding.editEndTime.setOnClickListener { showDateTimePicker(isStart = false) }
 
         // Edit phase: date+time picker
         binding.editDateEdit.setText(dateTimeFormat.format(selectedDateTime))
         binding.editDateEdit.setOnClickListener { showDateTimePicker(isStart = true) }
 
-        // Edit phase: end time picker
-        binding.editEndTimeEdit.setText(dateTimeFormat.format(selectedEndTime))
+        // Edit phase: end time picker (populated later by populateForm)
         binding.editEndTimeEdit.setOnClickListener { showDateTimePicker(isStart = false) }
     }
 
     private fun showDateTimePicker(isStart: Boolean) {
         val ctx = context ?: return
         val cal = Calendar.getInstance()
-        cal.time = if (isStart) selectedDateTime else selectedEndTime
+        cal.time = if (isStart) selectedDateTime else (selectedEndTime ?: Date())
 
         DatePickerDialog(
             ctx,
@@ -305,7 +303,7 @@ class AddEditTripFragment : Fragment() {
             purpose = binding.editPurpose.text.toString().trim(),
             purposeId = selectedPurposeId,
             notes = binding.editNotes.text.toString().trim().ifEmpty { null },
-            endTime = selectedEndTime,
+            endTime = selectedEndTime ?: Date(),
             gpsDistanceKm = viewModel.uiState.value.gpsDistanceKm.takeIf { it > 0 },
             isActive = false,
             businessPartner = binding.editBusinessPartner.text.toString().trim().ifEmpty { null },
@@ -435,9 +433,15 @@ class AddEditTripFragment : Fragment() {
                     // Successfully saved
                     if (state.savedSuccessfully) {
                         // If we just started a trip, start GPS tracking
-                        if (state.phase == TripPhase.START && state.trip?.isActive == true) {
+                        if (state.trip?.isActive == true) {
                             context?.let { ctx ->
                                 LocationTrackingService.start(ctx, state.trip.id)
+                            }
+                        }
+                        // If the trip is no longer active, stop GPS tracking
+                        if (state.trip?.isActive == false) {
+                            context?.let { ctx ->
+                                LocationTrackingService.stop(ctx)
                             }
                         }
                         viewModel.onSaveConsumed()
@@ -495,8 +499,9 @@ class AddEditTripFragment : Fragment() {
                 binding.textStartSummary.text = startInfo
 
                 // Pre-fill end time with current time
-                selectedEndTime = Date()
-                binding.editEndTime.setText(dateTimeFormat.format(selectedEndTime))
+                val now = Date()
+                selectedEndTime = now
+                binding.editEndTime.setText(dateTimeFormat.format(now))
 
                 // Pre-fill end odometer from GPS if available
                 val gpsKm = LocationTrackingService.gpsDistanceKm.value
@@ -515,9 +520,11 @@ class AddEditTripFragment : Fragment() {
             TripPhase.EDIT -> {
                 selectedDateTime = trip.date
                 binding.editDateEdit.setText(dateTimeFormat.format(trip.date))
-                trip.endTime?.let {
-                    selectedEndTime = it
-                    binding.editEndTimeEdit.setText(dateTimeFormat.format(it))
+                selectedEndTime = trip.endTime
+                if (trip.endTime != null) {
+                    binding.editEndTimeEdit.setText(dateTimeFormat.format(trip.endTime))
+                } else {
+                    binding.editEndTimeEdit.setText("")
                 }
                 binding.editStartLocationEdit.setText(trip.startLocation)
                 binding.editEndLocationEdit.setText(trip.endLocation)
@@ -671,52 +678,66 @@ class AddEditTripFragment : Fragment() {
     @Suppress("MissingPermission")
     private fun suggestNearestLocation() {
         val act = activity ?: return
-        val fusedLocationClient = LocationServices.getFusedLocationProviderClient(act)
-        val cancellationToken = CancellationTokenSource()
+        val locationManager = act.getSystemService(Context.LOCATION_SERVICE) as LocationManager
 
-        fusedLocationClient.getCurrentLocation(
-            Priority.PRIORITY_BALANCED_POWER_ACCURACY,
-            cancellationToken.token
-        ).addOnSuccessListener { location ->
-            if (location != null && _binding != null) {
-                viewLifecycleOwner.lifecycleScope.launch {
-                    val nearest = findNearestSavedLocationUseCase(
-                        location.latitude, location.longitude
-                    )
-                    if (nearest != null && _binding != null) {
-                        val phase = viewModel.uiState.value.phase
-                        // Auto-fill start location (start phase) or end location (end phase)
-                        when (phase) {
-                            TripPhase.START -> {
-                                if (binding.editStartLocation.text.isNullOrBlank()) {
-                                    binding.editStartLocation.setText(nearest.name)
-                                    Snackbar.make(
-                                        binding.root,
-                                        getString(R.string.location_suggested, nearest.name),
-                                        Snackbar.LENGTH_SHORT
-                                    ).show()
-                                }
+        val provider = when {
+            locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) ->
+                LocationManager.GPS_PROVIDER
+            locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER) ->
+                LocationManager.NETWORK_PROVIDER
+            else -> return
+        }
+
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
+            locationManager.getCurrentLocation(
+                provider,
+                CancellationSignal(),
+                act.mainExecutor
+            ) { location -> handleSuggestedLocation(location) }
+        } else {
+            // API 26-29: use last known location as best-effort
+            val lastKnown = locationManager.getLastKnownLocation(provider)
+            handleSuggestedLocation(lastKnown)
+        }
+    }
+
+    private fun handleSuggestedLocation(location: android.location.Location?) {
+        if (location != null && _binding != null) {
+            viewLifecycleOwner.lifecycleScope.launch {
+                val nearest = findNearestSavedLocationUseCase(
+                    location.latitude, location.longitude
+                )
+                if (nearest != null && _binding != null) {
+                    val phase = viewModel.uiState.value.phase
+                    // Auto-fill start location (start phase) or end location (end phase)
+                    when (phase) {
+                        TripPhase.START -> {
+                            if (binding.editStartLocation.text.isNullOrBlank()) {
+                                binding.editStartLocation.setText(nearest.name)
+                                Snackbar.make(
+                                    binding.root,
+                                    getString(R.string.location_suggested, nearest.name),
+                                    Snackbar.LENGTH_SHORT
+                                ).show()
                             }
-                            TripPhase.END -> {
-                                if (binding.editEndLocation.text.isNullOrBlank()) {
-                                    binding.editEndLocation.setText(nearest.name)
-                                    autoFillBusinessPartner(nearest)
-                                    Snackbar.make(
-                                        binding.root,
-                                        getString(R.string.location_suggested, nearest.name),
-                                        Snackbar.LENGTH_SHORT
-                                    ).show()
-                                }
+                        }
+                        TripPhase.END -> {
+                            if (binding.editEndLocation.text.isNullOrBlank()) {
+                                binding.editEndLocation.setText(nearest.name)
+                                autoFillBusinessPartner(nearest)
+                                Snackbar.make(
+                                    binding.root,
+                                    getString(R.string.location_suggested, nearest.name),
+                                    Snackbar.LENGTH_SHORT
+                                ).show()
                             }
-                            TripPhase.EDIT -> {
-                                // Don't auto-fill in edit mode
-                            }
+                        }
+                        TripPhase.EDIT -> {
+                            // Don't auto-fill in edit mode
                         }
                     }
                 }
             }
-        }.addOnFailureListener { e ->
-            Timber.d(e, "GPS location not available for suggestion")
         }
     }
 

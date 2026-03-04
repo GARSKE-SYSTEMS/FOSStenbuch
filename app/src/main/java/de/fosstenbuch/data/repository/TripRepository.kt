@@ -32,4 +32,6 @@ interface TripRepository {
     fun getTotalDistanceByDateRange(startDate: Long, endDate: Long): Flow<Double?>
     fun getBusinessDistanceByDateRange(startDate: Long, endDate: Long): Flow<Double?>
     fun getPrivateDistanceByDateRange(startDate: Long, endDate: Long): Flow<Double?>
+    suspend fun getTripsForVehicleOrdered(vehicleId: Long): List<Trip>
+    suspend fun updateTripChainHash(tripId: Long, chainHash: String?)
 }

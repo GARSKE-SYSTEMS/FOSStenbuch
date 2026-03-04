@@ -2,6 +2,7 @@ package de.fosstenbuch.domain.usecase.trip
 
 import de.fosstenbuch.data.model.Trip
 import de.fosstenbuch.data.repository.TripRepository
+import de.fosstenbuch.domain.backup.TripChainService
 import de.fosstenbuch.domain.validation.TripValidator
 import de.fosstenbuch.domain.validation.ValidationResult
 import javax.inject.Inject
@@ -9,10 +10,12 @@ import javax.inject.Inject
 /**
  * Inserts a new trip after validation.
  * Returns a [Result] containing either the new trip ID or a validation error.
+ * Automatically computes chain hashes for audit-protected vehicles.
  */
 class InsertTripUseCase @Inject constructor(
     private val tripRepository: TripRepository,
-    private val tripValidator: TripValidator
+    private val tripValidator: TripValidator,
+    private val tripChainService: TripChainService
 ) {
     sealed class Result {
         data class Success(val tripId: Long) : Result()
@@ -28,6 +31,7 @@ class InsertTripUseCase @Inject constructor(
 
         return try {
             val id = tripRepository.insertTrip(trip)
+            tripChainService.updateChainHash(id)
             Result.Success(id)
         } catch (e: Exception) {
             Result.Error(e)

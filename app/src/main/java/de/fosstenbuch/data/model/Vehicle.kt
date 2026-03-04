@@ -12,5 +12,7 @@ data class Vehicle(
     val fuelType: String,
     val isPrimary: Boolean = false,
     val notes: String? = null,
-    val auditProtected: Boolean = false
+    val auditProtected: Boolean = false,
+    val bluetoothDeviceAddress: String? = null,
+    val bluetoothDeviceName: String? = null
 )

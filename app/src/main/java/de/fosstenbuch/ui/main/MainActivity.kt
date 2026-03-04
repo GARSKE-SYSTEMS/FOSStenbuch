@@ -1,11 +1,16 @@
 package de.fosstenbuch.ui.main
 
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.content.ContextCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.findNavController
@@ -18,8 +23,10 @@ import dagger.hilt.android.AndroidEntryPoint
 import de.fosstenbuch.R
 import de.fosstenbuch.data.local.PreferencesManager
 import de.fosstenbuch.databinding.ActivityMainBinding
+import de.fosstenbuch.domain.service.BluetoothTrackingService
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import timber.log.Timber
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -31,8 +38,30 @@ class MainActivity : AppCompatActivity() {
     @Inject
     lateinit var preferencesManager: PreferencesManager
 
+    /**
+     * Launcher for all permissions needed by the BT ghost-trip feature.
+     * On API 31+ we need BLUETOOTH_CONNECT + BLUETOOTH_SCAN.
+     * On API 33+ we also need POST_NOTIFICATIONS.
+     * ACCESS_FINE_LOCATION is always needed for GPS tracking.
+     */
+    private val permissionsLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { results ->
+        results.forEach { (perm, granted) ->
+            Timber.d("Permission %s granted: %s", perm, granted)
+        }
+        // (Re)start BT service now that permissions may have been granted
+        if (results[Manifest.permission.BLUETOOTH_CONNECT] == true ||
+            results[Manifest.permission.BLUETOOTH_SCAN] == true) {
+            BluetoothTrackingService.start(this)
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Request all permissions needed for ghost-trip BT tracking + GPS + notifications
+        requestRequiredPermissions()
 
         // Apply dark mode preference
         lifecycleScope.launch {
@@ -105,6 +134,52 @@ class MainActivity : AppCompatActivity() {
             val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://garske-systems.de"))
             startActivity(intent)
             drawerLayout.closeDrawers()
+        }
+    }
+
+    /**
+     * Requests every runtime permission the ghost-trip feature needs:
+     *  - ACCESS_FINE_LOCATION   (GPS tracking during ghost trips)
+     *  - BLUETOOTH_CONNECT      (read device name, API 31+)
+     *  - BLUETOOTH_SCAN          (BT discovery, API 31+)
+     *  - POST_NOTIFICATIONS     (foreground-service notification, API 33+)
+     *
+     * Only permissions that are NOT yet granted are requested.
+     */
+    private fun requestRequiredPermissions() {
+        val needed = mutableListOf<String>()
+
+        // Location — always needed for GPS recording
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+            != PackageManager.PERMISSION_GRANTED) {
+            needed += Manifest.permission.ACCESS_FINE_LOCATION
+        }
+
+        // Bluetooth — API 31+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT)
+                != PackageManager.PERMISSION_GRANTED) {
+                needed += Manifest.permission.BLUETOOTH_CONNECT
+            }
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_SCAN)
+                != PackageManager.PERMISSION_GRANTED) {
+                needed += Manifest.permission.BLUETOOTH_SCAN
+            }
+        }
+
+        // Notifications — API 33+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+                != PackageManager.PERMISSION_GRANTED) {
+                needed += Manifest.permission.POST_NOTIFICATIONS
+            }
+        }
+
+        if (needed.isNotEmpty()) {
+            Timber.d("Requesting permissions: %s", needed)
+            permissionsLauncher.launch(needed.toTypedArray())
+        } else {
+            Timber.d("All required permissions already granted")
         }
     }
 

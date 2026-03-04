@@ -2,6 +2,7 @@ package de.fosstenbuch.domain.usecase.trip
 
 import de.fosstenbuch.data.model.Trip
 import de.fosstenbuch.data.repository.TripRepository
+import de.fosstenbuch.domain.backup.TripChainService
 import de.fosstenbuch.domain.validation.TripValidator
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -17,10 +18,11 @@ class EndTripUseCaseTest {
     private lateinit var useCase: EndTripUseCase
     private val mockRepository: TripRepository = mockk()
     private val validator = TripValidator()
+    private val mockTripChainService: TripChainService = mockk(relaxed = true)
 
     @Before
     fun setup() {
-        useCase = EndTripUseCase(mockRepository, validator)
+        useCase = EndTripUseCase(mockRepository, validator, mockTripChainService)
     }
 
     private fun validEndTrip() = Trip(
@@ -79,13 +81,13 @@ class EndTripUseCaseTest {
     }
 
     @Test
-    fun `null purposeId passes validation`() = runBlocking {
+    fun `null purposeId returns validation error`() = runBlocking {
         val trip = validEndTrip().copy(purposeId = null)
-        coEvery { mockRepository.updateTrip(any()) } returns Unit
 
         val result = useCase(trip)
 
-        assertTrue(result is EndTripUseCase.Result.Success)
+        assertTrue(result is EndTripUseCase.Result.ValidationError)
+        coVerify(exactly = 0) { mockRepository.updateTrip(any()) }
     }
 
     @Test
@@ -104,13 +106,13 @@ class EndTripUseCaseTest {
             startLocation = "",
             endLocation = "",
             distanceKm = -1.0,
-            purpose = ""
+            purposeId = null
         )
 
         val result = useCase(trip)
 
         assertTrue(result is EndTripUseCase.Result.ValidationError)
         val validation = (result as EndTripUseCase.Result.ValidationError).validation
-        assertTrue(validation.errors.size >= 3)
+        assertTrue(validation.errors.size >= 4)
     }
 }

@@ -15,6 +15,10 @@
             android:id="@+id/action_trips_to_add_edit_trip"
             app:destination="@id/navigation_add_edit_trip" />
 
+        <action
+            android:id="@+id/action_trips_to_ghost_trips"
+            app:destination="@id/navigation_ghost_trips" />
+
     </fragment>
 
     <fragment
@@ -136,5 +140,31 @@
         android:name="de.fosstenbuch.ui.mileage.MileageCalculatorFragment"
         android:label="@string/title_mileage_calculator"
         tools:layout="@layout/fragment_mileage_calculator" />
+
+    <!-- Ghost Trips (automatic Bluetooth-tracked trips) -->
+    <fragment
+        android:id="@+id/navigation_ghost_trips"
+        android:name="de.fosstenbuch.ui.trips.ghost.GhostTripsFragment"
+        android:label="@string/title_ghost_trips"
+        tools:layout="@layout/fragment_ghost_trips">
+
+        <action
+            android:id="@+id/action_ghost_trips_to_ghost_trip_detail"
+            app:destination="@id/navigation_ghost_trip_detail" />
+
+    </fragment>
+
+    <fragment
+        android:id="@+id/navigation_ghost_trip_detail"
+        android:name="de.fosstenbuch.ui.trips.ghost.GhostTripDetailFragment"
+        android:label="@string/title_ghost_trip_detail"
+        tools:layout="@layout/fragment_ghost_trip_detail">
+
+        <argument
+            android:name="tripId"
+            app:argType="long"
+            android:defaultValue="0L" />
+
+    </fragment>
 
 </navigation>

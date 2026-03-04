@@ -51,4 +51,8 @@ class TripRepositoryImpl @Inject constructor(
         tripDao.getBusinessDistanceByDateRange(startDate, endDate)
     override fun getPrivateDistanceByDateRange(startDate: Long, endDate: Long): Flow<Double?> =
         tripDao.getPrivateDistanceByDateRange(startDate, endDate)
+    override suspend fun getTripsForVehicleOrdered(vehicleId: Long): List<Trip> =
+        tripDao.getTripsForVehicleOrdered(vehicleId)
+    override suspend fun updateTripChainHash(tripId: Long, chainHash: String?) =
+        tripDao.updateTripChainHash(tripId, chainHash)
 }

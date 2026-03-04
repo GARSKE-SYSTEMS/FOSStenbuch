@@ -102,6 +102,13 @@
     <string name="latitude">Breitengrad</string>
     <string name="longitude">Längengrad</string>
     <string name="get_current_location">Aktuellen Standort ermitteln</string>
+    <string name="search_address">Adresse suchen (OpenStreetMap)</string>
+    <string name="search_address_title">Adresse suchen</string>
+    <string name="search_address_hint">Straße, Ort, PLZ…</string>
+    <string name="search_address_no_results">Keine Ergebnisse gefunden</string>
+    <string name="search_address_error">Fehler bei der Adresssuche: %s</string>
+    <string name="search_address_searching">Suche läuft…</string>
+    <string name="search_address_no_internet">Keine Internetverbindung</string>
     <string name="location_permission_denied">Standortberechtigung wurde verweigert</string>
     <string name="location_not_available">Standort nicht verfügbar</string>
     <string name="error_name_required">Name ist erforderlich</string>
@@ -111,7 +118,7 @@
     <string name="delete_location_message">Möchten Sie diesen Standort wirklich löschen?</string>
     <string name="location_suggested">Standort vorgeschlagen: %s</string>
     <string name="usage_count_format">× %d</string>
-    <string name="coordinates_format">%s, %s</string>
+    <string name="coordinates_format">%1$s, %2$s</string>
 
     <!-- Trip Purposes -->
     <string name="title_purposes">Fahrt-Kategorien</string>
@@ -130,6 +137,7 @@
     <string name="color_preview">Farbvorschau</string>
     <string name="cannot_delete_default">Standard-Kategorien können nicht gelöscht werden</string>
     <string name="cannot_delete_in_use">Kategorie wird noch von Fahrten verwendet</string>
+    <string name="cannot_delete_audit_protected_trip">Fahrten von änderungssicheren Fahrzeugen können nicht gelöscht werden</string>
     <string name="purpose_name_duplicate">Eine Kategorie mit diesem Namen existiert bereits</string>
 
     <!-- Statistics -->
@@ -330,6 +338,7 @@
     <string name="notification_channel_desc">Tägliche Erinnerung zum Eintragen von Fahrten</string>
     <string name="notification_title">Fahrten eintragen</string>
     <string name="notification_message">Haben Sie heute Fahrten unternommen? Tragen Sie sie jetzt ein.</string>
+    <string name="notification_permission_required">Benachrichtigungsberechtigung erforderlich. Bitte aktivieren Sie die Berechtigung in den App-Einstellungen.</string>
 
     <!-- Trip Start/End Flow -->
     <string name="start_trip">Fahrt starten</string>
@@ -363,4 +372,51 @@
     <string name="info_company_name">Garske Systems, Inh. Patrick Garske</string>
     <string name="info_website">garske-systems.de</string>
     <string name="info_garske_logo_cd">Garske Systems Logo</string>
+
+    <!-- Bluetooth Tracking -->
+    <string name="bluetooth_tracking_section">Automatisches Tracking</string>
+    <string name="bluetooth_tracking_hint">Wenn ein Bluetooth-Gerät des Fahrzeugs verbunden wird, startet das Tracking automatisch. Beim Trennen wird eine automatische Fahrt erstellt.</string>
+    <string name="bluetooth_pick_device">Bluetooth-Gerät auswählen</string>
+    <string name="bluetooth_change_device">Anderes Gerät wählen</string>
+    <string name="bluetooth_remove">Entfernen</string>
+    <string name="bluetooth_pick_title">Gekoppeltes Gerät auswählen</string>
+    <string name="bluetooth_unknown_device">Unbekanntes Gerät</string>
+    <string name="bluetooth_no_paired_devices">Keine gekoppelten Geräte gefunden</string>
+    <string name="bluetooth_not_available">Bluetooth ist nicht verfügbar oder deaktiviert</string>
+    <string name="bluetooth_permission_denied">Bluetooth-Berechtigung wurde verweigert</string>
+    <string name="bt_tracking_channel_name">Automatisches Tracking</string>
+    <string name="bt_tracking_channel_desc">Überwacht Bluetooth-Verbindungen für automatisches Fahrt-Tracking</string>
+    <string name="bt_tracking_notification_title">Automatisches Tracking aktiv</string>
+    <string name="bt_tracking_notification_text">Verbindung zum Fahrzeug wird überwacht</string>
+    <string name="bt_standby_notification_text">Bereit zur automatischen Fahrterkennung</string>
+    <!-- %1$s = Gerätename, %2$.1f = km, %3$d = Minuten -->
+    <string name="ghost_recording_notification_title">Fahrt wird aufgezeichnet · %1$s</string>
+    <string name="ghost_recording_notification_text">%1$.1f km · %2$d min</string>
+    <!-- Recording banner in trips list -->
+    <string name="ghost_recording_banner_title">● Automatische Aufzeichnung läuft</string>
+    <string name="ghost_recording_banner_device">Gerät: %1$s</string>
+    <string name="ghost_recording_banner_distance">%1$.1f km · %2$d min</string>
+
+    <!-- Ghost Trips -->
+    <string name="title_ghost_trips">Automatische Fahrten</string>
+    <string name="title_ghost_trip_detail">Fahrt übernehmen</string>
+    <string name="ghost_trips_show">Anzeigen</string>
+    <string name="ghost_trips_empty">Keine automatischen Fahrten</string>
+    <string name="ghost_trips_empty_hint">Verbinden Sie ein Bluetooth-Gerät mit Ihrem Fahrzeug, um automatisch Fahrten aufzuzeichnen.</string>
+    <string name="ghost_no_distance">Distanz unbekannt</string>
+    <string name="ghost_duration_format">bis %s</string>
+    <string name="ghost_detail_hint">Diese Fahrt wurde automatisch erkannt. Bitte prüfen Sie die Angaben und übernehmen Sie die Fahrt ins Fahrtenbuch.</string>
+    <string name="ghost_distance_helper">Wird automatisch aus Start- und Endkilometerstand berechnet</string>
+    <string name="ghost_accept">Fahrt übernehmen</string>
+    <string name="ghost_discard">Verwerfen</string>
+    <string name="ghost_discard_title">Fahrt verwerfen?</string>
+    <string name="ghost_discard_message">Möchten Sie diese automatisch erkannte Fahrt wirklich verwerfen? Die Fahrt wird dauerhaft gelöscht.</string>
+    <string name="ghost_discard_confirm">Verwerfen</string>
+    <string name="ghost_accepted_success">Fahrt erfolgreich übernommen</string>
+
+    <plurals name="ghost_trips_banner_text">
+        <item quantity="one">%d neue automatische Fahrt verfügbar</item>
+        <item quantity="other">%d neue automatische Fahrten verfügbar</item>
+    </plurals>
+
 </resources>

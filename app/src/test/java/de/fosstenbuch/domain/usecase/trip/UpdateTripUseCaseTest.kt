@@ -2,6 +2,7 @@ package de.fosstenbuch.domain.usecase.trip
 
 import de.fosstenbuch.data.model.Trip
 import de.fosstenbuch.data.repository.TripRepository
+import de.fosstenbuch.domain.backup.TripChainService
 import de.fosstenbuch.domain.validation.TripValidator
 import de.fosstenbuch.domain.validation.ValidationResult
 import io.mockk.coEvery
@@ -18,10 +19,11 @@ class UpdateTripUseCaseTest {
     private lateinit var useCase: UpdateTripUseCase
     private val mockRepository: TripRepository = mockk()
     private val validator = TripValidator()
+    private val mockTripChainService: TripChainService = mockk(relaxed = true)
 
     @Before
     fun setup() {
-        useCase = UpdateTripUseCase(mockRepository, validator)
+        useCase = UpdateTripUseCase(mockRepository, validator, mockTripChainService)
     }
 
     private fun validTrip() = Trip(

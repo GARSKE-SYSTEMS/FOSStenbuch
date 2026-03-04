@@ -12,10 +12,10 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface TripDao {
-    @Query("SELECT * FROM trips ORDER BY date DESC")
+    @Query("SELECT * FROM trips WHERE isGhost = 0 ORDER BY date DESC")
     fun getAllTrips(): Flow<List<Trip>>
 
-    @Query("SELECT * FROM trips ORDER BY date DESC")
+    @Query("SELECT * FROM trips WHERE isGhost = 0 ORDER BY date DESC")
     fun getAllTripsPaged(): PagingSource<Int, Trip>
 
     @Query("SELECT * FROM trips WHERE id = :id")
@@ -24,7 +24,7 @@ interface TripDao {
     @Query("""
         SELECT trips.* FROM trips 
         INNER JOIN trip_purposes ON trips.purposeId = trip_purposes.id 
-        WHERE trip_purposes.isBusinessRelevant = 1 
+        WHERE trip_purposes.isBusinessRelevant = 1 AND trips.isGhost = 0
         ORDER BY trips.date DESC
     """)
     fun getBusinessTrips(): Flow<List<Trip>>
@@ -32,7 +32,7 @@ interface TripDao {
     @Query("""
         SELECT trips.* FROM trips 
         INNER JOIN trip_purposes ON trips.purposeId = trip_purposes.id 
-        WHERE trip_purposes.isBusinessRelevant = 0 
+        WHERE trip_purposes.isBusinessRelevant = 0 AND trips.isGhost = 0
         ORDER BY trips.date DESC
     """)
     fun getPrivateTrips(): Flow<List<Trip>>
@@ -104,10 +104,10 @@ interface TripDao {
     @Query("SELECT * FROM trips WHERE isActive = 1 LIMIT 1")
     fun getActiveTrip(): Flow<Trip?>
 
-    @Query("SELECT endOdometer FROM trips WHERE isActive = 0 AND vehicleId = :vehicleId ORDER BY date DESC LIMIT 1")
+    @Query("SELECT endOdometer FROM trips WHERE isActive = 0 AND vehicleId = :vehicleId AND endOdometer IS NOT NULL ORDER BY date DESC LIMIT 1")
     suspend fun getLastEndOdometerForVehicle(vehicleId: Long): Int?
 
-    @Query("SELECT endOdometer FROM trips WHERE isActive = 0 ORDER BY date DESC LIMIT 1")
+    @Query("SELECT endOdometer FROM trips WHERE isActive = 0 AND endOdometer IS NOT NULL ORDER BY date DESC LIMIT 1")
     suspend fun getLastEndOdometer(): Int?
 
     @Query("SELECT * FROM trips WHERE isActive = 0 ORDER BY date DESC LIMIT 1")
@@ -140,6 +140,21 @@ interface TripDao {
         AND trips.date BETWEEN :startDate AND :endDate AND trips.isActive = 0
     """)
     fun getPrivateDistanceByDateRange(startDate: Long, endDate: Long): Flow<Double?>
+
+    @Query("SELECT * FROM trips WHERE vehicleId = :vehicleId ORDER BY id ASC")
+    suspend fun getTripsForVehicleOrdered(vehicleId: Long): List<Trip>
+
+    @Query("UPDATE trips SET chainHash = :chainHash WHERE id = :tripId")
+    suspend fun updateTripChainHash(tripId: Long, chainHash: String?)
+
+    @Query("SELECT * FROM trips WHERE isGhost = 1 ORDER BY date DESC")
+    fun getGhostTrips(): Flow<List<Trip>>
+
+    @Query("SELECT COUNT(*) FROM trips WHERE isGhost = 1")
+    fun countGhostTrips(): Flow<Int>
+
+    @Query("SELECT * FROM trips WHERE id = :id AND isGhost = 1 LIMIT 1")
+    suspend fun getGhostTripByIdOnce(id: Long): Trip?
 }
 
 data class MonthlyDistance(

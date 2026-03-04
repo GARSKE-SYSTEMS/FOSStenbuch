@@ -33,7 +33,8 @@ class BackupManager @Inject constructor(
     private val vehicleDao: VehicleDao,
     private val tripAuditLogDao: TripAuditLogDao,
     private val savedLocationDao: SavedLocationDao,
-    private val tripPurposeDao: TripPurposeDao
+    private val tripPurposeDao: TripPurposeDao,
+    private val tripChainHashCalculator: TripChainHashCalculator
 ) {
 
     companion object {
@@ -128,6 +129,42 @@ class BackupManager @Inject constructor(
             }
         }
 
+        // Verify chain hashes for audit-protected vehicles
+        val auditProtectedVehicleIds = vehicles
+            .filter { it.auditProtected }
+            .map { it.id }
+            .toSet()
+
+        for (vehicleId in auditProtectedVehicleIds) {
+            val vehicleTrips = trips
+                .filter { it.vehicleId == vehicleId }
+                .sortedBy { it.id }
+
+            if (vehicleTrips.isNotEmpty()) {
+                // All trips of audit-protected vehicles must have chain hashes
+                if (vehicleTrips.any { it.chainHash == null }) {
+                    val vehicleName = vehicles.find { it.id == vehicleId }
+                        ?.let { "${it.make} ${it.model} (${it.licensePlate})" }
+                        ?: "ID $vehicleId"
+                    throw IntegrityViolationException(
+                        "Fehlende Hash-Kette für änderungssicheres Fahrzeug $vehicleName. " +
+                            "Alle Fahrten müssen verifizierbare Chain-Hashes besitzen."
+                    )
+                }
+
+                val result = tripChainHashCalculator.verifyChain(vehicleTrips)
+                if (result is TripChainHashCalculator.ChainVerificationResult.Broken) {
+                    val vehicleName = vehicles.find { it.id == vehicleId }
+                        ?.let { "${it.make} ${it.model} (${it.licensePlate})" }
+                        ?: "ID $vehicleId"
+                    throw IntegrityViolationException(
+                        "Hash-Kette für Fahrzeug $vehicleName ist beschädigt bei Fahrt #${result.trip.id}. " +
+                            "Die Backup-Daten wurden möglicherweise manipuliert."
+                    )
+                }
+            }
+        }
+
         Timber.i("Backup restored: ${vehicles.size} vehicles, ${purposes.size} purposes, ${trips.size} trips")
     }
 
@@ -214,6 +251,12 @@ class BackupManager @Inject constructor(
                     put("vehicleId", t.vehicleId ?: JSONObject.NULL)
                     put("isCancelled", t.isCancelled)
                     put("cancellationReason", t.cancellationReason ?: JSONObject.NULL)
+                    put("isActive", t.isActive)
+                    put("endTime", t.endTime?.time ?: JSONObject.NULL)
+                    put("gpsDistanceKm", t.gpsDistanceKm ?: JSONObject.NULL)
+                    put("businessPartner", t.businessPartner ?: JSONObject.NULL)
+                    put("route", t.route ?: JSONObject.NULL)
+                    put("chainHash", t.chainHash ?: JSONObject.NULL)
                 })
             }
         }
@@ -296,7 +339,13 @@ class BackupManager @Inject constructor(
                 endOdometer = o.optIntOrNull("endOdometer"),
                 vehicleId = o.optLongOrNull("vehicleId"),
                 isCancelled = o.optBoolean("isCancelled", false),
-                cancellationReason = o.optStringOrNull("cancellationReason")
+                cancellationReason = o.optStringOrNull("cancellationReason"),
+                isActive = o.optBoolean("isActive", false),
+                endTime = o.optLongOrNull("endTime")?.let { Date(it) },
+                gpsDistanceKm = o.optDoubleOrNull("gpsDistanceKm"),
+                businessPartner = o.optStringOrNull("businessPartner"),
+                route = o.optStringOrNull("route"),
+                chainHash = o.optStringOrNull("chainHash")
             )
         }
     }
@@ -327,5 +376,9 @@ class BackupManager @Inject constructor(
 
     private fun JSONObject.optIntOrNull(key: String): Int? {
         return if (isNull(key)) null else optInt(key, 0).takeIf { it != 0 }
+    }
+
+    private fun JSONObject.optDoubleOrNull(key: String): Double? {
+        return if (!has(key) || isNull(key)) null else optDouble(key).takeIf { !it.isNaN() }
     }
 }

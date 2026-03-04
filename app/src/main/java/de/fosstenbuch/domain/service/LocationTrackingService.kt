@@ -10,16 +10,11 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.Location
+import android.location.LocationListener
+import android.location.LocationManager
 import android.os.IBinder
-import android.os.Looper
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
-import com.google.android.gms.location.FusedLocationProviderClient
-import com.google.android.gms.location.LocationCallback
-import com.google.android.gms.location.LocationRequest
-import com.google.android.gms.location.LocationResult
-import com.google.android.gms.location.LocationServices
-import com.google.android.gms.location.Priority
 import de.fosstenbuch.R
 import de.fosstenbuch.utils.HaversineUtils
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -50,6 +45,14 @@ class LocationTrackingService : Service() {
         private val _isTracking = MutableStateFlow(false)
         val isTracking: StateFlow<Boolean> = _isTracking.asStateFlow()
 
+        /** Lat/Lng of the very first GPS fix after tracking starts. */
+        private val _startLocation = MutableStateFlow<Pair<Double, Double>?>(null)
+        val startLocation: StateFlow<Pair<Double, Double>?> = _startLocation.asStateFlow()
+
+        /** Lat/Lng of the most recent GPS fix. */
+        private val _currentLocation = MutableStateFlow<Pair<Double, Double>?>(null)
+        val currentLocation: StateFlow<Pair<Double, Double>?> = _currentLocation.asStateFlow()
+
         fun start(context: Context, tripId: Long) {
             val intent = Intent(context, LocationTrackingService::class.java).apply {
                 action = ACTION_START
@@ -66,8 +69,8 @@ class LocationTrackingService : Service() {
         }
     }
 
-    private lateinit var fusedLocationClient: FusedLocationProviderClient
-    private lateinit var locationCallback: LocationCallback
+    private lateinit var locationManager: LocationManager
+    private var locationListener: LocationListener? = null
     private var lastLocation: Location? = null
     private var totalDistanceMeters: Double = 0.0
     private var activeTripId: Long = 0L
@@ -76,7 +79,7 @@ class LocationTrackingService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+        locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
         createNotificationChannel()
     }
 
@@ -88,6 +91,12 @@ class LocationTrackingService : Service() {
             }
             ACTION_STOP -> {
                 stopTracking()
+            }
+            else -> {
+                // System restarted the service with null intent (START_STICKY).
+                // We have no trip context, so shut down cleanly instead of running as zombie.
+                Timber.d("LocationTrackingService restarted with null intent – stopping")
+                stopSelf()
             }
         }
         return START_STICKY
@@ -104,36 +113,60 @@ class LocationTrackingService : Service() {
         totalDistanceMeters = 0.0
         lastLocation = null
         _gpsDistanceKm.value = 0.0
+        _startLocation.value = null
+        _currentLocation.value = null
         _isTracking.value = true
 
         val notification = buildNotification(0.0)
         startForeground(NOTIFICATION_ID, notification)
 
-        val locationRequest = LocationRequest.Builder(
-            Priority.PRIORITY_HIGH_ACCURACY,
-            LOCATION_INTERVAL_MS
-        )
-            .setMinUpdateDistanceMeters(LOCATION_MIN_DISPLACEMENT_M)
-            .build()
+        val listener = object : LocationListener {
+            override fun onLocationChanged(location: Location) {
+                processNewLocation(location)
+            }
 
-        locationCallback = object : LocationCallback() {
-            override fun onLocationResult(result: LocationResult) {
-                for (location in result.locations) {
-                    processNewLocation(location)
-                }
+            @Deprecated("Deprecated in API level 29")
+            override fun onStatusChanged(provider: String?, status: Int, extras: android.os.Bundle?) {
+                // Required for API < 29
+            }
+
+            override fun onProviderEnabled(provider: String) {}
+            override fun onProviderDisabled(provider: String) {
+                Timber.w("Location provider $provider disabled")
+            }
+        }
+        locationListener = listener
+
+        // Prefer GPS, fall back to network provider
+        val provider = when {
+            locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) ->
+                LocationManager.GPS_PROVIDER
+            locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER) ->
+                LocationManager.NETWORK_PROVIDER
+            else -> {
+                Timber.w("No location provider available")
+                stopSelf()
+                return
             }
         }
 
-        fusedLocationClient.requestLocationUpdates(
-            locationRequest,
-            locationCallback,
-            Looper.getMainLooper()
+        locationManager.requestLocationUpdates(
+            provider,
+            LOCATION_INTERVAL_MS,
+            LOCATION_MIN_DISPLACEMENT_M,
+            listener
         )
 
-        Timber.d("Location tracking started for trip $activeTripId")
+        Timber.d("Location tracking started for trip $activeTripId (provider: $provider)")
     }
 
     private fun processNewLocation(location: Location) {
+        // Record first fix as start location
+        if (_startLocation.value == null) {
+            _startLocation.value = Pair(location.latitude, location.longitude)
+        }
+        _currentLocation.value = Pair(location.latitude, location.longitude)
+
         val previous = lastLocation
         if (previous != null) {
             val distanceMeters = HaversineUtils.distanceInMeters(
@@ -153,9 +186,8 @@ class LocationTrackingService : Service() {
 
     private fun stopTracking() {
         _isTracking.value = false
-        if (::locationCallback.isInitialized) {
-            fusedLocationClient.removeLocationUpdates(locationCallback)
-        }
+        locationListener?.let { locationManager.removeUpdates(it) }
+        locationListener = null
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
         Timber.d("Location tracking stopped. Total distance: %.1f km", totalDistanceMeters / 1000.0)
@@ -206,8 +238,7 @@ class LocationTrackingService : Service() {
     override fun onDestroy() {
         super.onDestroy()
         _isTracking.value = false
-        if (::locationCallback.isInitialized) {
-            fusedLocationClient.removeLocationUpdates(locationCallback)
-        }
+        locationListener?.let { locationManager.removeUpdates(it) }
+        locationListener = null
     }
 }

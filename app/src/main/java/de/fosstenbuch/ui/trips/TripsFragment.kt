@@ -55,6 +55,13 @@ class TripsFragment : Fragment() {
         setupFab()
         observeState()
         observeGpsForBanner()
+        setupGhostBanner()
+    }
+
+    private fun setupGhostBanner() {
+        binding.buttonShowGhostTrips.setOnClickListener {
+            safeNavigate(TripsFragmentDirections.actionTripsToGhostTrips())
+        }
     }
 
     private fun setupRecyclerView() {
@@ -85,6 +92,16 @@ class TripsFragment : Fragment() {
                 val position = viewHolder.bindingAdapterPosition
                 if (position == RecyclerView.NO_POSITION) return
                 val trip = tripAdapter.currentList.getOrNull(position) ?: return
+                if (viewModel.isTripDeletionBlocked(trip)) {
+                    // Restore item and show message
+                    tripAdapter.submitList(tripAdapter.currentList.toList())
+                    Snackbar.make(
+                        binding.root,
+                        R.string.cannot_delete_audit_protected_trip,
+                        Snackbar.LENGTH_LONG
+                    ).show()
+                    return
+                }
                 showDeleteConfirmation(trip, position)
             }
         }
@@ -120,8 +137,10 @@ class TripsFragment : Fragment() {
         }
 
         if (!trip.isActive) {
-            options.add(getString(R.string.delete))
-            actions.add { showDeleteConfirmationFromContext(trip) }
+            if (!viewModel.isTripDeletionBlocked(trip)) {
+                options.add(getString(R.string.delete))
+                actions.add { showDeleteConfirmationFromContext(trip) }
+            }
         }
 
         if (options.isEmpty()) return
@@ -217,6 +236,34 @@ class TripsFragment : Fragment() {
 
                     // Active trip banner
                     updateActiveTripBanner(state.activeTrip)
+
+                    // Ghost trips banner (pending reviews)
+                    if (state.hasGhostTrips) {
+                        binding.cardGhostTrips.visibility = View.VISIBLE
+                        binding.textGhostTripsInfo.text = resources.getQuantityString(
+                            R.plurals.ghost_trips_banner_text,
+                            state.ghostTripCount,
+                            state.ghostTripCount
+                        )
+                    } else {
+                        binding.cardGhostTrips.visibility = View.GONE
+                    }
+
+                    // Ghost-trip recording banner (live while auto-recording)
+                    if (state.isGhostTripRecording) {
+                        binding.cardGhostRecording.visibility = View.VISIBLE
+                        binding.textGhostRecordingDevice.text = getString(
+                            R.string.ghost_recording_banner_device,
+                            state.activeGhostTripDeviceName
+                        )
+                        binding.textGhostRecordingDistance.text = getString(
+                            R.string.ghost_recording_banner_distance,
+                            state.activeGhostTripDistanceKm,
+                            state.activeGhostTripElapsedMin
+                        )
+                    } else {
+                        binding.cardGhostRecording.visibility = View.GONE
+                    }
 
                     // Hide FAB when a trip is already active
                     binding.fabAddTrip.visibility =
