@@ -1,5 +1,6 @@
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import java.util.Properties
 
 plugins {
     id("com.android.application")
@@ -85,10 +86,19 @@ koverReport {
 }
 
 // --- Automated versioning ---
-// versionName: date-based (yyyy.MM.dd), e.g. "2026.02.27"
-// versionCode: set by CI via VERSION_CODE env var, falls back to 1 for local builds
-val autoVersionName: String = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy.MM.dd"))
-val autoVersionCode: Int = System.getenv("VERSION_CODE")?.toIntOrNull() ?: 1
+// Read from version.properties (deterministic, required for F-Droid).
+// CI can still override via VERSION_CODE / VERSION_NAME env vars.
+// Falls back to date-based values for local dev convenience.
+val versionProps = Properties().apply {
+    val f = rootProject.file("version.properties")
+    if (f.exists()) load(f.inputStream())
+}
+val autoVersionName: String = System.getenv("VERSION_NAME")
+    ?: versionProps.getProperty("VERSION_NAME")
+    ?: LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy.MM.dd"))
+val autoVersionCode: Int = System.getenv("VERSION_CODE")?.toIntOrNull()
+    ?: versionProps.getProperty("VERSION_CODE")?.toIntOrNull()
+    ?: LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd")).toInt()
 
 android {
     namespace = "de.fosstenbuch"

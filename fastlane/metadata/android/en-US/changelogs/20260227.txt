@@ -1,0 +1,3 @@
+Initial release of FOSStenbuch – a free and open source trip logbook for Android.
+
+Features include trip recording, GPS tracking, vehicle management, PDF/CSV export, backup & restore, audit log, templates, and more.

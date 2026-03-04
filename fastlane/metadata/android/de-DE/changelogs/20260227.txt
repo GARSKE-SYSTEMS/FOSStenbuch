@@ -1,0 +1,3 @@
+Erstveröffentlichung von FOSStenbuch – ein freies Open-Source-Fahrtenbuch für Android.
+
+Enthält Fahrtenerfassung, GPS-Tracking, Fahrzeugverwaltung, PDF/CSV-Export, Backup & Restore, Audit-Log, Vorlagen und mehr.
