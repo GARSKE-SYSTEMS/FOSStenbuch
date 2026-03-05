@@ -6,13 +6,15 @@ WebSite: https://github.com/GARSKE-SYSTEMS/FOSStenbuch
 SourceCode: https://github.com/GARSKE-SYSTEMS/FOSStenbuch
 IssueTracker: https://github.com/GARSKE-SYSTEMS/FOSStenbuch/issues
 
+AutoName: FOSStenbuch
+
 RepoType: git
 Repo: https://github.com/GARSKE-SYSTEMS/FOSStenbuch.git
 
 Builds:
   - versionName: 2026.03.04
     versionCode: 20260304
-    commit: 335019c74e3c60d193e5c9c6d2c4c2248ca5c200
+    commit: 3b26b936a5f3b2261029de15c4584dea89b8777e
     subdir: app
     gradle:
       - yes
