@@ -186,7 +186,7 @@ Dieses Projekt ist unter der **MIT-Lizenz** lizenziert – siehe [LICENSE](LICEN
 ```
 MIT License
 
-Copyright (c) 2023 FOSStenbuch Contributors
+Copyright (c) 2026 FOSStenbuch Contributors
 ```
 
 ---
