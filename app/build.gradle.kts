@@ -85,12 +85,12 @@ kover {
 
 android {
     namespace = "de.fosstenbuch"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "de.garsys.fosstenbuch"
         minSdk = 26
-        targetSdk = 34
+        targetSdk = 35
         versionCode = 20260304
         versionName = "2026.03.04"
 
