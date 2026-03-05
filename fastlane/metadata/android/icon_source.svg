@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 108 108">
+  <!-- Background matching ic_background color -->
+  <rect width="108" height="108" fill="#E3F2FD" rx="20" ry="20"/>
+  <!-- Road / path -->
+  <path fill="#455A64" d="M30,78 L42,30 L66,30 L78,78 Z" />
+  <!-- Center road line -->
+  <path fill="#FFD54F" d="M51,38 L53,38 L56,68 L48,68 Z" />
+  <!-- Car body -->
+  <path fill="#1565C0" d="M40,58 C40,54 44,50 54,50 C64,50 68,54 68,58 L68,66 C68,68 66,70 64,70 L44,70 C42,70 40,68 40,66 Z" />
+  <!-- Windshield -->
+  <path fill="#B3E5FC" d="M45,54 L63,54 L61,58 L47,58 Z" />
+  <!-- Left headlight -->
+  <path fill="#FFD54F" d="M43,62 C43,60.9 43.9,60 45,60 C46.1,60 47,60.9 47,62 C47,63.1 46.1,64 45,64 C43.9,64 43,63.1 43,62 Z" />
+  <!-- Right headlight -->
+  <path fill="#FFD54F" d="M61,62 C61,60.9 61.9,60 63,60 C64.1,60 65,60.9 65,62 C65,63.1 64.1,64 63,64 C61.9,64 61,63.1 61,62 Z" />
+</svg>

@@ -1,0 +1,19 @@
+FOSStenbuch is a free and open source digital trip logbook for Android – designed for individuals, freelancers, and businesses who want to document their trips easily, privately, and without any cloud dependency.
+
+Features:
+
+* Trip recording – Create trips with start/end locations, odometer readings, purpose, and vehicle
+* GPS tracking – Background location tracking via foreground service
+* Vehicle management – Manage multiple vehicles
+* Trip purposes – Define custom purposes (business, private, etc.)
+* Saved locations – Save and reuse frequently visited places
+* Odometer tracking – Seamless documentation of odometer readings
+* Statistics – Evaluations and overviews of trips and kilometers
+* Export – Export trips as PDF or CSV and share them
+* Backup & Restore – Local data backup and recovery
+* Reminders – Notifications for trip recording
+* Audit log – Traceable change history of trips
+* Templates – Save recurring trips as templates
+* Material Design – Modern Android UI with Material 3 components
+* Offline-first – All data is stored locally on the device (Room database)
+* No tracking, no ads, no cloud – Full data control

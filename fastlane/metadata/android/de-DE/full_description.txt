@@ -1,0 +1,19 @@
+FOSStenbuch ist ein quelloffenes, digitales Fahrtenbuch für Android – entwickelt für Privatpersonen, Selbstständige und Unternehmen, die ihre Fahrten einfach, datenschutzfreundlich und ohne Cloud-Zwang dokumentieren möchten.
+
+Funktionen:
+
+* Fahrtenerfassung – Fahrten mit Start-/Zielort, Kilometerstand, Zweck und Fahrzeug anlegen
+* GPS-Tracking – Standorterfassung im Hintergrund via Foreground Service
+* Fahrzeugverwaltung – Mehrere Fahrzeuge verwalten
+* Fahrzwecke – Individuelle Fahrzwecke (dienstlich, privat, etc.) definieren
+* Gespeicherte Orte – Häufig genutzte Orte speichern und wiederverwenden
+* Kilometerstand-Tracking – Lückenlose Dokumentation der Kilometerstände
+* Statistiken – Auswertungen und Übersichten über Fahrten und Kilometer
+* Export – Fahrten als PDF oder CSV exportieren und teilen
+* Backup & Restore – Lokale Datensicherung und Wiederherstellung
+* Erinnerungen – Benachrichtigungen zur Fahrtenerfassung
+* Audit-Log – Nachvollziehbare Änderungshistorie der Fahrten
+* Vorlagen – Wiederkehrende Fahrten als Vorlage speichern
+* Material Design – Moderne Android-Oberfläche mit Material 3 Komponenten
+* Offline-first – Alle Daten werden lokal auf dem Gerät gespeichert (Room-Datenbank)
+* Kein Tracking, keine Werbung, keine Cloud – Volle Datenkontrolle

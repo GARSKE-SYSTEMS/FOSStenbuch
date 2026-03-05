@@ -1,0 +1,25 @@
+Categories:
+  - Money
+License: MIT
+AuthorName: GARSKE SYSTEMS
+WebSite: https://github.com/GARSKE-SYSTEMS/FOSStenbuch
+SourceCode: https://github.com/GARSKE-SYSTEMS/FOSStenbuch
+IssueTracker: https://github.com/GARSKE-SYSTEMS/FOSStenbuch/issues
+
+AutoName: FOSStenbuch
+
+RepoType: git
+Repo: https://github.com/GARSKE-SYSTEMS/FOSStenbuch.git
+
+Builds:
+  - versionName: 2026.03.04
+    versionCode: 20260304
+    commit: 3b26b936a5f3b2261029de15c4584dea89b8777e
+    subdir: app
+    gradle:
+      - yes
+
+AutoUpdateMode: Version
+UpdateCheckMode: Tags
+CurrentVersion: 2026.03.04
+CurrentVersionCode: 20260304

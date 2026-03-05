@@ -1,94 +1,87 @@
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
-
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
-    id("org.jetbrains.kotlin.kapt")
+    id("com.google.devtools.ksp")
     id("com.google.dagger.hilt.android")
     id("androidx.navigation.safeargs.kotlin")
     id("org.jetbrains.kotlinx.kover")
 }
 
-koverReport {
-    filters {
-        excludes {
-            // Exclude Android UI, DI, generated code from coverage
-            classes(
-                // UI layer
-                "*Fragment",
-                "*Fragment\$*",
-                "*Activity",
-                "*Activity\$*",
-                "*Adapter",
-                "*Adapter\$*",
-                "*Application",
-                "*Application\$*",
-                "*ViewModel",
-                "*ViewModel\$*",
-                "*UiState",
-                "*UiState\$*",
-                "*Receiver",
-                "*Receiver\$*",
-                // Service (Android-dependent, not unit-testable)
-                "*Service",
-                "*Service\$*",
-                // UI helper classes
-                "de.fosstenbuch.ui.stats.StatItem",
-                "de.fosstenbuch.ui.trips.TripFilter",
-                "de.fosstenbuch.ui.trips.TripSort",
-                "de.fosstenbuch.ui.trips.TripPhase",
-                "de.fosstenbuch.ui.stats.StatsFilterMode",
-                "de.fosstenbuch.ui.common.*",
-                // DI modules
-                "*Module",
-                "*Module\$*",
-                // Hilt / Dagger generated
-                "*_Factory",
-                "*_Factory\$*",
-                "*_HiltModules*",
-                "*_MembersInjector",
-                "*Binding*",
-                "hilt_aggregated_deps.*",
-                "*_HiltComponents*",
-                "*_ComponentTreeDeps*",
-                "*_GeneratedInjector",
-                "*Hilt_*",
-                // Room generated DAO implementations
-                "*_Impl",
-                "*_Impl\$*",
-                // Navigation generated
-                "*BuildConfig",
-                "*Directions",
-                "*Directions\$*",
-                "*Args",
-                "*Args\$*",
-                // DAOs (interfaces, covered via repository tests)
-                "*Dao",
-                "*Dao\$*",
-                // Android-dependent classes not unit-testable
-                "*PdfTripExporter",
-                "*PdfTripExporter\$*",
-                "*BackupManager",
-                "*BackupManager\$*",
-                "*PreferencesManager",
-                "*PreferencesManager\$*",
-                "*PreferencesManagerKt",
-                "*TimberDebugTree",
-                // Room database
-                "de.fosstenbuch.data.local.AppDatabase",
-                "de.fosstenbuch.data.local.AppDatabase\$*"
-            )
-            annotatedBy("dagger.Module", "dagger.internal.DaggerGenerated", "androidx.room.Database")
+kover {
+    reports {
+        filters {
+            excludes {
+                // Exclude Android UI, DI, generated code from coverage
+                classes(
+                    // UI layer
+                    "*Fragment",
+                    "*Fragment\$*",
+                    "*Activity",
+                    "*Activity\$*",
+                    "*Adapter",
+                    "*Adapter\$*",
+                    "*Application",
+                    "*Application\$*",
+                    "*ViewModel",
+                    "*ViewModel\$*",
+                    "*UiState",
+                    "*UiState\$*",
+                    "*Receiver",
+                    "*Receiver\$*",
+                    // Service (Android-dependent, not unit-testable)
+                    "*Service",
+                    "*Service\$*",
+                    // UI helper classes
+                    "de.fosstenbuch.ui.stats.StatItem",
+                    "de.fosstenbuch.ui.trips.TripFilter",
+                    "de.fosstenbuch.ui.trips.TripSort",
+                    "de.fosstenbuch.ui.trips.TripPhase",
+                    "de.fosstenbuch.ui.stats.StatsFilterMode",
+                    "de.fosstenbuch.ui.common.*",
+                    // DI modules
+                    "*Module",
+                    "*Module\$*",
+                    // Hilt / Dagger generated
+                    "*_Factory",
+                    "*_Factory\$*",
+                    "*_HiltModules*",
+                    "*_MembersInjector",
+                    "*Binding*",
+                    "hilt_aggregated_deps.*",
+                    "*_HiltComponents*",
+                    "*_ComponentTreeDeps*",
+                    "*_GeneratedInjector",
+                    "*Hilt_*",
+                    // Room generated DAO implementations
+                    "*_Impl",
+                    "*_Impl\$*",
+                    // Navigation generated
+                    "*BuildConfig",
+                    "*Directions",
+                    "*Directions\$*",
+                    "*Args",
+                    "*Args\$*",
+                    // DAOs (interfaces, covered via repository tests)
+                    "*Dao",
+                    "*Dao\$*",
+                    // Android-dependent classes not unit-testable
+                    "*PdfTripExporter",
+                    "*PdfTripExporter\$*",
+                    "*BackupManager",
+                    "*BackupManager\$*",
+                    "*PreferencesManager",
+                    "*PreferencesManager\$*",
+                    "*PreferencesManagerKt",
+                    "*TimberDebugTree",
+                    // Room database
+                    "de.fosstenbuch.data.local.AppDatabase",
+                    "de.fosstenbuch.data.local.AppDatabase\$*"
+                )
+                annotatedBy("dagger.Module", "dagger.internal.DaggerGenerated", "androidx.room.Database")
+            }
         }
     }
 }
-
-// --- Automated versioning ---
-// versionName: date-based (yyyy.MM.dd), e.g. "2026.02.27"
-// versionCode: set by CI via VERSION_CODE env var, falls back to 1 for local builds
-val autoVersionName: String = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy.MM.dd"))
-val autoVersionCode: Int = System.getenv("VERSION_CODE")?.toIntOrNull() ?: 1
 
 android {
     namespace = "de.fosstenbuch"
@@ -98,8 +91,8 @@ android {
         applicationId = "de.garsys.fosstenbuch"
         minSdk = 26
         targetSdk = 34
-        versionCode = autoVersionCode
-        versionName = autoVersionName
+        versionCode = 20260304
+        versionName = "2026.03.04"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -175,7 +168,7 @@ dependencies {
 
     // Room for database
     implementation("androidx.room:room-runtime:2.6.1")
-    kapt("androidx.room:room-compiler:2.6.1")
+    ksp("androidx.room:room-compiler:2.6.1")
     implementation("androidx.room:room-ktx:2.6.1")
     implementation("androidx.room:room-paging:2.6.1")
 
@@ -192,12 +185,12 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-common-java8:2.7.0")
 
     // Navigation
-    implementation("androidx.navigation:navigation-fragment-ktx:2.6.0")
-    implementation("androidx.navigation:navigation-ui-ktx:2.6.0")
+    implementation("androidx.navigation:navigation-fragment-ktx:2.7.7")
+    implementation("androidx.navigation:navigation-ui-ktx:2.7.7")
 
     // Hilt for Dependency Injection
-    implementation("com.google.dagger:hilt-android:2.48")
-    kapt("com.google.dagger:hilt-compiler:2.48")
+    implementation("com.google.dagger:hilt-android:2.52")
+    ksp("com.google.dagger:hilt-compiler:2.52")
 
     // Timber for logging
     implementation("com.jakewharton.timber:timber:5.0.1")
