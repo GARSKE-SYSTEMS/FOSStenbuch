@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Texte des Einstellungs-Bildschirms (weitere Settings-Texte stehen bereits in strings.xml) -->
 <resources>
-    <string name="settings_reminder_time_format">Erinnerungszeit: %s</string>
+    <string name="settings_reminder_time_format">Erinnerungszeit: %1$02d:%2$02d</string>
     <string name="settings_backup_share_title">Backup speichern oder teilen</string>
     <string name="settings_delete_error">Fehler beim Löschen: %s</string>
     <string name="settings_chain_broken_title">Backup-Prüfung fehlgeschlagen</string>

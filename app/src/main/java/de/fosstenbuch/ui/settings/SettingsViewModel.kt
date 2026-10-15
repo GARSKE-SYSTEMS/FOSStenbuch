@@ -2,6 +2,7 @@ package de.fosstenbuch.ui.settings
 
 import android.app.Application
 import android.net.Uri
+import androidx.annotation.StringRes
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import de.fosstenbuch.R
@@ -37,6 +38,7 @@ class SettingsViewModel(app: Application) : AndroidViewModel(app) {
         Outcome(app.getString(R.string.settings_backup_share_title), share = Backup.export(app))
     }
 
+    /** Spielt das Backup aus [uri] ein; [force] übergeht eine gebrochene Hash-Kette (nur nach Rückfrage) */
     fun restore(uri: Uri, force: Boolean = false) = perform(R.string.restore_error) {
         try {
             Backup.restore(app, uri, force)
@@ -52,14 +54,16 @@ class SettingsViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     /** Startet [action], falls nicht schon eine läuft (nie zwei gleichzeitig); Fehler werden zu [errorFormat] */
-    private fun perform(errorFormat: Int, action: suspend () -> Outcome) {
+    private fun perform(@StringRes errorFormat: Int, action: suspend () -> Outcome) {
         if (busy.value) return
         busy.value = true
         viewModelScope.launch {
             val outcome = try {
                 action()
+            } catch (e: CancellationException) {
+                throw e // Abbruch (Bildschirm verlassen) ist kein Fehler und darf nicht gemeldet werden
             } catch (e: Exception) {
-                if (e is CancellationException) throw e
+                // Datei, JSON, Datenbank, laufende Aufzeichnung: jeder Fehler wird zur Meldung statt zum Absturz
                 Outcome(app.getString(errorFormat, e.message ?: e.javaClass.simpleName))
             } finally {
                 busy.value = false
