@@ -41,6 +41,11 @@ android {
     }
 
     buildTypes {
+        debug {
+            // Eigene App-ID: Ein Debug-Build (debuggable!) kann so nie die installierte
+            // Release-App ersetzen oder an deren Daten kommen – auch wenn die CI ihn signiert.
+            applicationIdSuffix = ".debug"
+        }
         release {
             isMinifyEnabled = false
             signingConfig = signingConfigs.getByName("release")
