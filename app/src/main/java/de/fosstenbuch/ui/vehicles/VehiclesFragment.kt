@@ -51,6 +51,7 @@ class VehiclesFragment : Fragment(R.layout.fragment_masterdata_list) {
         }
     }
 
+    /** Aktionsmenü beim langen Drücken: Hauptfahrzeug setzen (falls noch nicht) oder löschen */
     private fun showOptions(v: Vehicle) {
         val options = listOfNotNull(R.string.set_primary.takeIf { !v.isPrimary }, R.string.delete)
         choose(getString(R.string.masterdata_two_parts, v.make, v.model), options.map { getString(it) }) { i ->

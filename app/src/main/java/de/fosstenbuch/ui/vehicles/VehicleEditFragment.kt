@@ -35,6 +35,9 @@ import de.fosstenbuch.ui.common.launch
 import de.fosstenbuch.ui.common.setDropdown
 import de.fosstenbuch.ui.common.textOrNull
 import de.fosstenbuch.ui.common.toast
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 /**
  * Fahrzeug anlegen/bearbeiten ([argId], 0 = neu).
@@ -206,7 +209,15 @@ class VehicleEditFragment : Fragment(R.layout.fragment_vehicle_edit) {
             // Aufzeichnung beenden – das Trennen des alten Geräts erkennt Ghosts danach nicht mehr als Fahrtende
             val ghost = ctx.dao.recordingGhost()
             if (ghost != null && ghost.vehicleId == argId && !btAddress.equals(ctx.dao.vehicle(argId)?.bluetoothDeviceAddress, ignoreCase = true)) {
-                if (TrackingService.live.value?.tripId == ghost.id) TrackingService.stop(ctx) else Ghosts.finish(ctx, ghost.id)
+                if (TrackingService.live.value?.tripId == ghost.id) {
+                    TrackingService.stop(ctx)
+                } else {
+                    // Ohne Dienst selbst abschließen, aber nicht abwarten: Das Nachtragen der Ortsnamen braucht
+                    // ggf. lange Netz, und ein Verlassen des Bildschirms darf weder das Abschließen noch das
+                    // Speichern des Fahrzeugs abbrechen
+                    val app = ctx.applicationContext
+                    CoroutineScope(Dispatchers.IO).launch { Ghosts.finish(app, ghost.id) }
+                }
             }
             ctx.db.withTransaction {
                 val old = ctx.dao.vehicle(argId)
