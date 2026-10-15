@@ -67,7 +67,9 @@ object Backup {
         val dao = db.dao()
         // Room-Flows nicht innerhalb der Transaktion lesen. Wird eine dieser Fahrten inzwischen
         // übernommen, steht sie unten auch in allTrips() und wird hier aussortiert (sonst doppelte ID).
-        val ghosts = dao.ghostTrips().first()
+        // Eine laufende Aufzeichnung (endTime == null) ist noch keine Fahrt: Wiederhergestellt würde sie
+        // als Dauer-Aufzeichnung gelten und die Bluetooth-Erkennung blockieren.
+        val ghosts = dao.ghostTrips().first().filter { it.endTime != null }
         // Eine Transaktion = ein stimmiger Stand (z.B. kein Protokolleintrag ohne seine Fahrt)
         val content = db.withTransaction {
             val vehicles = dao.allVehicles()
@@ -94,14 +96,21 @@ object Backup {
      * geprüft, erst danach wird in einer Transaktion geleert und eingefügt. Jeder Fehler – auch
      * ein Abbruch mittendrin – lässt die bisherigen Daten unverändert.
      * @param force trotz [BrokenChain] wiederherstellen (nur nach Rückfrage beim Nutzer)
+     * @throws IllegalStateException während einer GPS-Aufzeichnung
      */
     suspend fun restore(context: Context, uri: Uri, force: Boolean) {
+        // Nicht während einer Aufzeichnung: Der Dienst schreibt bis zu seinem (asynchronen) Stopp
+        // GPS-Stände per Fahrt-ID – nach dem Einspielen träfe das eine fremde, wiederhergestellte
+        // Fahrt (verfälschte Daten, gebrochene Hash-Kette). Vorher stoppen hilft nicht, weil das
+        // Beenden der Aufzeichnung die alte Fahrt danach über die neue Zeile schreiben könnte.
+        check(TrackingService.live.value == null) { "Bitte zuerst die laufende Fahrt-Aufzeichnung beenden" }
         val content = withContext(Dispatchers.IO) {
             val text = context.contentResolver.openInputStream(uri)?.use { it.reader().readText() }
                 ?: throw IllegalArgumentException("Backup-Datei konnte nicht gelesen werden")
-            decode(fromText(text))
+            // Auch die Kettenprüfung (SHA-256 je Fahrt) dauert bei Tausenden Fahrten spürbar –
+            // daher hier im Hintergrund statt im Main-Thread des Aufrufers (viewModelScope)
+            decode(fromText(text)).also { if (!force) checkChains(it) }
         }
-        if (!force) checkChains(content)
         val db = context.db
         db.withTransaction {
             val dao = db.dao()
@@ -114,7 +123,6 @@ object Backup {
             dao.insertTemplates(content.templates)
             dao.insertAuditLogs(content.auditLogs)
         }
-        stopTracking(context)
     }
 
     /** Löscht alle Daten und legt die zwei Standard-Kategorien neu an – alles in einer Transaktion */
@@ -133,7 +141,9 @@ object Backup {
         }
         // Die gewählte Standard-Kategorie ist weg (SQLite vergibt ihre ID nicht erneut)
         Settings.set(context, Settings.DEFAULT_PURPOSE_ID, null)
-        stopTracking(context)
+        // Die aufgezeichnete Fahrt ist gelöscht. Nachzügler-Schreibzugriffe des Dienstes laufen ins
+        // Leere, denn gelöschte IDs vergibt SQLite (AUTOINCREMENT) nie erneut.
+        if (TrackingService.live.value != null) TrackingService.stop(context)
     }
 
     /** Leert alle Tabellen; Reihenfolge so, dass keine Fremdschlüssel-Aktionen nötig sind */
@@ -144,11 +154,6 @@ object Backup {
         dao.deleteAllLocations()
         dao.deleteAllVehicles()
         dao.deleteAllPurposes()
-    }
-
-    /** Eine laufende GPS-Aufzeichnung gehört zu einer Fahrt, die es so nicht mehr gibt */
-    private fun stopTracking(context: Context) {
-        if (TrackingService.live.value != null) TrackingService.stop(context)
     }
 
     // ── Prüfung ──────────────────────────────────────────────────────────────
