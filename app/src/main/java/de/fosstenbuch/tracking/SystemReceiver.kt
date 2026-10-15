@@ -21,7 +21,8 @@ import kotlinx.coroutines.withTimeoutOrNull
  *   sind von der Sperre impliziter Broadcasts ausgenommen; ab Android 12 kommen sie nur mit der
  *   Berechtigung BLUETOOTH_CONNECT an.
  * - Erinnerungs-Alarm, Neustart, App-Update, Zeitumstellung → [Reminder].
- * - Neustart → verwaiste Aufzeichnung abschließen; App-Update → laufende Aufzeichnung fortsetzen.
+ * - Neustart → verwaiste Aufzeichnung abschließen; App-Update → laufende Aufzeichnung fortsetzen
+ *   (eine automatische nur, wenn sie plausibel noch läuft, siehe [Ghosts.resume]).
  */
 class SystemReceiver : BroadcastReceiver() {
 
@@ -50,8 +51,7 @@ class SystemReceiver : BroadcastReceiver() {
                     // Android startet den Aufzeichnungsdienst nach einem Update nicht neu. Dieser Broadcast erlaubt den
                     // Start aus dem Hintergrund; scheitert er trotzdem, fangen startManual/startGhost das ab.
                     val active = app.dao.activeTrip()
-                    val ghost = app.dao.recordingGhost()
-                    if (active != null) TrackingService.startManual(app, active.id) else if (ghost != null) TrackingService.startGhost(app, ghost.id)
+                    if (active != null) TrackingService.startManual(app, active.id) else Ghosts.resume(app)
                 }
             }
         }

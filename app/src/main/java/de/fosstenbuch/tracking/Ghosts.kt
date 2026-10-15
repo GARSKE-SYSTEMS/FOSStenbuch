@@ -26,9 +26,11 @@ internal object Ghosts {
 
     /** Kürzere Bluetooth-Abbrüche (Telefonat, Neuverbinden der Freisprechanlage) setzen dieselbe Fahrt fort */
     private const val REOPEN_MS = 3 * 60_000L
+    /** So lange fährt niemand ohne Bluetooth-Unterbrechung: Eine ältere offene Aufzeichnung ist verwaist (siehe [resume]) */
+    private const val MAX_DRIVE_MS = 12 * 3_600_000L
     private const val UNKNOWN = "Unbekannt"
 
-    /** Für [end]: Das Abschließen soll den auslösenden Bildschirm bzw. Empfänger überdauern */
+    /** Für [end] und Ortsnamen: Das soll den auslösenden Bildschirm bzw. Empfänger überdauern */
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     /**
@@ -56,8 +58,14 @@ internal object Ghosts {
         } else {
             // Eine offene Aufzeichnung, die hier nicht läuft, ist verwaist: Die Trennung wurde verpasst (z.B. nach
             // "Beenden erzwingen"). Abschließen statt fortsetzen – sonst entstünde Tage später eine Fahrt mit
-            // altem Startdatum. Die Ortsnamen brauchen ggf. Netz, darauf wartet die neue Fahrt nicht.
-            if (recording != null) end(context, recording.id)
+            // altem Startdatum. Das Ende muss stehen, bevor die neue Fahrt entsteht: Deren Start-Km baut auf dem
+            // geschätzten End-Km auf, und zwei offene Zeilen gleichzeitig darf es nicht geben (stirbt der Prozess
+            // dazwischen, bliebe die ältere unsichtbar offen). Der Dienst zeichnet sie nicht auf (sonst liefe sie
+            // hier), also direkt in der DB. Nur auf die Ortsnamen (Netz) wartet die neue Fahrt nicht.
+            if (recording != null) {
+                val app = context.applicationContext
+                close(app, recording.id)?.let { scope.launch { addPlaceNames(app, it) } }
+            }
             val recent = dao.ghostTrips().first().firstOrNull {
                 it.id != recording?.id && it.vehicleId == vehicle.id && now - (it.endTime?.time ?: 0) < REOPEN_MS
             }
@@ -97,6 +105,18 @@ internal object Ghosts {
         }
     }
 
+    /**
+     * Nach einem App-Update: Android startet den Aufzeichnungsdienst dann nicht von selbst neu, also die offene
+     * Aufzeichnung fortsetzen. Ist sie älter als [MAX_DRIVE_MS], wurde ihre Trennung verpasst (z.B. nach "Beenden
+     * erzwingen" oder entzogener Bluetooth-Berechtigung): abschließen, sonst liefe das GPS ohne Ende weiter.
+     * Bewusst hingenommen: Eine jüngere verwaiste Aufzeichnung ist nicht erkennbar und wird fortgesetzt, bis das
+     * Fahrzeug sich trennt oder der Nutzer sie im Fahrtformular beendet ([end]).
+     */
+    suspend fun resume(context: Context) {
+        val ghost = context.dao.recordingGhost() ?: return
+        if (System.currentTimeMillis() - ghost.date.time < MAX_DRIVE_MS) TrackingService.startGhost(context, ghost.id) else finish(context, ghost.id)
+    }
+
     /** Nach einem Neustart: Eine schon vorher begonnene Aufzeichnung ist verwaist, die Verbindung ist längst weg */
     suspend fun closeStale(context: Context) {
         val ghost = context.dao.recordingGhost() ?: return
@@ -110,13 +130,20 @@ internal object Ghosts {
     private fun runsHere(id: Long) = id == connectedId || id == TrackingService.live.value?.tripId
 
     /**
-     * Schließt eine automatische Aufzeichnung ab: Ende = jetzt, End-Kilometerstand aus der GPS-Strecke
-     * geschätzt, Orte aus den Koordinaten. Zuerst wird das Ende gespeichert (schnell, ohne Netz),
-     * danach werden die Ortsnamen nachgetragen – das braucht ggf. Netz und darf auch ausbleiben.
+     * Schließt eine automatische Aufzeichnung ab: erst das Ende ([close], schnell, ohne Netz), danach die
+     * Ortsnamen ([addPlaceNames], braucht ggf. Netz und darf auch ausbleiben).
      */
     suspend fun finish(context: Context, id: Long) {
+        close(context, id)?.let { addPlaceNames(context, it) }
+    }
+
+    /**
+     * Schneller Teil von [finish]: Ende = jetzt, End-Kilometerstand aus der GPS-Strecke geschätzt, Orte vorerst
+     * "Unbekannt". Liefert die abgeschlossene Fahrt; null, wenn nichts mehr offen war oder sie als Duplikat entfiel.
+     */
+    private suspend fun close(context: Context, id: Long): Trip? {
         val dao = context.dao
-        val ghost = dao.trip(id)?.takeIf { it.isGhost && it.endTime == null } ?: return
+        val ghost = dao.trip(id)?.takeIf { it.isGhost && it.endTime == null } ?: return null
         // Eine echte Fahrt desselben Fahrzeugs, die sich mit der Aufzeichnung überschneidet (läuft noch oder
         // endete erst nach deren Beginn), ist maßgeblich – der Ghost wäre ein Duplikat. Typisch: Das Auto-Bluetooth
         // verbindet sich beim Motorstart, erst danach startet der Nutzer die Fahrt in der App; deren Abfahrtszeit
@@ -124,7 +151,7 @@ internal object Ghosts {
         // Reihenfolge gilt und auch ohne laufenden Dienst (z.B. ohne Standortberechtigung).
         if (dao.allTrips().any { it.vehicleId == ghost.vehicleId && !it.isCancelled && (it.isActive || (it.endTime ?: it.date) >= ghost.date) }) {
             dao.deleteTrip(ghost)
-            return
+            return null
         }
         val ended = ghost.copy(
             endTime = Date(),
@@ -133,10 +160,16 @@ internal object Ghosts {
             endLocation = UNKNOWN
         )
         dao.updateTrip(ended)
-        val start = placeName(context, ghost.startLatitude, ghost.startLongitude)
-        val end = placeName(context, ghost.endLatitude, ghost.endLongitude)
+        return ended
+    }
+
+    /** Langsamer Teil von [finish]: Ortsnamen aus den Koordinaten der abgeschlossenen Fahrt [ended] nachtragen */
+    private suspend fun addPlaceNames(context: Context, ended: Trip) {
+        val start = placeName(context, ended.startLatitude, ended.startLongitude)
+        val end = placeName(context, ended.endLatitude, ended.endLongitude)
         // Nur, wenn die Fahrt seitdem unverändert ist (nicht übernommen, gelöscht oder wieder geöffnet)
-        if (dao.trip(id) == ended) dao.updateTrip(ended.copy(startLocation = start, endLocation = end))
+        val dao = context.dao
+        if (dao.trip(ended.id) == ended) dao.updateTrip(ended.copy(startLocation = start, endLocation = end))
     }
 
     private suspend fun placeName(context: Context, lat: Double?, lng: Double?): String =
