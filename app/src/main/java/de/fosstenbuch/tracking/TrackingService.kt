@@ -93,6 +93,7 @@ class TrackingService : Service() {
     }
 
     /** Vordergrundbetrieb mit Standort-Typ; false, wenn Android ihn verweigert */
+    @SuppressLint("InlinedApi") // ServiceCompat übergibt den Typ erst ab Android 10, wo es ihn gibt
     private fun enterForeground(): Boolean = try {
         ServiceCompat.startForeground(this, NOTIFICATION_ID, notification(), ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION)
         true
@@ -106,7 +107,8 @@ class TrackingService : Service() {
     /** Beginnt die Aufzeichnung von [t] (nichts zu tun, wenn sie schon läuft) */
     private fun record(t: Trip) {
         if (trip?.id == t.id) return
-        // Eine laufende automatische Fahrt bleibt dabei offen und endet wie immer beim Bluetooth-Trennen
+        // Eine laufende automatische Fahrt bleibt dabei offen; beim Bluetooth-Trennen verwirft Ghosts.finish
+        // sie als Duplikat der manuellen Fahrt
         stopTracking()
         trip = t
         // Automatische Fahrt: bisherige Strecke und letzte Position aus der DB übernehmen (Fortsetzen)

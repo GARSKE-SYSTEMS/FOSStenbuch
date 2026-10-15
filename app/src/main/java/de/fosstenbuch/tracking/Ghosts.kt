@@ -23,6 +23,12 @@ internal object Ghosts {
     private const val REOPEN_MS = 3 * 60_000L
     private const val UNKNOWN = "Unbekannt"
 
+    /**
+     * Zuletzt in diesem Prozess per Bluetooth begonnene oder fortgesetzte Aufzeichnung. Der Prozess ist
+     * nach dem letzten Boot entstanden – diese Aufzeichnung ist also nicht verwaist (siehe [closeStale]).
+     */
+    @Volatile private var connectedId = 0L
+
     /** Ein Bluetooth-Gerät hat sich verbunden */
     suspend fun onConnected(context: Context, address: String) {
         val dao = context.dao
@@ -49,6 +55,7 @@ internal object Ghosts {
                 )
             }
         }
+        connectedId = id
         if (TrackingService.live.value?.tripId != id) TrackingService.startGhost(context, id)
     }
 
@@ -66,7 +73,10 @@ internal object Ghosts {
     suspend fun closeStale(context: Context) {
         val ghost = context.dao.recordingGhost() ?: return
         val bootTime = System.currentTimeMillis() - SystemClock.elapsedRealtime()
-        if (ghost.date.time < bootTime) finish(context, ghost.id)
+        // Ausnahme: Das Auto hat sich nach dem Boot schon wieder verbunden und die Aufzeichnung fortgesetzt.
+        // BOOT_COMPLETED läuft über eine eigene, langsame Warteschlange und kann nach ACL_CONNECTED kommen.
+        val resumed = ghost.id == connectedId || ghost.id == TrackingService.live.value?.tripId
+        if (ghost.date.time < bootTime && !resumed) finish(context, ghost.id)
     }
 
     /**
@@ -77,6 +87,14 @@ internal object Ghosts {
     suspend fun finish(context: Context, id: Long) {
         val dao = context.dao
         val ghost = dao.trip(id)?.takeIf { it.isGhost && it.endTime == null } ?: return
+        // Eine während der Aufzeichnung von Hand gestartete (oder nachgetragene) Fahrt desselben Fahrzeugs
+        // ist maßgeblich, der Ghost wäre ein Duplikat. Typisch: Das Auto-Bluetooth verbindet sich beim
+        // Motorstart, erst danach startet der Nutzer die Fahrt in der App. Geprüft wird hier, damit es für
+        // jede Reihenfolge gilt und auch ohne laufenden Dienst (z.B. ohne Standortberechtigung).
+        if (dao.allTrips().any { it.vehicleId == ghost.vehicleId && !it.isCancelled && it.date >= ghost.date }) {
+            dao.deleteTrip(ghost)
+            return
+        }
         val ended = ghost.copy(
             endTime = Date(),
             endOdometer = endOdometer(ghost.startOdometer, ghost.gpsDistanceKm),

@@ -1,10 +1,12 @@
 package de.fosstenbuch.tracking
 
+import android.annotation.SuppressLint
 import android.app.AlarmManager
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import de.fosstenbuch.R
@@ -12,9 +14,9 @@ import de.fosstenbuch.data.Settings
 import java.util.Calendar
 
 /**
- * Tägliche Erinnerung "Fahrten eintragen". Ein einmaliger, ungenauer Alarm (ohne Sonderberechtigung
- * für exakte Alarme) weckt den [SystemReceiver]; der zeigt die Benachrichtigung und plant den
- * nächsten Tag über [sync] – so gilt immer der aktuelle Stand der Einstellungen.
+ * Tägliche Erinnerung "Fahrten eintragen". Ein einmaliger Alarm (ohne Sonderberechtigung für exakte
+ * Alarme) weckt den [SystemReceiver]; der zeigt die Benachrichtigung und plant den nächsten Tag über
+ * [sync] – so gilt immer der aktuelle Stand der Einstellungen.
  */
 object Reminder {
 
@@ -24,6 +26,7 @@ object Reminder {
     private const val DEFAULT_TIME = "18:00"
 
     /** Plant oder storniert die tägliche Erinnerung gemäß den Einstellungen */
+    @SuppressLint("MissingPermission") // exakter Alarm nur vor Android 12, dort ohne Berechtigung erlaubt
     suspend fun sync(context: Context) {
         val alarms = context.getSystemService(AlarmManager::class.java) ?: return
         val alarm = PendingIntent.getBroadcast(
@@ -32,8 +35,15 @@ object Reminder {
         )
         if (Settings.get(context, Settings.REMINDER_ENABLED, false)) {
             val (hour, minute) = parseTime(Settings.get(context, Settings.REMINDER_TIME, DEFAULT_TIME))
-            // "AllowWhileIdle": kommt auch im Doze-Modus, ggf. einige Minuten später
-            alarms.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, nextTrigger(System.currentTimeMillis(), hour, minute), alarm)
+            val at = nextTrigger(System.currentTimeMillis(), hour, minute)
+            // "AllowWhileIdle": kommt auch im Doze-Modus, ggf. einige Minuten später.
+            // Vor Android 12 sind exakte Alarme ohne Berechtigung erlaubt – und nötig: Ungenaue Alarme hätten
+            // dort keine 1-h-Obergrenze, sondern bis zu 75 % der Vorlaufzeit (bei 24 h also bis zu 18 h später).
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
+                alarms.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, at, alarm)
+            } else {
+                alarms.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, at, alarm)
+            }
         } else {
             alarms.cancel(alarm)
         }
