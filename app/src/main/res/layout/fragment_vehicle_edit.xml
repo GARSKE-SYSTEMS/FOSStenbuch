@@ -40,7 +40,6 @@
                 android:maxLength="100" />
         </com.google.android.material.textfield.TextInputLayout>
 
-        <!-- Bewusst kein Formatmuster: Bundeswehr-, Kurzzeit- und ausländische Kennzeichen sind auch gültig -->
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/plate_layout"
             android:layout_width="match_parent"

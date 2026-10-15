@@ -1,12 +1,16 @@
 package de.fosstenbuch.ui.vehicles
 
+import android.content.Context
 import android.os.Bundle
 import android.view.View
+import androidx.annotation.PluralsRes
+import androidx.annotation.StringRes
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.room.withTransaction
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import de.fosstenbuch.R
+import de.fosstenbuch.data.AppDao
+import de.fosstenbuch.data.TripTemplate
 import de.fosstenbuch.data.Vehicle
 import de.fosstenbuch.data.dao
 import de.fosstenbuch.data.db
@@ -14,6 +18,7 @@ import de.fosstenbuch.databinding.FragmentMasterdataListBinding
 import de.fosstenbuch.databinding.ItemVehicleBinding
 import de.fosstenbuch.ui.common.ARG_ID
 import de.fosstenbuch.ui.common.SimpleAdapter
+import de.fosstenbuch.ui.common.choose
 import de.fosstenbuch.ui.common.collect
 import de.fosstenbuch.ui.common.confirm
 import de.fosstenbuch.ui.common.launch
@@ -46,34 +51,54 @@ class VehiclesFragment : Fragment(R.layout.fragment_masterdata_list) {
         }
     }
 
+    /** Aktionsmenü beim langen Drücken: Hauptfahrzeug setzen (falls noch nicht) oder löschen */
     private fun showOptions(v: Vehicle) {
         val options = listOfNotNull(R.string.set_primary.takeIf { !v.isPrimary }, R.string.delete)
-        MaterialAlertDialogBuilder(requireContext())
-            .setTitle(getString(R.string.masterdata_two_parts, v.make, v.model))
-            .setItems(options.map { getString(it) }.toTypedArray()) { _, i ->
-                if (options[i] == R.string.delete) delete(v) else launch { requireContext().dao.setPrimaryVehicle(v.id) }
+        choose(getString(R.string.masterdata_two_parts, v.make, v.model), options.map { getString(it) }) { i ->
+            if (options[i] != R.string.delete) {
+                launch { requireContext().dao.setPrimaryVehicle(v.id) }
+            } else {
+                // Gilt auch für änderungssichere Fahrzeuge: ohne Fahrten gibt es nichts zu schützen
+                deleteUnused(
+                    R.string.delete_vehicle_title, R.string.delete_vehicle_message, R.plurals.masterdata_vehicle_in_use,
+                    count = { tripCountForVehicle(v.id) },
+                    unlink = { t -> t.copy(vehicleId = null).takeIf { t.vehicleId == v.id } },
+                    delete = { deleteVehicle(v) }
+                )
             }
-            .show()
+        }
     }
+}
 
-    /**
-     * Löscht nur Fahrzeuge ohne Fahrten – sonst verlören alle Fahrten (auch eine laufende oder
-     * gerade aufgezeichnete) per Fremdschlüssel ihr Fahrzeug. Gilt auch für änderungssichere Fahrzeuge.
-     */
-    private fun delete(v: Vehicle) = confirm(getString(R.string.delete_vehicle_title), getString(R.string.delete_vehicle_message), getString(R.string.delete)) {
-        launch {
-            val ctx = requireContext()
-            // Zählen und Löschen in einer Transaktion, damit keine Fahrt dazwischen entstehen kann
-            val trips = ctx.db.withTransaction {
-                ctx.dao.tripCountForVehicle(v.id).also { count ->
-                    if (count == 0) {
-                        // Vorlagen haben keinen Fremdschlüssel: Verweis lösen, sonst scheitert später das Speichern einer Fahrt aus der Vorlage
-                        ctx.dao.allTemplates().filter { it.vehicleId == v.id }.forEach { ctx.dao.saveTemplate(it.copy(vehicleId = null)) }
-                        ctx.dao.deleteVehicle(v)
-                    }
+/**
+ * Gemeinsamer Lösch-Ablauf für Fahrzeuge und Kategorien: Nach Bestätigung wird nur gelöscht, wenn keine
+ * Fahrt (auch keine automatische oder laufende) den Eintrag verwendet – sonst verlören diese Fahrten per
+ * Fremdschlüssel ihre Zuordnung; dann nennt [inUse] (Plural) die Anzahl. Zählen und Löschen laufen in
+ * einer Transaktion, damit dazwischen keine Fahrt entstehen kann.
+ *
+ * Vorlagen haben keinen Fremdschlüssel: [unlink] liefert eine betroffene Vorlage ohne den Verweis
+ * (sonst null), sonst scheiterte später das Speichern einer Fahrt aus der Vorlage.
+ */
+internal fun Fragment.deleteUnused(
+    @StringRes title: Int,
+    @StringRes message: Int,
+    @PluralsRes inUse: Int,
+    count: suspend AppDao.() -> Int,
+    unlink: (TripTemplate) -> TripTemplate?,
+    delete: suspend AppDao.() -> Unit,
+    onDeleted: suspend (Context) -> Unit = {}
+) = confirm(getString(title), getString(message), getString(R.string.delete)) {
+    launch {
+        val ctx = requireContext()
+        val dao = ctx.dao
+        val trips = ctx.db.withTransaction {
+            dao.count().also { n ->
+                if (n == 0) {
+                    dao.allTemplates().mapNotNull(unlink).forEach { dao.saveTemplate(it) }
+                    dao.delete()
                 }
             }
-            if (trips > 0) toast(resources.getQuantityString(R.plurals.masterdata_vehicle_in_use, trips, trips))
         }
+        if (trips > 0) toast(resources.getQuantityString(inUse, trips, trips)) else onDeleted(ctx)
     }
 }
