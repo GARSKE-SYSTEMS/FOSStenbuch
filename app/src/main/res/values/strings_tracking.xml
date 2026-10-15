@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Titel der Aufzeichnungs-Benachrichtigung bei automatisch (per Bluetooth) erkannten Fahrten -->
+    <string name="tracking_ghost_title">Automatische Fahrt wird aufgezeichnet</string>
+</resources>
