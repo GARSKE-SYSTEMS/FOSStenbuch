@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Zusätzliche Texte des Exportbildschirms (die übrigen stehen in strings.xml) -->
+<resources>
+    <string name="export_purpose_business">%s (G)</string>
+    <string name="export_purpose_private">%s (P)</string>
+    <string name="export_purposes_some">Nur Fahrten der ausgewählten Kategorien</string>
+    <string name="export_purposes_none">Keine Kategorie ausgewählt – es werden keine Fahrten exportiert</string>
+    <string name="export_pdf_all_trips">PDF-Exporte enthalten immer alle Fahrten des Zeitraums und markieren nichts als exportiert.</string>
+    <!-- Ersetzt export_trip_count_preview aus strings.xml ("1 Fahrten" → "1 Fahrt") -->
+    <plurals name="export_count">
+        <item quantity="one">%d Fahrt wird exportiert</item>
+        <item quantity="other">%d Fahrten werden exportiert</item>
+    </plurals>
+    <string name="export_mark_title">Als exportiert markieren?</string>
+    <plurals name="export_mark_message">
+        <item quantity="one">Wurde die Datei gespeichert oder versendet? Dann wird die Fahrt als exportiert markiert und bei „Nur neue Fahrten“ künftig ausgelassen.</item>
+        <item quantity="other">Wurde die Datei gespeichert oder versendet? Dann werden die %d Fahrten als exportiert markiert und bei „Nur neue Fahrten“ künftig ausgelassen.</item>
+    </plurals>
+    <string name="export_mark_yes">Markieren</string>
+</resources>
