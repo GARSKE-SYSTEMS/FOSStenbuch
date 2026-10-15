@@ -10,7 +10,7 @@ import kotlin.math.floor
  *
  * Zeiträume sind [LongRange]s aus Epoch-Millisekunden in **lokaler Zeit** (Gerätezeitzone, so wie
  * die Fahrten angezeigt werden). Sie werden mit `until` gebildet, enden also direkt vor dem Beginn
- * des nächsten Zeitraums – so fällt keine Fahrt in eine Lücke wie früher bei "23:59:59.999".
+ * des nächsten Zeitraums – ein festes Ende wie "23:59:59.999" ließe dagegen eine Lücke.
  */
 object Mileage {
 
@@ -36,6 +36,7 @@ object Mileage {
         timeInMillis
     }
 
+    /** Zeitraum ab dem 1. des Monats [month] im Jahr [year], [length] (Calendar.YEAR oder MONTH) lang */
     private fun period(year: Int, month: Int, length: Int): LongRange {
         val cal = Calendar.getInstance().apply { clear(); set(year, month, 1) }
         val start = cal.timeInMillis
@@ -118,10 +119,9 @@ object Mileage {
     }
 
     /**
-     * Statistikmodus (Verhalten der alten App): Die geschäftlichen km eines Jahres werden als
-     * Hin- und Rückweg zur Arbeit an [days] Arbeitstagen gedeutet, daraus folgt die mittlere
-     * einfache Entfernung. Das ist eine Annahme – sind es Dienstreisen, gilt [businessTripAllowance]
-     * (nur mit eigenem Pkw).
+     * Statistikmodus: Die geschäftlichen km eines Jahres werden als Hin- und Rückweg zur Arbeit an
+     * [days] Arbeitstagen gedeutet, daraus folgt die mittlere einfache Entfernung. Das ist eine
+     * Annahme – sind es Dienstreisen, gilt [businessTripAllowance] (nur mit eigenem Pkw).
      */
     fun commuteAllowanceFromYearKm(yearKm: Double, days: Int, year: Int): Allowance =
         commuteAllowance(yearKm / 2 / days, days, year)

@@ -14,6 +14,7 @@ import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
 
+/** Zeiträume in Ortszeit, Statistik-Summen und Pauschalen aus [Mileage] */
 class MileageTest {
 
     private val original = TimeZone.getDefault()

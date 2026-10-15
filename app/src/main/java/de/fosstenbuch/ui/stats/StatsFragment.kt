@@ -116,8 +116,8 @@ class StatsFragment : Fragment(R.layout.fragment_stats) {
     private fun StatsCardBinding.setup(label: Int, accentColor: Int? = null) {
         this.label.setText(label)
         accent.isVisible = accentColor != null
-        // Tönen statt GradientDrawable.setColor(): Das änderte früher den mit allen Nutzern von
-        // rounded_accent geteilten Drawable-Zustand, und alle Balken bekamen dieselbe Farbe.
+        // Tönen statt GradientDrawable.setColor(): setColor() ändert den mit allen Nutzern von
+        // rounded_accent geteilten Drawable-Zustand, dann hätten alle Balken dieselbe Farbe.
         if (accentColor != null) accent.backgroundTintList = ColorStateList.valueOf(MaterialColors.getColor(accent, accentColor))
     }
 
