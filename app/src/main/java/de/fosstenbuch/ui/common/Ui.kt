@@ -4,6 +4,7 @@ import android.app.DatePickerDialog
 import android.app.TimePickerDialog
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.SystemClock
 import android.view.LayoutInflater
@@ -14,6 +15,7 @@ import android.widget.EditText
 import android.widget.Filter
 import android.widget.Toast
 import androidx.annotation.StringRes
+import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
@@ -27,6 +29,8 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import androidx.viewbinding.ViewBinding
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.textfield.TextInputEditText
+import com.google.android.material.textfield.TextInputLayout
 import de.fosstenbuch.R
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
@@ -92,6 +96,40 @@ fun Fragment.confirm(title: String, message: String, positive: String, onConfirm
         .setNegativeButton(R.string.cancel, null)
         .show()
 }
+
+/** Auswahl aus einer Liste (Aktionsmenü, Suchtreffer, Gerät …); [onPick] bekommt den Index */
+fun Fragment.choose(title: CharSequence, items: List<CharSequence>, onPick: (Int) -> Unit) {
+    MaterialAlertDialogBuilder(requireContext())
+        .setTitle(title)
+        .setItems(items.toTypedArray()) { _, i -> onPick(i) }
+        .setNegativeButton(R.string.cancel, null)
+        .show()
+}
+
+/** Fragt einen kurzen Text ab (z.B. Stornogrund, Vorlagenname); [onOk] bekommt ihn getrimmt */
+fun Fragment.askText(title: String, hint: String, positive: String, onOk: (String) -> Unit) {
+    val input = TextInputEditText(requireContext())
+    val padding = (24 * resources.displayMetrics.density).toInt()
+    val layout = TextInputLayout(requireContext()).apply {
+        this.hint = hint
+        addView(input)
+        setPadding(padding, padding / 2, padding, 0)
+    }
+    MaterialAlertDialogBuilder(requireContext())
+        .setTitle(title)
+        .setView(layout)
+        .setPositiveButton(positive) { _, _ -> onOk(input.text.toString().trim()) }
+        .setNegativeButton(R.string.cancel, null)
+        .show()
+}
+
+// ── Berechtigungen & Farben ──────────────────────────────────────────────────
+
+fun Context.granted(permission: String) = ContextCompat.checkSelfPermission(this, permission) == PackageManager.PERMISSION_GRANTED
+
+/** Farbwert für "#RRGGBB" (Kategoriefarbe), sonst null – alle Bildschirme zeigen damit dieselbe Farbe */
+fun hexColor(text: String?): Int? =
+    text?.takeIf { Regex("#[0-9A-Fa-f]{6}").matches(it) }?.let { it.substring(1).toInt(16) or 0xFF000000.toInt() }
 
 // ── Listen ───────────────────────────────────────────────────────────────────
 

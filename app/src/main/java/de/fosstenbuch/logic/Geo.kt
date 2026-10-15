@@ -51,11 +51,15 @@ object Geo {
             .filter { it.second <= radiusMeters }
             .minByOrNull { it.second }?.first
 
+    /**
+     * Standortberechtigungen – immer GEMEINSAM anfragen: Ab Android 12 ignoriert das System eine
+     * Anfrage nur nach "genau" ohne "ungefähr" (der Nutzer darf "ungefähr" wählen).
+     */
+    val PERMISSIONS = arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION)
+
     /** Hat die App irgendeine Standortberechtigung (genau oder ungefähr)? */
     fun hasPermission(context: Context): Boolean =
-        listOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION).any {
-            ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED
-        }
+        PERMISSIONS.any { ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED }
 
     /** Aktuelle Position (max. 10 s warten, sonst letzte bekannte), null ohne Berechtigung/Empfang */
     @SuppressLint("MissingPermission") // geprüft über hasPermission()
