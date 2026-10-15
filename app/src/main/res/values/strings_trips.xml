@@ -1,13 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Texte der Fahrten-Bildschirme (Liste, Formular, automatische Fahrten) -->
+<!-- Texte der Fahrten-Bildschirme (Liste, Formular, automatische Fahrten). Kilometer (%s) kommen fertig aus Fmt.km. -->
 <resources>
     <string name="trips_no_match">Keine Fahrten für diesen Filter</string>
     <string name="trips_save_completed">Fahrt nachtragen</string>
     <string name="trips_new_hint">„Fahrt starten“: Startort, Km-Stand und Fahrzeug genügen – den Rest tragen Sie beim Beenden ein.\n„Fahrt nachtragen“: eine bereits gefahrene Fahrt vollständig erfassen.</string>
     <string name="trips_recording_hint">Diese Fahrt wird gerade automatisch aufgezeichnet. Nach dem Ende der Aufzeichnung können Sie sie prüfen und übernehmen.</string>
+    <string name="trips_end_recording">Aufzeichnung beenden</string>
+    <string name="trips_recording_not_running">Für diese Fahrt läuft keine GPS-Aufzeichnung. Sie endet, sobald sich das Handy vom Auto-Bluetooth trennt.</string>
+    <string name="trips_discard_active_message">Möchten Sie die laufende Fahrt wirklich verwerfen? Sie wird dauerhaft gelöscht.</string>
     <!-- Typografische Anführungszeichen: gerade " würden von aapt entfernt -->
     <string name="trips_add_location">„%s“ als neuen Standort speichern…</string>
     <string name="trips_distance">Distanz: %s</string>
+    <string name="trips_gps">GPS: %s</string>
+    <string name="trips_gps_live">GPS-Strecke: %s</string>
+    <!-- %1$s = Strecke, %2$d = Minuten seit Beginn -->
+    <string name="trips_recording_progress">%1$s · %2$d min</string>
     <string name="trips_template_applied">Vorlage angewendet</string>
     <string name="trips_audit_log">Änderungsprotokoll</string>
     <!-- %1$s = Zeitpunkt, %2$s = Feld, %3$s = alter Wert, %4$s = neuer Wert -->
