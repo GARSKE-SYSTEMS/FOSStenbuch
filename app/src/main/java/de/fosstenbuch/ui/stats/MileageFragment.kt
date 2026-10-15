@@ -63,7 +63,7 @@ class MileageFragment : Fragment(R.layout.fragment_mileage) {
             b.rateInfo.text = if (rateFirst == rateBeyond) getString(R.string.stats_mileage_rate_flat, i.year, Fmt.euro(rateFirst))
             else getString(R.string.stats_mileage_rates, i.year, Fmt.euro(rateFirst), Fmt.euro(rateBeyond))
 
-            // Ungültige Eingaben werden gemeldet statt still durch Ersatzwerte (früher 0 km bzw. 230 Tage) ersetzt
+            // Ungültige Eingaben als Feldfehler melden, nicht still durch Ersatzwerte ersetzen
             val days = i.days.toIntOrNull()?.takeIf { it in 1..366 }
             b.layoutDays.error = if (days == null) getString(R.string.stats_mileage_error_days) else null
             val oneWay = i.oneWay.replace(',', '.').toDoubleOrNull()?.takeIf { it > 0 }
@@ -81,7 +81,7 @@ class MileageFragment : Fragment(R.layout.fragment_mileage) {
                 b.total.text = Fmt.euro(a.total)
                 b.first20.text = getString(R.string.stats_mileage_part, getString(R.string.mileage_rate_standard), Fmt.euro(a.first20))
                 b.beyond20.text = getString(R.string.stats_mileage_part, getString(R.string.mileage_rate_extended), Fmt.euro(a.beyond20))
-                b.details.text = if (noData) getString(R.string.mileage_no_data) else getString(R.string.stats_mileage_details, a.km, a.days)
+                b.details.text = if (noData) getString(R.string.mileage_no_data) else getString(R.string.stats_mileage_details, Fmt.km(a.km.toDouble()), a.days)
                 // Im Statistikmodus ist offen, ob die km Arbeitswege oder Dienstreisen sind – beides zeigen
                 // (den Dienstreise-Betrag nur mit Bedingung im Text: eigener Pkw, abzüglich Erstattung)
                 b.businessTrips.isVisible = i.fromStats && !noData
