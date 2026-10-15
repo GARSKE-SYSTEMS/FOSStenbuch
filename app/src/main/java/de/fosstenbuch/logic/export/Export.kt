@@ -6,6 +6,7 @@ import de.fosstenbuch.data.TripPurpose
 import de.fosstenbuch.data.Vehicle
 import de.fosstenbuch.ui.common.Fmt
 import java.io.File
+import java.io.Serializable
 import java.text.SimpleDateFormat
 import java.time.LocalDate
 import java.time.YearMonth
@@ -21,7 +22,11 @@ enum class Format(val mime: String, val ext: String) {
     FINANZAMT_PDF("application/pdf", "pdf")
 }
 
-/** Filter und Optionen des Exports, so wie der Nutzer sie gewählt hat */
+/**
+ * Filter und Optionen des Exports, so wie der Nutzer sie gewählt hat.
+ * Serializable, damit der Bildschirm sie im SavedStateHandle über einen Prozess-Tod rettet
+ * (LocalDate, Set und das enum sind selbst serialisierbar).
+ */
 data class Options(
     val from: LocalDate = LocalDate.now().withDayOfYear(1),
     // Jahresende statt "heute": Bleibt der Bildschirm über Mitternacht offen, fehlten sonst die heutigen Fahrten
@@ -35,7 +40,7 @@ data class Options(
     val includeAudit: Boolean = true,
     /** Firma/Betrieb, nur im Finanzamt-PDF */
     val company: String = ""
-) {
+) : Serializable {
     /**
      * "Nur neue" und "Als exportiert markieren" gelten nur für CSV. Ein PDF muss immer den ganzen
      * Zeitraum zeigen (seine Summen sind Steuergrundlage) und darf den CSV-Stand nicht verbrauchen.

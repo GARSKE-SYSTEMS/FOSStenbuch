@@ -1,5 +1,6 @@
 package de.fosstenbuch.ui.export
 
+import android.app.Dialog
 import android.content.res.ColorStateList
 import android.graphics.Color
 import android.os.Bundle
@@ -11,6 +12,7 @@ import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import com.google.android.material.chip.Chip
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import de.fosstenbuch.R
 import de.fosstenbuch.databinding.FragmentExportBinding
 import de.fosstenbuch.logic.export.Export
@@ -37,6 +39,9 @@ import java.util.Date
 class ExportFragment : Fragment(R.layout.fragment_export) {
 
     private val vm: ExportViewModel by viewModels()
+
+    /** Die offene Rückfrage "Als exportiert markieren?" – nur, um sie nicht doppelt zu zeigen */
+    private var markDialog: Dialog? = null
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val b = FragmentExportBinding.bind(view)
@@ -140,15 +145,30 @@ class ExportFragment : Fragment(R.layout.fragment_export) {
                 requireContext().shareFile(done.file, done.mime, getString(R.string.export_share_title))
                 // Der Teilen-Dialog meldet nicht, ob die Datei wirklich gespeichert oder versendet wurde.
                 // Würde sofort markiert, fehlten die Fahrten nach einem Abbruch in jedem "Nur neue"-Export.
-                if (done.markIds.isNotEmpty()) {
-                    confirm(
-                        getString(R.string.export_mark_title),
-                        resources.getQuantityString(R.plurals.export_mark_message, done.markIds.size, done.markIds.size),
-                        getString(R.string.export_mark_yes)
-                    ) { vm.markExported(done.markIds) }
-                }
+                if (done.markIds.isNotEmpty()) vm.askMark(done.markIds)
             }.onFailure { toast(getString(R.string.export_error, it.message)) }
         }
+
+        // Die Rückfrage hängt am Zustand im ViewModel, nicht am Dialog: Wird die Activity neu erzeugt,
+        // während der Nutzer in der Ziel-App ist (Drehen, Dunkelmodus, Prozess-Tod), erscheint sie wieder
+        collect(vm.pendingMark) { ids ->
+            if (ids.isEmpty() || markDialog?.isShowing == true) return@collect
+            markDialog = MaterialAlertDialogBuilder(requireContext())
+                .setTitle(R.string.export_mark_title)
+                .setMessage(resources.getQuantityString(R.plurals.export_mark_message, ids.size, ids.size))
+                .setPositiveButton(R.string.export_mark_yes) { _, _ -> vm.answerMark(true) }
+                .setNegativeButton(R.string.export_mark_no) { _, _ -> vm.answerMark(false) }
+                .setOnCancelListener { vm.answerMark(false) } // Zurück-Taste oder Tippen daneben = Nein
+                .show()
+        }
+    }
+
+    override fun onDestroyView() {
+        // Nur das Fenster schließen (löst keinen Abbruch aus): Die Rückfrage bleibt offen und
+        // wird von der neuen Ansicht erneut gezeigt
+        markDialog?.dismiss()
+        markDialog = null
+        super.onDestroyView()
     }
 
     private fun LocalDate.toDate(): Date = Date.from(atStartOfDay(ZoneId.systemDefault()).toInstant())
