@@ -13,12 +13,14 @@ import android.widget.AutoCompleteTextView
 import android.widget.EditText
 import android.widget.Filter
 import android.widget.Toast
+import androidx.annotation.StringRes
 import androidx.core.content.FileProvider
 import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.lifecycle.withStarted
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
@@ -30,10 +32,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import java.io.File
-import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
-import java.util.Locale
 
 // Kleine Helfer, die alle Bildschirme gemeinsam nutzen.
 
@@ -67,15 +67,20 @@ fun Fragment.navigate(destination: Int, vararg args: Pair<String, Any?>) {
     runCatching { findNavController().navigate(destination, bundleOf(*args)) }
 }
 
-/** Zurück zum vorherigen Bildschirm */
+/**
+ * Zurück zum vorherigen Bildschirm. Wartet ggf., bis der Bildschirm wieder sichtbar ist:
+ * Nach onStop (z.B. Home direkt nach "Speichern") ignoriert Navigation das Zurück sonst stillschweigend.
+ */
 fun Fragment.close() {
-    if (isAdded) findNavController().navigateUp()
+    if (!isAdded) return
+    lifecycleScope.launch { withStarted { if (isAdded) findNavController().navigateUp() } }
 }
 
 // ── Meldungen & Dialoge ──────────────────────────────────────────────────────
 
 fun Context.toast(text: CharSequence) = Toast.makeText(this, text, Toast.LENGTH_LONG).show()
 fun Fragment.toast(text: CharSequence) = requireContext().toast(text)
+fun Fragment.toast(@StringRes text: Int) = toast(getString(text))
 
 /** Sicherheitsabfrage; [onConfirm] läuft nur nach Bestätigung */
 fun Fragment.confirm(title: String, message: String, positive: String, onConfirm: () -> Unit) {
@@ -156,18 +161,6 @@ fun Fragment.pickDate(initial: Date, onPicked: (Date) -> Unit) {
         cal.set(y, m, d)
         onPicked(cal.time)
     }, cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH)).show()
-}
-
-// ── Formatierung (deutsch) ───────────────────────────────────────────────────
-
-object Fmt {
-    fun date(d: Date): String = SimpleDateFormat("dd.MM.yyyy", Locale.GERMANY).format(d)
-    fun dateTime(d: Date): String = SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.GERMANY).format(d)
-    fun time(d: Date): String = SimpleDateFormat("HH:mm", Locale.GERMANY).format(d)
-    /** z.B. "1.234,5 km" */
-    fun km(km: Double): String = String.format(Locale.GERMANY, "%,.1f km", km)
-    /** z.B. "1.234,56 €" */
-    fun euro(value: Double): String = String.format(Locale.GERMANY, "%,.2f €", value)
 }
 
 // ── Teilen & Links ───────────────────────────────────────────────────────────

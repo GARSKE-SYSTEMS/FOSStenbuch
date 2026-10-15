@@ -14,7 +14,7 @@ import de.fosstenbuch.data.Trip
 import de.fosstenbuch.data.TripPurpose
 import de.fosstenbuch.databinding.ItemTripBinding
 import de.fosstenbuch.logic.Trips
-import de.fosstenbuch.ui.common.Fmt
+import de.fosstenbuch.logic.Fmt
 import de.fosstenbuch.ui.common.confirm
 import de.fosstenbuch.ui.common.launch
 import de.fosstenbuch.ui.common.toast

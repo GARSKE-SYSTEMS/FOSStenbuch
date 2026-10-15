@@ -4,7 +4,7 @@ import de.fosstenbuch.data.Trip
 import de.fosstenbuch.data.TripAuditLog
 import de.fosstenbuch.data.TripPurpose
 import de.fosstenbuch.data.Vehicle
-import de.fosstenbuch.ui.common.Fmt
+import de.fosstenbuch.logic.Fmt
 import java.io.File
 import java.io.Serializable
 import java.text.SimpleDateFormat

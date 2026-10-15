@@ -84,7 +84,8 @@ object Geo {
 
     /** Adresssuche, max. 5 Treffer. Wirft IOException bei Netzwerkfehlern. */
     suspend fun search(query: String): List<Place> {
-        val json = JSONArray(get("search?format=json&limit=5&q=" + URLEncoder.encode(query, "UTF-8")))
+        val text = get("search?format=json&limit=5&q=" + URLEncoder.encode(query, "UTF-8"))
+        val json = try { JSONArray(text) } catch (e: JSONException) { throw IOException("Ungültige Antwort der Adresssuche", e) }
         return (0 until json.length()).mapNotNull { i ->
             val o = json.getJSONObject(i)
             val lat = o.optString("lat").toDoubleOrNull()

@@ -13,7 +13,7 @@ import de.fosstenbuch.databinding.ItemTripBinding
 import de.fosstenbuch.logic.Trips
 import de.fosstenbuch.tracking.TrackingService
 import de.fosstenbuch.ui.common.ARG_ID
-import de.fosstenbuch.ui.common.Fmt
+import de.fosstenbuch.logic.Fmt
 import de.fosstenbuch.ui.common.SimpleAdapter
 import de.fosstenbuch.ui.common.collect
 import de.fosstenbuch.ui.common.launch

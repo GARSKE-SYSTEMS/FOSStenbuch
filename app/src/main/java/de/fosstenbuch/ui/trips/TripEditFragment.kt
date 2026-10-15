@@ -29,7 +29,7 @@ import de.fosstenbuch.databinding.ItemTemplateBinding
 import de.fosstenbuch.logic.Geo
 import de.fosstenbuch.logic.Trips
 import de.fosstenbuch.tracking.TrackingService
-import de.fosstenbuch.ui.common.Fmt
+import de.fosstenbuch.logic.Fmt
 import de.fosstenbuch.ui.common.SimpleAdapter
 import de.fosstenbuch.ui.common.argId
 import de.fosstenbuch.ui.common.close

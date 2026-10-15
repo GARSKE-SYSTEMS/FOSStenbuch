@@ -11,7 +11,7 @@ import de.fosstenbuch.data.dao
 import de.fosstenbuch.databinding.FragmentStatsBinding
 import de.fosstenbuch.databinding.StatsCardBinding
 import de.fosstenbuch.logic.Mileage
-import de.fosstenbuch.ui.common.Fmt
+import de.fosstenbuch.logic.Fmt
 import de.fosstenbuch.ui.common.collect
 import de.fosstenbuch.ui.common.pickDate
 import kotlinx.coroutines.flow.MutableStateFlow

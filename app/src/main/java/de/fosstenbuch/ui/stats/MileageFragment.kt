@@ -9,7 +9,7 @@ import de.fosstenbuch.R
 import de.fosstenbuch.data.dao
 import de.fosstenbuch.databinding.FragmentMileageBinding
 import de.fosstenbuch.logic.Mileage
-import de.fosstenbuch.ui.common.Fmt
+import de.fosstenbuch.logic.Fmt
 import de.fosstenbuch.ui.common.collect
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine

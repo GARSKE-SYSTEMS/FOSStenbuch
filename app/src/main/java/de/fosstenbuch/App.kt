@@ -9,6 +9,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
+/** Application: setzt den Dunkelmodus vor der ersten Activity und plant die Erinnerung neu */
 class App : Application() {
 
     override fun onCreate() {

@@ -6,7 +6,7 @@ import android.graphics.Paint
 import android.graphics.Typeface
 import android.graphics.pdf.PdfDocument
 import de.fosstenbuch.data.Trip
-import de.fosstenbuch.ui.common.Fmt
+import de.fosstenbuch.logic.Fmt
 import java.io.OutputStream
 import java.util.Locale
 

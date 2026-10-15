@@ -9,9 +9,7 @@ import de.fosstenbuch.data.dao
 import de.fosstenbuch.data.db
 import de.fosstenbuch.tracking.TrackingService
 import java.security.MessageDigest
-import java.text.SimpleDateFormat
 import java.util.Date
-import java.util.Locale
 
 /**
  * Alle Schreibzugriffe auf Fahrten mit ihren Geschäftsregeln:
@@ -29,7 +27,10 @@ object Trips {
     /** Formularfelder, an denen Validierungsfehler angezeigt werden */
     enum class Field { START_LOCATION, END_LOCATION, DISTANCE, PURPOSE, DATE, END_TIME, START_ODOMETER, ODOMETER, VEHICLE }
 
+    /** Validierungsfehler je Formularfeld; message = alle Fehler zeilenweise */
     class Invalid(val errors: Map<Field, String>) : Exception(errors.values.joinToString("\n"))
+
+    /** Regelverstoß mit nutzertauglicher Meldung (z.B. gesperrte Fahrt) */
     class Rejected(message: String) : Exception(message)
 
     /** Wie require(), aber mit [Rejected] */
@@ -110,7 +111,11 @@ object Trips {
         val db = context.db
         return db.withTransaction {
             val dao = db.dao()
-            val old = if (t.id != 0L) dao.trip(t.id) else null
+            val old = if (t.id != 0L) dao.trip(t.id) ?: throw Rejected("Die Fahrt wurde inzwischen gelöscht") else null
+            // Bluetooth hat sich kurz nach dem Trennen wieder verbunden: Die Fahrt läuft weiter
+            require(old == null || !old.isGhost || old.endTime != null) {
+                "Die Fahrt wird gerade wieder aufgezeichnet – bitte nach dem Ende übernehmen"
+            }
             // Nur Änderungen an bereits abgeschlossenen Fahrten werden gesperrt bzw. protokolliert
             if (old != null && !old.isActive && !old.isGhost) {
                 require(!isProtected(dao, old.vehicleId)) { "Änderungssicher – Bearbeitung gesperrt" }
@@ -206,7 +211,7 @@ object Trips {
 
     /** Ein Protokolleintrag je geändertem Feld (lesbare Feldnamen und Werte) */
     fun auditDiff(old: Trip, new: Trip, now: Date = Date()): List<TripAuditLog> {
-        fun date(d: Date?) = d?.let { SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.GERMANY).format(it) }
+        fun date(d: Date?) = d?.let(Fmt::dateTime)
         val fields: List<Triple<String, Any?, Any?>> = listOf(
             Triple("Abfahrt", date(old.date), date(new.date)),
             Triple("Ankunft", date(old.endTime), date(new.endTime)),
