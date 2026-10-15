@@ -6,7 +6,7 @@
     <string name="title_settings">Einstellungen</string>
     <string name="title_vehicles">Fahrzeuge</string>
 
-    <!-- Trip list -->
+    <!-- Fahrtenliste -->
     <string name="filter_all">Alle</string>
     <string name="filter_business">Geschäftlich</string>
     <string name="filter_private">Privat</string>
@@ -15,30 +15,21 @@
     <string name="add_first_trip">Tippen Sie auf +, um eine Fahrt hinzuzufügen</string>
     <string name="add_trip">Fahrt hinzufügen</string>
     <string name="trip_route_format">%1$s → %2$s</string>
-    <string name="distance_format">%.1f km</string>
     <string name="business">Geschäftlich</string>
     <string name="private_trip">Privat</string>
     <string name="trip_cancelled">Storniert</string>
     <string name="cancel_trip_title">Fahrt stornieren?</string>
     <string name="cancel_trip_message">Bitte geben Sie einen Stornogrund an (optional):</string>
     <string name="cancel_trip_action">Stornieren</string>
-    <string name="cancel_trip_success">Fahrt wurde storniert</string>
-    <string name="cancel_trip_error">Fahrt konnte nicht storniert werden</string>
-    <string name="cancel_trip_csv_note">STORNIERT</string>
     <string name="cancel_trip_reason_format">Storno: %s</string>
 
-    <!-- Trip form -->
+    <!-- Fahrtformular -->
     <string name="add_edit_trip">Fahrt</string>
-    <string name="trip_date">Datum</string>
     <string name="start_location">Startort</string>
     <string name="end_location">Zielort</string>
-    <string name="distance_km">Distanz</string>
     <string name="start_odometer">Km-Stand Start</string>
     <string name="end_odometer">Km-Stand Ende</string>
-    <string name="purpose">Zweck</string>
-    <string name="business_trip">Geschäftliche Fahrt</string>
     <string name="vehicle">Fahrzeug</string>
-    <string name="error_vehicle_required">Bitte wählen Sie ein Fahrzeug aus</string>
     <string name="notes">Notizen</string>
     <string name="business_partner">Geschäftspartner / Kunde</string>
     <string name="business_partner_hint">z.B. Firma Müller GmbH</string>
@@ -47,14 +38,13 @@
     <string name="route_description_hint">z.B. über A9, Umweg wegen Baustelle</string>
     <string name="save">Speichern</string>
 
-    <!-- Delete -->
+    <!-- Löschen -->
     <string name="delete">Löschen</string>
-    <string name="deleted">Gelöscht</string>
     <string name="cancel">Abbrechen</string>
     <string name="delete_trip_title">Fahrt löschen?</string>
     <string name="delete_trip_message">Möchten Sie diese Fahrt wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.</string>
 
-    <!-- Vehicles -->
+    <!-- Fahrzeuge -->
     <string name="no_vehicles">Keine Fahrzeuge vorhanden</string>
     <string name="add_first_vehicle">Tippen Sie auf +, um ein Fahrzeug hinzuzufügen</string>
     <string name="add_vehicle">Fahrzeug hinzufügen</string>
@@ -69,7 +59,7 @@
     <string name="delete_vehicle_title">Fahrzeug löschen?</string>
     <string name="delete_vehicle_message">Möchten Sie dieses Fahrzeug wirklich löschen?</string>
 
-    <!-- Audit protection -->
+    <!-- Änderungssicherheit -->
     <string name="audit_protection">Änderungssichere Protokollierung (Finanzamt)</string>
     <string name="audit_protection_hint">Wenn aktiviert, können zugehörige Fahrten nicht gelöscht werden. Änderungen werden protokolliert. Diese Einstellung kann nicht rückgängig gemacht werden.</string>
     <string name="audit_protection_active">Änderungssichere Protokollierung ist aktiv und kann nicht deaktiviert werden.</string>
@@ -78,20 +68,14 @@
     <string name="audit_protected">Änderungssicher</string>
     <string name="enable">Aktivieren</string>
 
-    <!-- Settings -->
+    <!-- Einstellungen -->
     <string name="data_summary">Datenübersicht</string>
-    <string name="manage_vehicles">Fahrzeuge verwalten</string>
-    <string name="manage_vehicles_subtitle">Fahrzeuge hinzufügen, bearbeiten und löschen</string>
-    <string name="manage_locations">Standorte verwalten</string>
-    <string name="manage_locations_subtitle">Gespeicherte Standorte bearbeiten und löschen</string>
-    <string name="manage_purposes">Fahrt-Kategorien verwalten</string>
-    <string name="manage_purposes_subtitle">Kategorien hinzufügen, bearbeiten und löschen</string>
     <string name="trip_count_format">Fahrten: %d</string>
     <string name="vehicle_count_format">Fahrzeuge: %d</string>
     <string name="location_count_format">Standorte: %d</string>
     <string name="purpose_count_format">Kategorien: %d</string>
 
-    <!-- Saved Locations -->
+    <!-- Gespeicherte Orte -->
     <string name="title_saved_locations">Gespeicherte Standorte</string>
     <string name="no_saved_locations">Keine Standorte gespeichert</string>
     <string name="add_first_location">Tippen Sie auf +, um einen Standort hinzuzufügen</string>
@@ -112,15 +96,12 @@
     <string name="location_permission_denied">Standortberechtigung wurde verweigert</string>
     <string name="location_not_available">Standort nicht verfügbar</string>
     <string name="error_name_required">Name ist erforderlich</string>
-    <string name="error_latitude_required">Breitengrad ist erforderlich</string>
-    <string name="error_longitude_required">Längengrad ist erforderlich</string>
     <string name="delete_location_title">Standort löschen?</string>
     <string name="delete_location_message">Möchten Sie diesen Standort wirklich löschen?</string>
     <string name="location_suggested">Standort vorgeschlagen: %s</string>
     <string name="usage_count_format">× %d</string>
-    <string name="coordinates_format">%1$s, %2$s</string>
 
-    <!-- Trip Purposes -->
+    <!-- Kategorien -->
     <string name="title_purposes">Fahrt-Kategorien</string>
     <string name="no_purposes">Keine Kategorien vorhanden</string>
     <string name="add_purpose">Kategorie hinzufügen</string>
@@ -134,38 +115,28 @@
     <string name="delete_purpose_title">Kategorie löschen?</string>
     <string name="delete_purpose_message">Möchten Sie diese Kategorie wirklich löschen?</string>
     <string name="no_category">Keine Kategorie</string>
-    <string name="color_preview">Farbvorschau</string>
     <string name="cannot_delete_default">Standard-Kategorien können nicht gelöscht werden</string>
-    <string name="cannot_delete_in_use">Kategorie wird noch von Fahrten verwendet</string>
-    <string name="cannot_delete_audit_protected_trip">Fahrten von änderungssicheren Fahrzeugen können nicht gelöscht werden</string>
     <string name="purpose_name_duplicate">Eine Kategorie mit diesem Namen existiert bereits</string>
 
-    <!-- Statistics -->
+    <!-- Statistik -->
     <string name="stats_total_distance">Gesamtstrecke</string>
     <string name="stats_business_distance">Geschäftliche Strecke</string>
     <string name="stats_private_distance">Private Strecke</string>
     <string name="stats_total_trips">Gesamtzahl Fahrten</string>
     <string name="stats_average_distance">Durchschnittliche Distanz</string>
-    <string name="stats_trips_this_month">Fahrten diesen Monat</string>
-    <string name="stats_trips_this_year">Fahrten dieses Jahr</string>
     <string name="stats_business_percentage">Geschäftsanteil</string>
     <string name="stats_no_data">Noch keine Statistiken verfügbar</string>
     <string name="stats_add_trips_hint">Fügen Sie Fahrten hinzu, um Statistiken zu sehen</string>
-    <string name="stats_year_label">Jahr: %d</string>
-    <string name="stats_km_format">%.1f km</string>
-    <string name="stats_count_format">%d</string>
     <string name="stats_percent_format">%.0f %%</string>
 
-    <!-- Stats filter -->
-    <string name="stats_filter_mode">Filtermodus</string>
+    <!-- Statistik: Filter -->
     <string name="stats_filter_year">Jahr</string>
     <string name="stats_filter_month">Monat</string>
     <string name="stats_filter_custom">Zeitraum</string>
     <string name="stats_from">Von</string>
     <string name="stats_to">Bis</string>
-    <string name="stats_month_label">%1$s %2$d</string>
 
-    <!-- Month names -->
+    <!-- Monatsnamen -->
     <string-array name="month_names">
         <item>Januar</item>
         <item>Februar</item>
@@ -181,7 +152,7 @@
         <item>Dezember</item>
     </string-array>
 
-    <!-- Sort options -->
+    <!-- Sortierung der Fahrtenliste -->
     <string-array name="sort_options">
         <item>Datum (neueste zuerst)</item>
         <item>Datum (älteste zuerst)</item>
@@ -203,17 +174,14 @@
     <string name="export_format_pdf">PDF</string>
     <string name="export_format_finanzamt_pdf">PDF (Finanzamt)</string>
     <string name="export_include_audit_log">Änderungsprotokoll einschließen</string>
-    <string name="export_trip_count_preview">%d Fahrten im ausgewählten Zeitraum</string>
     <string name="export_tracking_title">Exportverlauf</string>
     <string name="export_only_new">Nur neue Fahrten exportieren</string>
     <string name="export_only_new_hint">Nur Fahrten, die noch nicht exportiert wurden</string>
     <string name="export_mark_exported">Als exportiert markieren</string>
     <string name="export_mark_exported_hint">Exportierte Fahrten werden in zukünftigen Exporten nicht enthalten sein</string>
     <string name="export_button">Exportieren</string>
-    <string name="export_share_subject">FOSStenbuch Export</string>
     <string name="export_share_title">Export teilen</string>
     <string name="export_no_trips">Keine Fahrten im ausgewählten Zeitraum</string>
-    <string name="export_success">Export erfolgreich erstellt</string>
     <string name="export_error">Fehler beim Exportieren: %s</string>
     <string name="export_confirm_title">Export bestätigen</string>
     <string name="export_confirm_message">Hiermit bestätige ich, dass alle Einträge in diesem Fahrtenbuch der Wahrheit entsprechen.</string>
@@ -221,23 +189,14 @@
     <string name="export_company_name">Firma / Betrieb</string>
     <string name="export_company_name_hint">Wird im Finanzamt-PDF angezeigt</string>
     <string name="export_finanzamt_hint">Enthält alle gem. § 6 Abs. 1 Nr. 4 EStG erforderlichen Angaben</string>
-    <string name="export_finanzamt_warning_no_partner">Achtung: %d Geschäftsfahrten ohne Geschäftspartner gefunden. Für die Finanzamt-Konformität sollte bei jeder geschäftlichen Fahrt der besuchte Geschäftspartner eingetragen sein.</string>
-    <string name="export_finanzamt_warning_no_odometer">Achtung: %d Fahrten ohne lückenlose Km-Stände gefunden. Das Finanzamt erwartet durchgehende Km-Stand-Aufzeichnungen.</string>
-    <string name="settings_export">Daten exportieren</string>
-    <string name="settings_export_subtitle">Fahrten als CSV oder PDF exportieren</string>
 
-    <!-- Settings Phase 7 -->
+    <!-- Einstellungen: Daten -->
     <string name="settings_appearance">Darstellung</string>
     <string name="settings_dark_mode">Dunkelmodus</string>
-    <string name="dark_mode_system">System</string>
-    <string name="dark_mode_light">Hell</string>
-    <string name="dark_mode_dark">Dunkel</string>
     <string name="settings_general">Allgemein</string>
     <string name="settings_driver_name">Fahrername</string>
     <string name="settings_driver_name_hint">Wird auf Exporten angezeigt</string>
-    <string name="settings_distance_unit">Entfernungseinheit</string>
     <string name="settings_default_purpose">Standard-Kategorie</string>
-    <string name="settings_default_vehicle">Standard-Fahrzeug</string>
     <string name="no_default">Kein Standard</string>
     <string name="settings_data_management">Datenverwaltung</string>
     <string name="settings_backup">Backup erstellen</string>
@@ -247,7 +206,6 @@
     <string name="settings_delete_all">Alle Daten löschen</string>
     <string name="settings_delete_all_title">Alle Daten löschen?</string>
     <string name="settings_delete_all_message">Möchten Sie wirklich alle Daten unwiderruflich löschen? Es werden alle Fahrten, Fahrzeuge, Standorte und Kategorien entfernt.\n\nDiese Aktion kann nicht rückgängig gemacht werden!</string>
-    <string name="backup_success">Backup erfolgreich erstellt</string>
     <string name="restore_success">Daten erfolgreich wiederhergestellt</string>
     <string name="restore_warning_title">Backup wiederherstellen?</string>
     <string name="restore_warning_message">Alle vorhandenen Daten werden durch die Backup-Daten ersetzt.\n\nMöchten Sie fortfahren?</string>
@@ -255,7 +213,7 @@
     <string name="backup_error">Fehler beim Backup: %s</string>
     <string name="restore_error">Fehler beim Wiederherstellen: %s</string>
 
-    <!-- Fuel types -->
+    <!-- Kraftstoffarten -->
     <string-array name="fuel_types">
         <item>Benzin</item>
         <item>Diesel</item>
@@ -267,113 +225,74 @@
         <item>Wasserstoff</item>
     </string-array>
 
-    <!-- Dark mode options -->
+    <!-- Dunkelmodus -->
     <string-array name="dark_mode_options">
         <item>System</item>
         <item>Hell</item>
         <item>Dunkel</item>
     </string-array>
 
-    <!-- Distance unit options -->
-    <string-array name="distance_unit_options">
-        <item>Kilometer</item>
-        <item>Meilen</item>
-    </string-array>
-
-    <!-- Accessibility -->
+    <!-- Barrierefreiheit (Bildschirmleser) und Hinweise -->
     <string name="cd_loading">Wird geladen</string>
-    <string name="cd_saving">Wird gespeichert</string>
     <string name="cd_exporting">Wird exportiert</string>
     <string name="cd_color_preview">Farbvorschau</string>
     <string name="cd_previous_year">Vorheriges Jahr</string>
     <string name="cd_next_year">Nächstes Jahr</string>
-    <string name="cd_trip_type_indicator">Fahrt-Typ Markierung</string>
-    <string name="cd_purpose_color">Farbindikator der Kategorie</string>
-    <string name="cd_accent_indicator">Akzentfarbe</string>
-    <string name="cd_delete_action">Zum Löschen wischen</string>
-    <string name="cd_navigate_to">Navigieren zu %s</string>
-    <string name="cd_filter_purpose">Kategorie %s filtern</string>
 
-    <!-- Phase 9: Kilometerpauschale -->
+    <!-- Kilometerpauschale -->
     <string name="title_mileage_calculator">Kilometerpauschale</string>
-    <string name="mileage_calculator">Kilometerpauschale-Rechner</string>
-    <string name="mileage_calculator_subtitle">Steuerliche Entfernungspauschale berechnen</string>
-    <string name="mileage_year">Jahr</string>
     <string name="mileage_business_km">Geschäftliche Kilometer</string>
     <string name="mileage_rate_standard">Pauschale (erste 20 km)</string>
     <string name="mileage_rate_extended">Pauschale (ab 21. km)</string>
     <string name="mileage_result">Steuerlich absetzbar</string>
-    <string name="mileage_calculate">Berechnen</string>
     <string name="mileage_use_stats">Aus Statistik übernehmen</string>
-    <string name="mileage_rate_info">Entfernungspauschale 2024: 0,30 €/km (erste 20 km), 0,38 €/km (ab 21. km)</string>
-    <string name="mileage_result_format">%.2f €</string>
-    <string name="mileage_km_format">%.1f km</string>
     <string name="mileage_no_data">Keine geschäftlichen Fahrten im gewählten Jahr</string>
     <string name="mileage_disclaimer">Hinweis: Diese Berechnung dient nur zur Orientierung. Für die genaue steuerliche Berechnung konsultieren Sie bitte Ihren Steuerberater.</string>
     <string name="mileage_one_way_distance">Einfache Entfernung (km)</string>
     <string name="mileage_working_days">Arbeitstage</string>
     <string name="mileage_working_days_hint">Standard: 230</string>
 
-    <!-- Phase 9: Trip Templates -->
-    <string name="title_templates">Vorlagen</string>
-    <string name="trip_templates">Fahrt-Vorlagen</string>
-    <string name="trip_templates_subtitle">Wiederkehrende Fahrten als Vorlage speichern</string>
+    <!-- Vorlagen -->
     <string name="save_as_template">Als Vorlage speichern</string>
     <string name="use_template">Vorlage verwenden</string>
     <string name="template_name">Vorlagenname</string>
     <string name="no_templates">Keine Vorlagen vorhanden</string>
-    <string name="add_first_template">Erstellen Sie Vorlagen aus häufig genutzten Fahrten</string>
     <string name="template_saved">Vorlage gespeichert</string>
     <string name="delete_template_title">Vorlage löschen?</string>
     <string name="delete_template_message">Möchten Sie diese Vorlage wirklich löschen?</string>
 
-    <!-- Phase 9: Notifications -->
+    <!-- Benachrichtigungen -->
     <string name="settings_notifications">Erinnerungen</string>
     <string name="notification_reminder">Fahrt-Erinnerung</string>
     <string name="notification_reminder_subtitle">Tägliche Erinnerung zum Eintragen von Fahrten</string>
-    <string name="notification_enabled">Erinnerung aktiviert</string>
-    <string name="notification_time">Erinnerungszeit</string>
-    <string name="notification_time_default">18:00</string>
     <string name="notification_channel_name">Fahrt-Erinnerungen</string>
     <string name="notification_channel_desc">Tägliche Erinnerung zum Eintragen von Fahrten</string>
     <string name="notification_title">Fahrten eintragen</string>
     <string name="notification_message">Haben Sie heute Fahrten unternommen? Tragen Sie sie jetzt ein.</string>
     <string name="notification_permission_required">Benachrichtigungsberechtigung erforderlich. Bitte aktivieren Sie die Berechtigung in den App-Einstellungen.</string>
 
-    <!-- Trip Start/End Flow -->
+    <!-- Fahrt starten und beenden -->
     <string name="start_trip">Fahrt starten</string>
     <string name="end_trip">Fahrt beenden</string>
     <string name="trip_in_progress">Fahrt läuft…</string>
     <string name="trip_start_time">Startzeit</string>
     <string name="trip_end_time">Ankunftszeit</string>
-    <string name="trip_date_time">Datum \u0026 Uhrzeit</string>
     <string name="estimated_odometer">Geschätzter Km-Stand (GPS)</string>
-    <string name="gps_distance_format">GPS: %.1f km</string>
     <string name="active_trip_banner_text">%1$s — seit %2$s</string>
-    <string name="active_trip_gps_km">GPS-Strecke: %.1f km</string>
-    <string name="already_active_trip">Es läuft bereits eine Fahrt. Bitte beenden Sie diese zuerst.</string>
     <string name="tracking_channel_name">Fahrt-Aufzeichnung</string>
     <string name="tracking_channel_desc">Benachrichtigung während eine Fahrt aufgezeichnet wird</string>
     <string name="tracking_notification_title">Fahrt wird aufgezeichnet</string>
-    <string name="tracking_notification_text">Gefahrene Strecke: %.1f km</string>
     <string name="trip_active">Aktiv</string>
 
-    <!-- Audit lock -->
+    <!-- Bearbeitungssperre -->
     <string name="audit_locked_hint">Änderungssicher — Bearbeitung gesperrt</string>
 
-    <!-- Location autocomplete -->
-    <string name="add_new_location_suggestion">"%s" als neuen Standort speichern…</string>
-
-    <!-- Info footer -->
-    <string name="info_github_title">GitHub</string>
+    <!-- Links im Seitenmenü -->
     <string name="info_github_url">github.com/GARSKE-SYSTEMS/FOSStenbuch</string>
-    <string name="info_github_cd">GitHub Logo</string>
-    <string name="info_developed_by">Developed by Garske Systems</string>
-    <string name="info_company_name">Garske Systems, Inh. Patrick Garske</string>
+    <string name="info_developed_by">Entwickelt von Garske Systems</string>
     <string name="info_website">garske-systems.de</string>
-    <string name="info_garske_logo_cd">Garske Systems Logo</string>
 
-    <!-- Bluetooth Tracking -->
+    <!-- Automatische Fahrterkennung (Bluetooth) -->
     <string name="bluetooth_tracking_section">Automatisches Tracking</string>
     <string name="bluetooth_tracking_hint">Wenn ein Bluetooth-Gerät des Fahrzeugs verbunden wird, startet das Tracking automatisch. Beim Trennen wird eine automatische Fahrt erstellt.</string>
     <string name="bluetooth_pick_device">Bluetooth-Gerät auswählen</string>
@@ -383,35 +302,22 @@
     <string name="bluetooth_unknown_device">Unbekanntes Gerät</string>
     <string name="bluetooth_no_paired_devices">Keine gekoppelten Geräte gefunden</string>
     <string name="bluetooth_not_available">Bluetooth ist nicht verfügbar oder deaktiviert</string>
-    <string name="bluetooth_permission_denied">Bluetooth-Berechtigung wurde verweigert</string>
-    <string name="bt_tracking_channel_name">Automatisches Tracking</string>
-    <string name="bt_tracking_channel_desc">Überwacht Bluetooth-Verbindungen für automatisches Fahrt-Tracking</string>
-    <string name="bt_tracking_notification_title">Automatisches Tracking aktiv</string>
-    <string name="bt_tracking_notification_text">Verbindung zum Fahrzeug wird überwacht</string>
-    <string name="bt_standby_notification_text">Bereit zur automatischen Fahrterkennung</string>
-    <!-- %1$s = Gerätename, %2$.1f = km, %3$d = Minuten -->
-    <string name="ghost_recording_notification_title">Fahrt wird aufgezeichnet · %1$s</string>
-    <string name="ghost_recording_notification_text">%1$.1f km · %2$d min</string>
-    <!-- Recording banner in trips list -->
+    <!-- Aufzeichnungs-Banner in der Fahrtenliste -->
     <string name="ghost_recording_banner_title">● Automatische Aufzeichnung läuft</string>
     <string name="ghost_recording_banner_device">Gerät: %1$s</string>
-    <string name="ghost_recording_banner_distance">%1$.1f km · %2$d min</string>
 
-    <!-- Ghost Trips -->
+    <!-- Automatische Fahrten -->
     <string name="title_ghost_trips">Automatische Fahrten</string>
-    <string name="title_ghost_trip_detail">Fahrt übernehmen</string>
     <string name="ghost_trips_show">Anzeigen</string>
     <string name="ghost_trips_empty">Keine automatischen Fahrten</string>
     <string name="ghost_trips_empty_hint">Verbinden Sie ein Bluetooth-Gerät mit Ihrem Fahrzeug, um automatisch Fahrten aufzuzeichnen.</string>
     <string name="ghost_no_distance">Distanz unbekannt</string>
     <string name="ghost_duration_format">bis %s</string>
     <string name="ghost_detail_hint">Diese Fahrt wurde automatisch erkannt. Bitte prüfen Sie die Angaben und übernehmen Sie die Fahrt ins Fahrtenbuch.</string>
-    <string name="ghost_distance_helper">Wird automatisch aus Start- und Endkilometerstand berechnet</string>
     <string name="ghost_accept">Fahrt übernehmen</string>
     <string name="ghost_discard">Verwerfen</string>
     <string name="ghost_discard_title">Fahrt verwerfen?</string>
     <string name="ghost_discard_message">Möchten Sie diese automatisch erkannte Fahrt wirklich verwerfen? Die Fahrt wird dauerhaft gelöscht.</string>
-    <string name="ghost_discard_confirm">Verwerfen</string>
     <string name="ghost_accepted_success">Fahrt erfolgreich übernommen</string>
 
     <plurals name="ghost_trips_banner_text">
