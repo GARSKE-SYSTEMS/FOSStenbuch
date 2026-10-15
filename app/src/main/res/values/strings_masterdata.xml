@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Texte der Stammdaten-Bildschirme (Fahrzeuge, Kategorien, Orte) -->
+<resources>
+    <!-- %s = Feldname, z.B. "Hersteller" -->
+    <string name="masterdata_required">%s darf nicht leer sein</string>
+    <string name="masterdata_permission_denied">Berechtigung wurde verweigert</string>
+    <string name="masterdata_open_settings">Einstellungen</string>
+    <!-- Zusammengesetzte Listentexte -->
+    <string name="masterdata_two_parts">%1$s %2$s</string>
+    <string name="masterdata_details">%1$s · %2$s</string>
+    <string name="masterdata_two_lines">%1$s\n%2$s</string>
+
+    <!-- Fahrzeuge -->
+    <plurals name="masterdata_vehicle_in_use">
+        <item quantity="one">Das Fahrzeug kann nicht gelöscht werden, weil noch %d Fahrt dazugehört.</item>
+        <item quantity="other">Das Fahrzeug kann nicht gelöscht werden, weil noch %d Fahrten dazugehören.</item>
+    </plurals>
+    <!-- %s = Fahrzeug, z.B. "VW Golf (B-AB 123)" -->
+    <!-- %1$s = Gerätename, %2$s = MAC-Adresse -->
+    <string name="masterdata_device">%1$s (%2$s)</string>
+    <string name="masterdata_bt_in_use">Dieses Gerät ist bereits dem Fahrzeug %s zugeordnet. Entfernen Sie es dort zuerst.</string>
+    <string name="masterdata_checks_title">Voraussetzungen</string>
+    <string name="masterdata_checks_hint">Die Erkennung läuft im Hintergrund, auch wenn die App geschlossen ist. Dafür braucht FOSStenbuch: Standort „Immer erlauben“ (sonst fehlen Strecke sowie Start- und Zielort), keine Akku-Optimierung (sonst verhindert Android den Start der Aufzeichnung), Benachrichtigungen (zeigen die laufende Aufzeichnung an) und die Bluetooth-Berechtigung (sonst erfährt die App nicht, wann sich das Auto verbindet).</string>
+    <string name="masterdata_check_location">Standort „Immer erlauben“</string>
+    <string name="masterdata_check_battery">Akku-Optimierung aus</string>
+    <string name="masterdata_check_notifications">Benachrichtigungen</string>
+    <string name="masterdata_check_bluetooth">Bluetooth-Berechtigung</string>
+    <!-- %s = eine der Voraussetzungen oben -->
+    <string name="masterdata_check_ok">✓ %s</string>
+    <string name="masterdata_check_missing">⚠ %s – antippen zum Einrichten</string>
+
+    <!-- Kategorien -->
+    <plurals name="masterdata_purpose_in_use">
+        <item quantity="one">Die Kategorie wird von %d Fahrt verwendet und kann nicht gelöscht werden.</item>
+        <item quantity="other">Die Kategorie wird von %d Fahrten verwendet und kann nicht gelöscht werden.</item>
+    </plurals>
+    <plurals name="masterdata_purpose_locked">
+        <item quantity="one">Bereits von %d Fahrt verwendet: Geschäftlich/Privat ist nicht mehr änderbar, sonst würde diese Fahrt nachträglich umklassifiziert.</item>
+        <item quantity="other">Bereits von %d Fahrten verwendet: Geschäftlich/Privat ist nicht mehr änderbar, sonst würden diese Fahrten nachträglich umklassifiziert.</item>
+    </plurals>
+    <string name="masterdata_color_invalid">Bitte im Format #RRGGBB angeben, z.B. #FF5722</string>
+
+    <!-- Orte -->
+    <string name="masterdata_latitude_invalid">Bitte eine Zahl zwischen -90 und 90 eingeben</string>
+    <string name="masterdata_longitude_invalid">Bitte eine Zahl zwischen -180 und 180 eingeben</string>
+    <string name="masterdata_search">Suchen</string>
+    <string name="masterdata_search_pick">Ergebnis auswählen</string>
+</resources>
