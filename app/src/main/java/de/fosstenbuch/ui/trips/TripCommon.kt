@@ -6,16 +6,14 @@ import android.graphics.Paint
 import androidx.core.graphics.ColorUtils
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import com.google.android.material.textfield.TextInputEditText
-import com.google.android.material.textfield.TextInputLayout
 import de.fosstenbuch.R
 import de.fosstenbuch.data.Trip
 import de.fosstenbuch.data.TripPurpose
 import de.fosstenbuch.databinding.ItemTripBinding
-import de.fosstenbuch.logic.Trips
 import de.fosstenbuch.logic.Fmt
+import de.fosstenbuch.logic.Trips
 import de.fosstenbuch.ui.common.confirm
+import de.fosstenbuch.ui.common.hexColor
 import de.fosstenbuch.ui.common.launch
 import de.fosstenbuch.ui.common.toast
 
@@ -58,8 +56,8 @@ fun bindTrip(b: ItemTripBinding, trip: Trip, purpose: TripPurpose?) {
     // Automatische Fahrten haben noch keine Km-Stände – dort zählt nur die GPS-Strecke
     val gps = trip.gpsDistanceKm ?: 0.0
     b.textDistance.text = when {
-        !trip.isGhost -> ctx.getString(R.string.distance_format, trip.distanceKm)
-        gps > 0 -> ctx.getString(R.string.gps_distance_format, gps)
+        !trip.isGhost -> Fmt.km(trip.distanceKm)
+        gps > 0 -> ctx.getString(R.string.trips_gps, Fmt.km(gps))
         else -> ctx.getString(R.string.ghost_no_distance)
     }
     // Alter Freitext-Zweck nur zeigen, wenn er nicht ohnehin der Kategoriename ist
@@ -69,7 +67,7 @@ fun bindTrip(b: ItemTripBinding, trip: Trip, purpose: TripPurpose?) {
 
     // Kategorie in ihrer Farbe; die Schrift wird je nach Helligkeit schwarz oder weiß, damit sie lesbar bleibt
     b.textCategory.isVisible = !trip.isGhost
-    val color = purpose?.let { runCatching { Color.parseColor(it.color) }.getOrNull() } ?: Color.GRAY
+    val color = hexColor(purpose?.color) ?: Color.GRAY
     b.textCategory.text = purpose?.name ?: ctx.getString(R.string.no_category)
     b.textCategory.backgroundTintList = ColorStateList.valueOf(color)
     b.textCategory.setTextColor(if (ColorUtils.calculateLuminance(color) > 0.5) Color.BLACK else Color.WHITE)
@@ -87,40 +85,23 @@ fun bindTrip(b: ItemTripBinding, trip: Trip, purpose: TripPurpose?) {
 }
 
 /**
- * Löscht eine Fahrt nach Rückfrage (automatische Fahrten heißen dabei "Verwerfen").
+ * Löscht eine Fahrt nach Rückfrage. Laufende und automatische Fahrten heißen dabei "verwerfen".
  * Regelverstöße (z.B. änderungssicheres Fahrzeug) erscheinen als Meldung; [onDone] läuft nach Erfolg.
  */
 fun Fragment.confirmDelete(trip: Trip, onDone: () -> Unit = {}) {
-    val (title, message, positive) = if (trip.isGhost) {
-        Triple(R.string.ghost_discard_title, R.string.ghost_discard_message, R.string.ghost_discard_confirm)
-    } else {
-        Triple(R.string.delete_trip_title, R.string.delete_trip_message, R.string.delete)
+    val (title, message, positive) = when {
+        trip.isGhost -> Triple(R.string.ghost_discard_title, R.string.ghost_discard_message, R.string.ghost_discard)
+        trip.isActive -> Triple(R.string.ghost_discard_title, R.string.trips_discard_active_message, R.string.ghost_discard)
+        else -> Triple(R.string.delete_trip_title, R.string.delete_trip_message, R.string.delete)
     }
     confirm(getString(title), getString(message), getString(positive)) {
         launch {
             try {
                 Trips.delete(requireContext(), trip)
                 onDone()
-            } catch (e: IllegalStateException) {
-                toast(e.message!!)
+            } catch (e: Trips.Rejected) {
+                toast(e.message.orEmpty())
             }
         }
     }
-}
-
-/** Dialog mit einem Textfeld (Stornogrund, Vorlagenname); [onOk] bekommt den Text ohne Randleerzeichen */
-fun Fragment.askText(title: String, hint: String, positive: String, onOk: (String) -> Unit) {
-    val input = TextInputEditText(requireContext())
-    val padding = (24 * resources.displayMetrics.density).toInt()
-    val layout = TextInputLayout(requireContext()).apply {
-        this.hint = hint
-        addView(input)
-        setPadding(padding, padding / 2, padding, 0)
-    }
-    MaterialAlertDialogBuilder(requireContext())
-        .setTitle(title)
-        .setView(layout)
-        .setPositiveButton(positive) { _, _ -> onOk(input.text.toString().trim()) }
-        .setNegativeButton(android.R.string.cancel, null)
-        .show()
 }

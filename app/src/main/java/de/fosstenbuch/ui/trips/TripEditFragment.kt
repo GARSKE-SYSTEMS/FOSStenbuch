@@ -6,6 +6,7 @@ import android.os.Build
 import android.os.Bundle
 import android.view.View
 import android.widget.ArrayAdapter
+import android.widget.AutoCompleteTextView
 import android.widget.Filter
 import androidx.activity.result.contract.ActivityResultContracts.RequestMultiplePermissions
 import androidx.core.view.children
@@ -26,12 +27,13 @@ import de.fosstenbuch.data.Vehicle
 import de.fosstenbuch.data.dao
 import de.fosstenbuch.databinding.FragmentTripEditBinding
 import de.fosstenbuch.databinding.ItemTemplateBinding
+import de.fosstenbuch.logic.Fmt
 import de.fosstenbuch.logic.Geo
 import de.fosstenbuch.logic.Trips
 import de.fosstenbuch.tracking.TrackingService
-import de.fosstenbuch.logic.Fmt
 import de.fosstenbuch.ui.common.SimpleAdapter
 import de.fosstenbuch.ui.common.argId
+import de.fosstenbuch.ui.common.askText
 import de.fosstenbuch.ui.common.close
 import de.fosstenbuch.ui.common.collect
 import de.fosstenbuch.ui.common.confirm
@@ -42,6 +44,7 @@ import de.fosstenbuch.ui.common.pickDateTime
 import de.fosstenbuch.ui.common.setDropdown
 import de.fosstenbuch.ui.common.textOrNull
 import de.fosstenbuch.ui.common.toast
+import de.fosstenbuch.ui.locations.LocationEditFragment
 import kotlinx.coroutines.Job
 import java.util.Date
 import kotlin.math.roundToInt
@@ -49,11 +52,11 @@ import kotlin.math.roundToInt
 /**
  * Formular für eine Fahrt. Was es anbietet, ergibt sich allein aus der geladenen Fahrt ([Mode]):
  * neue Fahrt starten oder nachtragen, laufende Fahrt beenden oder verwerfen, automatisch erkannte Fahrt
- * übernehmen oder verwerfen, abgeschlossene Fahrt bearbeiten.
+ * übernehmen oder verwerfen, laufende automatische Aufzeichnung beenden, abgeschlossene Fahrt bearbeiten.
  *
  * Zustand: Feldtexte stellt Android nach Rotation und nach der Rückkehr aus "Neuen Standort
- * speichern" selbst wieder her. Alles andere (Zeiten, gewählte IDs) steht in Feldern dieser
- * Klasse und im savedInstanceState; befüllt wird das Formular nur einmal ([populated]).
+ * speichern" selbst wieder her. Alles andere (Zeiten, gewählte IDs, Km-Vorschläge) steht in Feldern
+ * dieser Klasse und im savedInstanceState; befüllt wird das Formular nur einmal ([populated]).
  */
 class TripEditFragment : Fragment(R.layout.fragment_trip_edit) {
 
@@ -82,8 +85,11 @@ class TripEditFragment : Fragment(R.layout.fragment_trip_edit) {
     private var endTime: Date? = null
     private var vehicleId: Long? = null
     private var purposeId: Long? = null
-    /** Zuletzt automatisch eingetragener Start-Km-Stand – nur diesen darf ein neuer Vorschlag ersetzen */
+    /** Zuletzt automatisch eingetragene Km-Stände – nur diese darf ein neuer Vorschlag ersetzen */
     private var suggestedKm: String? = null
+    private var suggestedEndKm: String? = null
+    /** Ortsfeld (View-ID), aus dem "Als neuen Standort speichern" geöffnet wurde */
+    private var placeField = View.NO_ID
 
     // Aus der Datenbank, bei jeder neuen Ansicht frisch geladen (siehe load)
     private var trip: Trip? = null
@@ -106,6 +112,14 @@ class TripEditFragment : Fragment(R.layout.fragment_trip_edit) {
             vehicleId = getLong("vehicleId", -1).takeIf { it >= 0 }
             purposeId = getLong("purposeId", -1).takeIf { it >= 0 }
             suggestedKm = getString("suggestedKm")
+            suggestedEndKm = getString("suggestedEndKm")
+            placeField = getInt("placeField", View.NO_ID)
+        }
+        // Den im Ortsformular tatsächlich gespeicherten Namen übernehmen (der Nutzer kann ihn dort noch
+        // ändern). Das Ergebnis kommt erst an, wenn dieses Formular wieder sichtbar ist – dann hat Android
+        // die Feldtexte bereits wiederhergestellt und überschreibt den Namen nicht mehr.
+        parentFragmentManager.setFragmentResultListener("location_saved", this) { _, result ->
+            view?.findViewById<AutoCompleteTextView>(placeField)?.setText(result.getString("name"), false)
         }
     }
 
@@ -117,6 +131,8 @@ class TripEditFragment : Fragment(R.layout.fragment_trip_edit) {
         outState.putLong("vehicleId", vehicleId ?: -1)
         outState.putLong("purposeId", purposeId ?: -1)
         outState.putString("suggestedKm", suggestedKm)
+        outState.putString("suggestedEndKm", suggestedEndKm)
+        outState.putInt("placeField", placeField)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -131,7 +147,9 @@ class TripEditFragment : Fragment(R.layout.fragment_trip_edit) {
         for (field in listOf(b.editStart, b.editEnd)) {
             field.setOnItemClickListener { parent, _, position, _ ->
                 val item = parent.getItemAtPosition(position) as PlaceAdapter.Item
-                if (item.place != null) takePartner(item.place) else navigate(R.id.navigation_location_edit, "name" to item.name)
+                if (item.place != null) return@setOnItemClickListener takePartner(item.place)
+                placeField = field.id
+                navigate(R.id.navigation_location_edit, LocationEditFragment.ARG_NAME to item.name)
             }
         }
         val res = resources // nicht getString(): Der Filter läuft im Hintergrund, evtl. nach dem Schließen
@@ -150,7 +168,7 @@ class TripEditFragment : Fragment(R.layout.fragment_trip_edit) {
                 startPermission.launch(START_PERMISSIONS)
             }
         }
-        b.buttonSave.setOnClickListener { save() }
+        b.buttonSave.setOnClickListener { if (mode == Mode.RECORDING) endRecording() else save() }
         b.buttonDiscard.setOnClickListener { trip?.let { confirmDelete(it) { close() } } }
         b.buttonUseTemplate.setOnClickListener { chooseTemplate() }
         b.buttonSaveTemplate.setOnClickListener { saveTemplate() }
@@ -170,10 +188,14 @@ class TripEditFragment : Fragment(R.layout.fragment_trip_edit) {
         vehicles = ctx.dao.allVehicles()
         purposes = ctx.dao.allPurposes()
         if (!populated && mode != Mode.RECORDING) populate(ctx)
+        // Nach Rückkehr oder Prozess-Tod kann die Auswahl inzwischen gelöscht sein – sonst scheiterte
+        // das Speichern am Fremdschlüssel statt an der normalen Prüfung "Bitte wählen Sie …"
+        if (vehicles.none { it.id == vehicleId }) vehicleId = null
+        if (purposes.none { it.id == purposeId }) purposeId = null
         showTimes()
         b.inputVehicle.setDropdown(vehicles.map { it.label }, vehicles.indexOfFirst { it.id == vehicleId }) {
             vehicleId = vehicles[it].id
-            launch { suggestStartKm() }
+            launch { suggestOdometer() }
         }
         b.inputPurpose.setDropdown(purposes.map { it.name }, purposes.indexOfFirst { it.id == purposeId }) {
             purposeId = purposes[it].id
@@ -181,49 +203,55 @@ class TripEditFragment : Fragment(R.layout.fragment_trip_edit) {
         render(ctx)
     }
 
-    /** Erstbefüllung: Werte der Fahrt bzw. Vorschläge für eine neue (Hauptfahrzeug, Standard-Kategorie, Km-Stand) */
+    /**
+     * Erstbefüllung: Werte der Fahrt bzw. Vorschläge (Hauptfahrzeug, Standard-Kategorie, Km-Stände).
+     * Die Standard-Kategorie gilt für neue und automatische Fahrten; gibt es sie nicht mehr, verwirft load() sie.
+     */
     private suspend fun populate(ctx: Context) {
         val t = trip
+        val defaultPurpose = Settings.get(ctx, Settings.DEFAULT_PURPOSE_ID, 0L)
         if (t == null) {
             vehicleId = (vehicles.firstOrNull { it.isPrimary } ?: vehicles.singleOrNull())?.id
-            val defaultPurpose = Settings.get(ctx, Settings.DEFAULT_PURPOSE_ID, 0L)
-            purposeId = purposes.firstOrNull { it.id == defaultPurpose }?.id
+            purposeId = defaultPurpose
         } else {
             date = t.date
             endTime = t.endTime ?: if (mode == Mode.ACTIVE) Date() else null // Beenden: Ankunft = jetzt
             b.editStart.setText(t.startLocation, false) // false: Vorschlagsliste nicht aufklappen
             b.editEnd.setText(t.endLocation, false)
-            b.editStartKm.setText(t.startOdometer?.toString())
-            b.editEndKm.setText(t.endOdometer?.toString())
+            // Automatische Fahrt: Die beim Erkennen gespeicherten Km-Stände sind eine evtl. überholte
+            // Schätzung, suggestOdometer() berechnet sie neu
+            if (mode != Mode.GHOST) {
+                b.editStartKm.setText(t.startOdometer?.toString())
+                b.editEndKm.setText(t.endOdometer?.toString())
+            }
             vehicleId = t.vehicleId
-            purposeId = t.purposeId
+            purposeId = t.purposeId ?: defaultPurpose.takeIf { mode == Mode.GHOST }
             b.editPartner.setText(t.businessPartner)
             b.editRoute.setText(t.route)
             b.editNotes.setText(t.notes)
         }
         populated = true
-        suggestStartKm()
-        if (mode == Mode.GHOST) suggestEndKm(t?.gpsDistanceKm)
+        suggestOdometer()
         // Ortsvorschlag nur, wo die Fahrt gerade hier beginnt bzw. endet
-        if (mode == Mode.NEW || mode == Mode.ACTIVE) suggestPermission.launch(LOCATION)
+        if (mode == Mode.NEW || mode == Mode.ACTIVE) suggestPermission.launch(Geo.PERMISSIONS)
     }
 
     /** Hinweis und Knöpfe passend zum Modus; Fahrten änderungssicherer Fahrzeuge sind komplett gesperrt */
     private fun render(ctx: Context) {
         val t = trip
         val locked = mode == Mode.EDIT && vehicles.any { it.id == t?.vehicleId && it.auditProtected }
-        val editable = mode != Mode.RECORDING && !locked
         b.form.isVisible = mode != Mode.RECORDING
         if (locked) b.form.children.forEach { it.isEnabled = false }
-        b.rowTemplates.isVisible = editable
+        b.rowTemplates.isVisible = mode != Mode.RECORDING && !locked
         b.buttonStart.isVisible = mode == Mode.NEW
-        b.buttonSave.isVisible = editable
+        b.buttonSave.isVisible = !locked
         b.buttonSave.setText(
             when (mode) {
                 Mode.NEW -> R.string.trips_save_completed
                 Mode.ACTIVE -> R.string.end_trip
                 Mode.GHOST -> R.string.ghost_accept
-                else -> R.string.save
+                Mode.RECORDING -> R.string.trips_end_recording
+                Mode.EDIT -> R.string.save
             }
         )
         // Laufende Fahrt verwerfen (z.B. versehentlich gestartet) – Trips.delete erlaubt das auch bei
@@ -237,7 +265,7 @@ class TripEditFragment : Fragment(R.layout.fragment_trip_edit) {
                 // GPS-Strecke als Anhaltspunkt, falls die Km-Stände erst noch eingetragen werden müssen
                 mode == Mode.GHOST -> listOfNotNull(
                     getString(R.string.ghost_detail_hint),
-                    t?.gpsDistanceKm?.takeIf { it > 0 }?.let { getString(R.string.gps_distance_format, it) }
+                    t?.gpsDistanceKm?.takeIf { it > 0 }?.let { getString(R.string.trips_gps, Fmt.km(it)) }
                 ).joinToString("\n")
                 t?.isCancelled == true -> t.cancellationReason?.takeIf { it.isNotBlank() }
                     ?.let { getString(R.string.cancel_trip_reason_format, it) } ?: getString(R.string.trip_cancelled)
@@ -246,7 +274,7 @@ class TripEditFragment : Fragment(R.layout.fragment_trip_edit) {
         )
         if (mode == Mode.ACTIVE) collect(TrackingService.live) { live ->
             val km = live?.takeIf { it.tripId == t?.id }?.km
-            showHint(listOfNotNull(getString(R.string.trip_in_progress), km?.let { getString(R.string.active_trip_gps_km, it) }).joinToString("\n"))
+            showHint(listOfNotNull(getString(R.string.trip_in_progress), km?.let { getString(R.string.trips_gps_live, Fmt.km(it)) }).joinToString("\n"))
             if (suggestEndKm(km)) b.layoutEndKm.helperText = getString(R.string.estimated_odometer)
         }
         if (mode == Mode.EDIT && t != null) collect(ctx.dao.auditLog(t.id)) { logs ->
@@ -282,45 +310,49 @@ class TripEditFragment : Fragment(R.layout.fragment_trip_edit) {
     }
 
     /** Startet die Fahrt (nach der Berechtigungsabfrage). GPS nur mit Standortberechtigung, die Fahrt auch ohne. */
-    private fun start() = launch {
+    private fun start() = submit {
         loading?.join() // nach einer Rotation kann die Antwort vor dem Laden ankommen
         val ctx = requireContext()
+        TrackingService.startManual(ctx, Trips.start(ctx, formTrip())) // startet ohne Berechtigung nichts
+        close()
+    }
+
+    /** Speichert: Nachtrag, laufende Fahrt beenden, automatische Fahrt übernehmen oder Änderungen */
+    private fun save() = submit {
+        val ctx = requireContext()
+        val old = trip ?: Trip(date = date, startLocation = "")
+        val t = formTrip()
+        // Die GPS-Aufzeichnung einer beendeten Fahrt stoppt der TrackingService selbst (er beobachtet die Fahrt)
+        Trips.save(ctx, t)
+        locationsToCount(old, t).forEach { ctx.dao.countLocationUsage(it) }
+        if (mode == Mode.GHOST) toast(R.string.ghost_accepted_success)
+        close()
+    }
+
+    /** Gemeinsamer Ablauf von Starten und Speichern: Knöpfe sperren, Ablehnung als Feldfehler bzw. Meldung zeigen */
+    private fun submit(block: suspend () -> Unit) = launch {
+        showErrors(emptyMap())
+        setBusy(true)
         try {
-            val id = Trips.start(ctx, formTrip())
-            if (Geo.hasPermission(ctx)) TrackingService.startManual(ctx, id)
-            close()
+            block()
         } catch (e: Trips.Invalid) {
             showErrors(e.errors)
             setBusy(false)
-        } catch (e: IllegalStateException) {
-            toast(e.message!!)
+        } catch (e: Trips.Rejected) {
+            toast(e.message.orEmpty())
             setBusy(false)
         }
     }
 
-    /** Speichert: Nachtrag, laufende Fahrt beenden, automatische Fahrt übernehmen oder Änderungen */
-    private fun save() = launch {
-        val ctx = requireContext()
-        val old = trip ?: Trip(date = date, startLocation = "")
-        val t = formTrip()
-        showErrors(emptyMap())
-        setBusy(true)
-        try {
-            Trips.save(ctx, t)
-            locationsToCount(old, t).forEach { ctx.dao.countLocationUsage(it) }
-            // Nur die Aufzeichnung DIESER Fahrt beenden, keine parallel laufende automatische
-            if (mode == Mode.ACTIVE && TrackingService.live.value.let { it == null || it.tripId == t.id }) {
-                TrackingService.stop(ctx)
-            }
-            if (mode == Mode.GHOST) toast(getString(R.string.ghost_accepted_success))
-            close()
-        } catch (e: Trips.Invalid) {
-            showErrors(e.errors)
-            setBusy(false)
-        } catch (e: IllegalStateException) {
-            toast(e.message!!)
-            setBusy(false)
-        }
+    /**
+     * Beendet eine laufende automatische Aufzeichnung (z.B. wenn die Bluetooth-Trennung verpasst wurde).
+     * Der TrackingService schließt die Fahrt danach ab, sie erscheint dann unter den automatischen Fahrten.
+     * Ohne laufendes GPS beendet sie erst die Bluetooth-Trennung; Ghosts.end übernimmt künftig beide Fälle.
+     */
+    private fun endRecording() {
+        if (TrackingService.live.value?.tripId != argId) return toast(R.string.trips_recording_not_running)
+        TrackingService.stop(requireContext())
+        close()
     }
 
     /** Verhindert Doppel-Tipps (sonst z.B. zwei nachgetragene Fahrten) */
@@ -364,29 +396,48 @@ class TripEditFragment : Fragment(R.layout.fragment_trip_edit) {
     }
 
     /**
-     * Schlägt den letzten Km-Stand des Fahrzeugs als Start vor – in ein leeres Feld oder anstelle
-     * des eigenen früheren Vorschlags (Fahrzeugwechsel), nie über eine Eingabe des Nutzers.
-     * Nur für neue und automatische Fahrten: Bei einer alten Fahrt ohne Start-Km (Altdaten) wäre
-     * der heutige Höchststand falsch und sähe trotzdem wie der gespeicherte Wert aus.
+     * Km-Vorschläge – nur in leere Felder oder anstelle des eigenen früheren Vorschlags (Fahrzeugwechsel),
+     * nie über eine Eingabe des Nutzers:
+     * - neue Fahrt: Start = letzter Km-Stand des Fahrzeugs
+     * - automatische Fahrt: Start = letzter Stand vor ihrem aufgezeichneten Beginn, Ende = Start + GPS-Strecke.
+     *   Die beim Erkennen gespeicherte Schätzung ist oft überholt (z.B. wenn inzwischen eine frühere
+     *   automatische Fahrt mit korrigierten Km-Ständen übernommen wurde) und dient nur als Rückfall – und
+     *   nur für das aufzeichnende Fahrzeug. Maßgeblich ist der aufgezeichnete Beginn, nicht das Datum im
+     *   Formular: Ein später gelegter Beginn zählte sonst die eigene gespeicherte Schätzung mit.
+     * Ohne Vorschlag wird ein früherer Vorschlag geleert (sonst bliebe nach einem Fahrzeugwechsel der
+     * Stand des alten Fahrzeugs stehen). Sonst nichts: Bei einer alten Fahrt ohne Start-Km (Altdaten)
+     * wäre der heutige Höchststand falsch und sähe trotzdem wie der gespeicherte Wert aus.
      */
-    private suspend fun suggestStartKm() {
-        if (mode != Mode.NEW && mode != Mode.GHOST) return
-        val km = vehicleId?.let { requireContext().dao.lastOdometer(it) }?.toString()
+    private suspend fun suggestOdometer() {
+        val dao = requireContext().dao
+        val ghost = trip
+        val start = when (mode) {
+            Mode.NEW -> vehicleId?.let { dao.lastOdometer(it) }
+            Mode.GHOST -> ghost?.let { g ->
+                vehicleId?.let { dao.odometerBefore(it, g.date) } ?: g.startOdometer?.takeIf { vehicleId == g.vehicleId }
+            }
+            else -> return
+        }?.toString()
         if (isReplaceable(b.editStartKm.text.toString(), suggestedKm)) {
-            b.editStartKm.setText(km)
-            suggestedKm = km
+            b.editStartKm.setText(start)
+            suggestedKm = start
+        }
+        if (mode == Mode.GHOST && !suggestEndKm(ghost?.gpsDistanceKm) && isReplaceable(b.editEndKm.text.toString(), suggestedEndKm)) {
+            b.editEndKm.setText(null)
+            suggestedEndKm = null
         }
     }
 
-    /** Trägt Start + Strecke (GPS oder Vorlage) als End-Km-Stand ein, nur in ein leeres Feld; true wenn eingetragen */
+    /** Trägt Start + Strecke (GPS oder Vorlage) als End-Km ein, solange der Nutzer das Feld nicht geändert hat; true = eingetragen */
     private fun suggestEndKm(km: Double?): Boolean {
-        val end = endKmSuggestion(b.editStartKm.intOrNull(), km) ?: return false
-        if (!b.editEndKm.text.isNullOrBlank()) return false
-        b.editEndKm.setText(end.toString())
+        val end = endKmSuggestion(b.editStartKm.intOrNull(), km)?.toString() ?: return false
+        if (!isReplaceable(b.editEndKm.text.toString(), suggestedEndKm)) return false
+        b.editEndKm.setText(end)
+        suggestedEndKm = end
         return true
     }
 
-    /** Nächster gespeicherter Ort (≤ 1 km) als Vorschlag: neue Fahrt → Startort, laufende Fahrt → Zielort */
+    /** Nächster gespeicherter Ort (Radius von Geo.nearest) als Vorschlag: neue Fahrt → Startort, laufende Fahrt → Zielort */
     private fun suggestLocation() = launch {
         loading?.join()
         val ctx = requireContext()
@@ -396,7 +447,7 @@ class TripEditFragment : Fragment(R.layout.fragment_trip_edit) {
             else -> return@launch
         }
         val here = Geo.currentLocation(ctx) ?: return@launch
-        val place = Geo.nearest(ctx.dao.allLocations(), here.latitude, here.longitude, 1000.0) ?: return@launch
+        val place = Geo.nearest(ctx.dao.allLocations(), here.latitude, here.longitude) ?: return@launch
         if (!field.text.isNullOrBlank()) return@launch // inzwischen selbst ausgefüllt (GPS kann 10 s dauern)
         field.setText(place.name, false)
         takePartner(place)
@@ -411,12 +462,12 @@ class TripEditFragment : Fragment(R.layout.fragment_trip_edit) {
     /** Vorlagen-Auswahl: Tippen wendet die Vorlage an, der Mülleimer löscht sie (nach Rückfrage) */
     private fun chooseTemplate() = launch {
         val templates = requireContext().dao.allTemplates()
-        if (templates.isEmpty()) return@launch toast(getString(R.string.no_templates))
+        if (templates.isEmpty()) return@launch toast(R.string.no_templates)
         val list = RecyclerView(requireContext()).apply { layoutManager = LinearLayoutManager(context) }
         val dialog = MaterialAlertDialogBuilder(requireContext())
             .setTitle(R.string.use_template)
             .setView(list)
-            .setNegativeButton(android.R.string.cancel, null)
+            .setNegativeButton(R.string.cancel, null)
             .show()
         list.adapter = SimpleAdapter(ItemTemplateBinding::inflate, { t: TripTemplate -> t.id }) { item, t ->
             item.textName.text = t.name
@@ -453,10 +504,10 @@ class TripEditFragment : Fragment(R.layout.fragment_trip_edit) {
         vehicles.firstOrNull { it.id == t.vehicleId }?.let {
             vehicleId = it.id
             b.inputVehicle.setText(it.label, false)
-            suggestStartKm()
+            suggestOdometer()
         }
         suggestEndKm(t.distanceKm)
-        toast(getString(R.string.trips_template_applied))
+        toast(R.string.trips_template_applied)
     }
 
     /** Speichert das Formular als Vorlage (inkl. Geschäftspartner und Route) */
@@ -480,15 +531,14 @@ class TripEditFragment : Fragment(R.layout.fragment_trip_edit) {
                     route = t.route
                 )
             )
-            toast(getString(R.string.template_saved))
+            toast(R.string.template_saved)
         }
     }
 
     private companion object {
-        val LOCATION = arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION)
         /** Ab Android 13 braucht auch die Benachrichtigung der GPS-Aufzeichnung eine Berechtigung */
         val START_PERMISSIONS =
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) LOCATION + Manifest.permission.POST_NOTIFICATIONS else LOCATION
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) Geo.PERMISSIONS + Manifest.permission.POST_NOTIFICATIONS else Geo.PERMISSIONS
     }
 }
 
