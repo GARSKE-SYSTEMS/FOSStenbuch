@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Texte für Statistik und Kilometerpauschale (weitere stehen in strings.xml: stats_*, mileage_*) -->
+<resources>
+    <string name="stats_previous_month">Vorheriger Monat</string>
+    <string name="stats_next_month">Nächster Monat</string>
+
+    <!-- %1$d = Jahr, %2$s / %3$s = Satz in € -->
+    <string name="stats_mileage_rates">Entfernungspauschale %1$d: %2$s/km (erste 20 km), %3$s/km (ab 21. km)</string>
+    <string name="stats_mileage_rate_flat">Entfernungspauschale %1$d: %2$s/km ab dem ersten Kilometer</string>
+    <!-- %1$s = Bezeichnung (mileage_rate_standard/extended), %2$s = Betrag -->
+    <string name="stats_mileage_part">%1$s: %2$s</string>
+    <string name="stats_mileage_details">%1$d volle km einfache Entfernung × %2$d Arbeitstage</string>
+    <!-- %1$s = geschäftliche km, %2$s = Satz, %3$s = Betrag. Die Bedingung gehört in den Text: beim Firmenwagen
+         trägt der Arbeitgeber die Kosten, dann ist für Dienstreisen nichts absetzbar -->
+    <string name="stats_mileage_business_trips">Nur bei eigenem Pkw (beim Firmenwagen ist nichts absetzbar): Sind die geschäftlichen Fahrten Dienstreisen statt Arbeitswege, gilt stattdessen die Reisekostenpauschale: %1$s × %2$s/km = %3$s, abzüglich einer Erstattung durch den Arbeitgeber</string>
+    <string name="stats_mileage_error_days">Bitte 1 bis 366 Arbeitstage angeben</string>
+    <string name="stats_mileage_error_km">Bitte eine Entfernung größer als 0 km angeben</string>
+</resources>
