@@ -11,7 +11,8 @@ FOSStenbuch ist ein quelloffenes, digitales Fahrtenbuch für Android – entwick
 ## Features
 
 - **Fahrtenerfassung** – Fahrten mit Start-/Zielort, Kilometerstand, Zweck und Fahrzeug anlegen
-- **GPS-Tracking** – Standorterfassung im Hintergrund via Foreground Service
+- **GPS-Tracking** – Gefahrene Strecke wird während der Fahrt per GPS mitgeschrieben
+- **Automatische Fahrterkennung** – Verbindet sich das Handy mit dem Auto-Bluetooth, wird die Fahrt automatisch aufgezeichnet und kann später geprüft und übernommen werden
 - **Fahrzeugverwaltung** – Mehrere Fahrzeuge verwalten
 - **Fahrzwecke** – Individuelle Fahrzwecke (dienstlich, privat, etc.) definieren
 - **Gespeicherte Orte** – Häufig genutzte Orte speichern und wiederverwenden
@@ -20,7 +21,7 @@ FOSStenbuch ist ein quelloffenes, digitales Fahrtenbuch für Android – entwick
 - **Export** – Fahrten als PDF oder CSV exportieren und teilen
 - **Backup & Restore** – Lokale Datensicherung und Wiederherstellung
 - **Erinnerungen** – Benachrichtigungen zur Fahrtenerfassung
-- **Audit-Log** – Nachvollziehbare Änderungshistorie der Fahrten
+- **Änderungssicher** – Änderungsprotokoll und Hash-Kette je Fahrzeug machen nachträgliche Änderungen erkennbar
 - **Vorlagen** – Wiederkehrende Fahrten als Vorlage speichern
 - **Material Design** – Moderne Android-Oberfläche mit Material 3 Komponenten
 - **Offline-first** – Alle Daten werden lokal auf dem Gerät gespeichert (Room-Datenbank)
@@ -44,19 +45,15 @@ FOSStenbuch ist ein quelloffenes, digitales Fahrtenbuch für Android – entwick
 |----------------------|--------------------------------------------------|
 | Sprache              | Kotlin                                           |
 | Min SDK              | 26 (Android 8.0)                                 |
-| Target SDK           | 34 (Android 14)                                  |
-| Architektur          | MVVM + Clean Architecture (Data / Domain / UI)   |
-| Dependency Injection | Hilt (Dagger)                                    |
-| Datenbank            | Room (SQLite)                                    |
-| Navigation           | Jetpack Navigation + SafeArgs                    |
+| Target SDK           | 35 (Android 15)                                  |
+| Architektur          | Bewusst schlicht (KISS): Daten / Logik / UI      |
+| Datenbank            | Room (SQLite), ein DAO                           |
+| Navigation           | Jetpack Navigation                               |
 | Asynchronität        | Kotlin Coroutines + Flow                         |
-| UI                   | View Binding + Material Design Components        |
-| Paginierung          | Paging 3                                         |
-| Standort             | Android LocationManager (AOSP)                   |
+| UI                   | View Binding + Material 3                        |
+| Standort             | Android LocationManager (AOSP, ohne Google-Dienste) |
 | Einstellungen        | DataStore Preferences                            |
-| Logging              | Timber                                           |
-| Testing              | JUnit 4, MockK, Coroutines Test                  |
-| Code Coverage        | Kover                                            |
+| Testing              | JUnit 4                                          |
 | CI/CD                | GitHub Actions                                   |
 | Build System         | Gradle (Kotlin DSL)                              |
 
@@ -64,10 +61,10 @@ FOSStenbuch ist ein quelloffenes, digitales Fahrtenbuch für Android – entwick
 
 ## Voraussetzungen
 
-- **Android Studio** Hedgehog (2023.1.1) oder neuer
-- **JDK 17**
-- **Android SDK** mit API Level 34
-- **Gradle** 8.x (wird über den Gradle Wrapper mitgeliefert)
+- **JDK 17 oder neuer** (getestet bis JDK 25)
+- **Android SDK** mit API Level 35
+- **Gradle** 9.x (wird über den Gradle Wrapper mitgeliefert)
+- Optional: Android Studio (aktuelle Version mit AGP-9-Unterstützung)
 
 ---
 
@@ -87,17 +84,12 @@ cd FOSStenbuch
 ```
 
 Die APK liegt anschließend unter `app/build/outputs/apk/debug/app-debug.apk`.
+Debug-Builds haben die App-ID `de.garsys.fosstenbuch.debug` und lassen sich neben der Release-Version installieren.
 
 ### Tests ausführen
 
 ```bash
 ./gradlew test
-```
-
-### Code Coverage Report
-
-```bash
-./gradlew koverHtmlReport
 ```
 
 ---
@@ -106,46 +98,33 @@ Die APK liegt anschließend unter `app/build/outputs/apk/debug/app-debug.apk`.
 
 ```
 app/src/main/java/de/fosstenbuch/
-├── data/                   # Datenschicht
-│   ├── local/              # Room-Datenbank, DAOs
-│   ├── model/              # Datenmodelle (Trip, Vehicle, TripPurpose, ...)
-│   └── repository/         # Repository-Implementierungen
-├── di/                     # Hilt Dependency Injection Module
-├── domain/                 # Geschäftslogik
-│   ├── backup/             # Backup & Restore
-│   ├── export/             # PDF/CSV-Export
-│   ├── notification/       # Erinnerungen
-│   ├── service/            # Location Tracking Service
-│   ├── usecase/            # Use Cases (Trip, Vehicle, Stats, ...)
-│   └── validation/         # Eingabevalidierung
-├── ui/                     # Präsentationsschicht
-│   ├── common/             # Gemeinsame UI-Komponenten
-│   ├── export/             # Export-Screen
-│   ├── locations/          # Gespeicherte Orte
-│   ├── main/               # MainActivity
-│   ├── mileage/            # Kilometerstand
-│   ├── purposes/           # Fahrzwecke
-│   ├── settings/           # Einstellungen
-│   ├── stats/              # Statistiken
-│   ├── trips/              # Fahrten
-│   └── vehicles/           # Fahrzeuge
-├── utils/                  # Hilfsfunktionen
-└── MainApplication.kt      # Application-Klasse
+├── App.kt              # Application: Dunkelmodus, Erinnerung neu planen
+├── data/               # Room-Entities, ein DAO, Datenbank + Migrationen, Einstellungen (DataStore)
+├── logic/              # Geschäftslogik ohne UI
+│   ├── Trips.kt        # Fahrten speichern: Validierung, Sperre, Änderungsprotokoll, Hash-Kette
+│   ├── Backup.kt       # Backup & Wiederherstellung (JSON)
+│   ├── Geo.kt          # Entfernungen, Standort, Adresssuche (OpenStreetMap Nominatim)
+│   ├── Mileage.kt      # Kilometer- und Entfernungspauschale
+│   ├── Fmt.kt          # Deutsche Zahlen- und Datumsformate
+│   └── export/         # CSV, PDF, Finanzamt-PDF
+├── tracking/           # GPS-Aufzeichnung, automatische Fahrterkennung (Bluetooth), Erinnerung
+└── ui/                 # MainActivity + ein Paket je Bildschirmgruppe, common/ = gemeinsame Helfer
 ```
 
 ---
 
 ## Berechtigungen
 
-| Berechtigung                    | Verwendung                                             |
-|---------------------------------|--------------------------------------------------------|
-| `ACCESS_FINE_LOCATION`          | GPS-Standorterfassung für Fahrten                      |
-| `ACCESS_COARSE_LOCATION`        | Ungefähre Standortbestimmung als Fallback              |
-| `FOREGROUND_SERVICE`            | GPS-Tracking im Hintergrund                            |
-| `FOREGROUND_SERVICE_LOCATION`   | Standort-Foreground-Service (ab Android 14)            |
-| `POST_NOTIFICATIONS`            | Fahrt-Erinnerungen anzeigen                            |
-| `RECEIVE_BOOT_COMPLETED`        | Erinnerungen nach Geräteneustart wiederherstellen      |
-| `SCHEDULE_EXACT_ALARM`          | Exakte Erinnerungszeitpunkte planen                    |
+| Berechtigung                                   | Verwendung                                                        |
+|------------------------------------------------|-------------------------------------------------------------------|
+| `ACCESS_FINE_LOCATION` / `ACCESS_COARSE_LOCATION` | GPS-Strecke und Ortsvorschläge                                 |
+| `ACCESS_BACKGROUND_LOCATION`                   | GPS bei automatisch erkannten Fahrten (App nicht geöffnet)       |
+| `FOREGROUND_SERVICE` / `FOREGROUND_SERVICE_LOCATION` | Aufzeichnung als Vordergrunddienst mit Benachrichtigung     |
+| `BLUETOOTH_CONNECT` (bzw. `BLUETOOTH` bis Android 11) | Erkennen, wann sich das Auto-Bluetooth verbindet/trennt     |
+| `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS`         | Ohne Akku-Optimierung darf die automatische Aufzeichnung starten |
+| `POST_NOTIFICATIONS`                           | Erinnerung und Aufzeichnungs-Benachrichtigung                    |
+| `RECEIVE_BOOT_COMPLETED`                       | Erinnerung nach Neustart wieder planen                           |
+| `INTERNET`                                     | Adresssuche und Ortsnamen über OpenStreetMap                     |
 
 ---
 
@@ -161,7 +140,7 @@ Beiträge sind herzlich willkommen! So kannst du mitmachen:
 
 ### Richtlinien
 
-- Halte dich an die bestehende Projektstruktur (MVVM + Clean Architecture)
+- Halte es einfach (KISS): so wenig Code wie möglich, keine unnötigen Schichten; Kommentare auf Deutsch
 - Schreibe Unit Tests für neue Geschäftslogik
 - Verwende [Conventional Commits](https://www.conventionalcommits.org/) für Commit-Messages
 - Stelle sicher, dass `./gradlew test` erfolgreich durchläuft
@@ -172,9 +151,9 @@ Beiträge sind herzlich willkommen! So kannst du mitmachen:
 
 - [ ] F-Droid Veröffentlichung
 - [x] Finanzamt-konformer PDF-Export
-- [ ] Dunkelmodus (Dark Theme)
+- [x] Dunkelmodus (Dark Theme)
 - [ ] Widget für Schnellerfassung
-- [ ] Automatische Fahrterkennung
+- [x] Automatische Fahrterkennung (Bluetooth)
 - [ ] Multi-Language Support (Englisch)
 
 ---
