@@ -83,6 +83,7 @@ class MileageFragment : Fragment(R.layout.fragment_mileage) {
                 b.beyond20.text = getString(R.string.stats_mileage_part, getString(R.string.mileage_rate_extended), Fmt.euro(a.beyond20))
                 b.details.text = if (noData) getString(R.string.mileage_no_data) else getString(R.string.stats_mileage_details, a.km, a.days)
                 // Im Statistikmodus ist offen, ob die km Arbeitswege oder Dienstreisen sind – beides zeigen
+                // (den Dienstreise-Betrag nur mit Bedingung im Text: eigener Pkw, abzüglich Erstattung)
                 b.businessTrips.isVisible = i.fromStats && !noData
                 b.businessTrips.text = getString(
                     R.string.stats_mileage_business_trips,
