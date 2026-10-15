@@ -4,7 +4,6 @@
     <!-- %s = Feldname, z.B. "Hersteller" -->
     <string name="masterdata_required">%s darf nicht leer sein</string>
     <string name="masterdata_permission_denied">Berechtigung wurde verweigert</string>
-    <string name="masterdata_open_settings">Einstellungen</string>
     <!-- Zusammengesetzte Listentexte -->
     <string name="masterdata_two_parts">%1$s %2$s</string>
     <string name="masterdata_details">%1$s · %2$s</string>
@@ -15,9 +14,9 @@
         <item quantity="one">Das Fahrzeug kann nicht gelöscht werden, weil noch %d Fahrt dazugehört.</item>
         <item quantity="other">Das Fahrzeug kann nicht gelöscht werden, weil noch %d Fahrten dazugehören.</item>
     </plurals>
-    <!-- %s = Fahrzeug, z.B. "VW Golf (B-AB 123)" -->
     <!-- %1$s = Gerätename, %2$s = MAC-Adresse -->
     <string name="masterdata_device">%1$s (%2$s)</string>
+    <!-- %s = Fahrzeug, z.B. "VW Golf (B-AB 123)" -->
     <string name="masterdata_bt_in_use">Dieses Gerät ist bereits dem Fahrzeug %s zugeordnet. Entfernen Sie es dort zuerst.</string>
     <string name="masterdata_checks_title">Voraussetzungen</string>
     <string name="masterdata_checks_hint">Die Erkennung läuft im Hintergrund, auch wenn die App geschlossen ist. Dafür braucht FOSStenbuch: Standort „Immer erlauben“ (sonst fehlen Strecke sowie Start- und Zielort), keine Akku-Optimierung (sonst verhindert Android den Start der Aufzeichnung), Benachrichtigungen (zeigen die laufende Aufzeichnung an) und die Bluetooth-Berechtigung (sonst erfährt die App nicht, wann sich das Auto verbindet).</string>

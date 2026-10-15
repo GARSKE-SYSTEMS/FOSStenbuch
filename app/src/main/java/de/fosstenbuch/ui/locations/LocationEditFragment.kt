@@ -1,11 +1,12 @@
 package de.fosstenbuch.ui.locations
 
-import android.Manifest
 import android.content.DialogInterface
 import android.os.Bundle
 import android.view.View
 import androidx.activity.result.contract.ActivityResultContracts.RequestMultiplePermissions
+import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.setFragmentResult
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import de.fosstenbuch.R
 import de.fosstenbuch.data.SavedLocation
@@ -14,12 +15,12 @@ import de.fosstenbuch.databinding.DialogMasterdataSearchBinding
 import de.fosstenbuch.databinding.FragmentLocationEditBinding
 import de.fosstenbuch.logic.Geo
 import de.fosstenbuch.ui.common.argId
+import de.fosstenbuch.ui.common.choose
 import de.fosstenbuch.ui.common.close
 import de.fosstenbuch.ui.common.doubleOrNull
 import de.fosstenbuch.ui.common.launch
 import de.fosstenbuch.ui.common.textOrNull
 import de.fosstenbuch.ui.common.toast
-import org.json.JSONException
 import java.io.IOException
 import java.net.UnknownHostException
 import java.util.Locale
@@ -33,6 +34,9 @@ private fun Double.toField() = String.format(Locale.US, "%.6f", this)
 /**
  * Gespeicherten Ort anlegen/bearbeiten ([argId], 0 = neu). Koordinaten per Eingabe,
  * aktuellem Standort oder Adresssuche (OpenStreetMap).
+ *
+ * Mit [ARG_NAME] geöffnet (aus dem Fahrtformular), meldet der Bildschirm den gespeicherten Namen
+ * per Fragment-Ergebnis "location_saved" zurück, damit das Formular den neuen Ort übernimmt.
  */
 class LocationEditFragment : Fragment(R.layout.fragment_location_edit) {
 
@@ -47,7 +51,7 @@ class LocationEditFragment : Fragment(R.layout.fragment_location_edit) {
     private var loaded = false
 
     private val locationPermission = registerForActivityResult(RequestMultiplePermissions()) { result ->
-        if (result.values.any { it }) locate() else if (result.isNotEmpty()) toast(getString(R.string.location_permission_denied))
+        if (result.values.any { it }) locate() else if (result.isNotEmpty()) toast(R.string.location_permission_denied)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -63,9 +67,7 @@ class LocationEditFragment : Fragment(R.layout.fragment_location_edit) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val b = FragmentLocationEditBinding.bind(view).also { _b = it }
         b.locate.setOnClickListener {
-            // Genau und ungefähr immer zusammen anfragen, sonst ignoriert Android 12+ die Anfrage
-            if (Geo.hasPermission(requireContext())) locate()
-            else locationPermission.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION))
+            if (Geo.hasPermission(requireContext())) locate() else locationPermission.launch(Geo.PERMISSIONS)
         }
         b.search.setOnClickListener { search() }
         b.save.setOnClickListener { save(b) }
@@ -101,7 +103,7 @@ class LocationEditFragment : Fragment(R.layout.fragment_location_edit) {
             try {
                 val location = Geo.currentLocation(requireContext())
                 if (location == null) {
-                    toast(getString(R.string.location_not_available))
+                    toast(R.string.location_not_available)
                 } else {
                     b.latitude.setText(location.latitude.toField())
                     b.longitude.setText(location.longitude.toField())
@@ -147,8 +149,6 @@ class LocationEditFragment : Fragment(R.layout.fragment_location_edit) {
                     getString(R.string.search_address_no_internet)
                 } catch (e: IOException) {
                     getString(R.string.search_address_error, e.message.orEmpty())
-                } catch (e: JSONException) {
-                    getString(R.string.search_address_error, e.message.orEmpty())
                 }
                 d.queryLayout.helperText = null
                 button.isEnabled = true
@@ -157,19 +157,14 @@ class LocationEditFragment : Fragment(R.layout.fragment_location_edit) {
     }
 
     /** Treffer übernehmen: Koordinaten immer, Adresse nur in ein leeres Feld */
-    private fun pick(places: List<Geo.Place>) {
-        MaterialAlertDialogBuilder(requireContext())
-            .setTitle(R.string.masterdata_search_pick)
-            .setItems(places.map { it.name }.toTypedArray()) { _, i ->
-                val b = _b ?: return@setItems
-                b.latitude.setText(places[i].latitude.toField())
-                b.longitude.setText(places[i].longitude.toField())
-                if (b.address.textOrNull() == null) b.address.setText(places[i].name)
-            }
-            .setNegativeButton(R.string.cancel, null)
-            .show()
+    private fun pick(places: List<Geo.Place>) = choose(getString(R.string.masterdata_search_pick), places.map { it.name }) { i ->
+        val b = _b ?: return@choose
+        b.latitude.setText(places[i].latitude.toField())
+        b.longitude.setText(places[i].longitude.toField())
+        if (b.address.textOrNull() == null) b.address.setText(places[i].name)
     }
 
+    /** Prüft Name und Koordinaten und speichert */
     private fun save(b: FragmentLocationEditBinding) {
         if (!loaded) return
         val name = b.name.textOrNull()
@@ -189,6 +184,7 @@ class LocationEditFragment : Fragment(R.layout.fragment_location_edit) {
             // Der Nutzungszähler bleibt beim Bearbeiten erhalten
             val usage = dao.location(argId)?.usageCount ?: 0
             dao.saveLocation(SavedLocation(argId, name, lat, lng, address, usage, partner))
+            if (arguments?.containsKey(ARG_NAME) == true) setFragmentResult("location_saved", bundleOf(ARG_NAME to name))
             close()
         }
     }

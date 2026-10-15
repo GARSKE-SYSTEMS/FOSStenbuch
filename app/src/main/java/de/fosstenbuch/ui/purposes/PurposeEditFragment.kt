@@ -12,17 +12,12 @@ import de.fosstenbuch.data.dao
 import de.fosstenbuch.databinding.FragmentPurposeEditBinding
 import de.fosstenbuch.ui.common.argId
 import de.fosstenbuch.ui.common.close
+import de.fosstenbuch.ui.common.hexColor
 import de.fosstenbuch.ui.common.launch
 import de.fosstenbuch.ui.common.textOrNull
 
 /** Farbe neuer Kategorien (wie die Standard-Kategorie "Beruflich") */
 private const val DEFAULT_COLOR = "#6200EE"
-
-private val HEX_COLOR = Regex("#[0-9A-Fa-f]{6}")
-
-/** Farbwert (voll deckend) für "#RRGGBB", sonst null */
-internal fun hexColor(text: String?): Int? =
-    text?.takeIf { HEX_COLOR.matches(it) }?.let { it.substring(1).toInt(16) or 0xFF000000.toInt() }
 
 /**
  * Kategorie anlegen/bearbeiten ([argId], 0 = neu). Der Name ist Pflicht und eindeutig
@@ -73,6 +68,7 @@ class PurposeEditFragment : Fragment(R.layout.fragment_purpose_edit) {
         }
     }
 
+    /** Prüft Name (Pflicht, eindeutig) und Farbe und speichert */
     private fun save(b: FragmentPurposeEditBinding) {
         if (!loaded) return
         val name = b.name.textOrNull()
