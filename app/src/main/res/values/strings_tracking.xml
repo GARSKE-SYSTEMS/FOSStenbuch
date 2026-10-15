@@ -2,4 +2,6 @@
 <resources>
     <!-- Titel der Aufzeichnungs-Benachrichtigung bei automatisch (per Bluetooth) erkannten Fahrten -->
     <string name="tracking_ghost_title">Automatische Fahrt wird aufgezeichnet</string>
+    <!-- Stand der Aufzeichnung: Strecke (über Fmt.km formatiert, z.B. "12,3 km") und Minuten seit Beginn -->
+    <string name="tracking_status">%1$s · %2$d min</string>
 </resources>

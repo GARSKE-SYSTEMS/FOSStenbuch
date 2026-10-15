@@ -35,13 +35,22 @@ class TrackingLogicTest {
 
     @Test
     fun `Rauschen im Stand zählt nicht, langsame Bewegung schon`() {
+        // Bezugspunkt und neue Position je ±10 m: erst ab 20 m Abstand ist es sicher Bewegung
         val track = Track()
         track.add(52.0, 13.0, 10f)
         assertFalse(track.add(52.000045, 13.0, 10f)) // ≈ 5 m: Rauschen
-        assertFalse(track.add(52.000072, 13.0, 10f)) // ≈ 8 m vom Bezugspunkt: Rauschen
+        assertFalse(track.add(52.000162, 13.0, 10f)) // ≈ 18 m vom Bezugspunkt: noch Rauschen
         assertEquals(0.0, track.km, 0.0)
-        assertTrue(track.add(52.000108, 13.0, 10f)) // ≈ 12 m vom Bezugspunkt: echte Bewegung
-        assertEquals(0.012, track.km, 0.001)
+        assertTrue(track.add(52.000225, 13.0, 10f)) // ≈ 25 m vom Bezugspunkt: echte Bewegung
+        assertEquals(0.025, track.km, 0.001)
+    }
+
+    @Test
+    fun `fortgesetzte Aufzeichnung zählt nur die Genauigkeit der neuen Position`() {
+        // Die Genauigkeit des gespeicherten Bezugspunkts ist unbekannt
+        val track = Track(1.0, 52.0, 13.0)
+        assertTrue(track.add(52.000108, 13.0, 10f)) // ≈ 12 m > 10 m
+        assertEquals(1.012, track.km, 0.001)
     }
 
     @Test

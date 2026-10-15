@@ -6,6 +6,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import androidx.core.content.IntentCompat
+import de.fosstenbuch.data.dao
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -14,12 +15,13 @@ import kotlinx.coroutines.withTimeoutOrNull
 
 /**
  * Empfängt Systemereignisse und den Erinnerungs-Alarm. Als Manifest-Receiver läuft er auch, wenn die
- * App gar nicht gestartet ist – ein dauerhaft laufender Bluetooth-Dienst ist dadurch überflüssig.
+ * App gar nicht gestartet ist – ein Dauerdienst zum Lauschen auf Bluetooth ist dadurch unnötig.
  *
  * - Auto-Bluetooth verbunden/getrennt → automatische Fahrt ([Ghosts]). ACL_CONNECTED/ACL_DISCONNECTED
  *   sind von der Sperre impliziter Broadcasts ausgenommen; ab Android 12 kommen sie nur mit der
  *   Berechtigung BLUETOOTH_CONNECT an.
  * - Erinnerungs-Alarm, Neustart, App-Update, Zeitumstellung → [Reminder].
+ * - Neustart → verwaiste Aufzeichnung abschließen; App-Update → laufende Aufzeichnung fortsetzen.
  */
 class SystemReceiver : BroadcastReceiver() {
 
@@ -45,6 +47,11 @@ class SystemReceiver : BroadcastReceiver() {
                     // Kanal des früheren Bluetooth-Dauerdienstes aus den System-Einstellungen entfernen
                     app.getSystemService(NotificationManager::class.java)?.deleteNotificationChannel("bt_tracking_channel")
                     Reminder.sync(app)
+                    // Android startet den Aufzeichnungsdienst nach einem Update nicht neu. Dieser Broadcast erlaubt den
+                    // Start aus dem Hintergrund; scheitert er trotzdem, fangen startManual/startGhost das ab.
+                    val active = app.dao.activeTrip()
+                    val ghost = app.dao.recordingGhost()
+                    if (active != null) TrackingService.startManual(app, active.id) else if (ghost != null) TrackingService.startGhost(app, ghost.id)
                 }
             }
         }

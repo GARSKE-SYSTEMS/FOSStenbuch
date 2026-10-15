@@ -5,7 +5,12 @@ import android.os.SystemClock
 import de.fosstenbuch.data.Trip
 import de.fosstenbuch.data.dao
 import de.fosstenbuch.logic.Geo
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import java.util.Date
 import kotlin.math.roundToInt
 
@@ -23,13 +28,19 @@ internal object Ghosts {
     private const val REOPEN_MS = 3 * 60_000L
     private const val UNKNOWN = "Unbekannt"
 
+    /** Für [end]: Das Abschließen soll den auslösenden Bildschirm bzw. Empfänger überdauern */
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
     /**
      * Zuletzt in diesem Prozess per Bluetooth begonnene oder fortgesetzte Aufzeichnung. Der Prozess ist
      * nach dem letzten Boot entstanden – diese Aufzeichnung ist also nicht verwaist (siehe [closeStale]).
      */
     @Volatile private var connectedId = 0L
 
-    /** Ein Bluetooth-Gerät hat sich verbunden */
+    /**
+     * Ein Bluetooth-Gerät hat sich verbunden: Für das zugehörige Fahrzeug eine automatische Fahrt beginnen,
+     * eine eben erst beendete fortsetzen (kurzer Abbruch) oder eine hier schon laufende weiterführen.
+     */
     suspend fun onConnected(context: Context, address: String) {
         val dao = context.dao
         val vehicle = dao.vehicleByBluetooth(address) ?: return
@@ -37,14 +48,18 @@ internal object Ghosts {
         if (dao.activeTrip() != null) return
         val recording = dao.recordingGhost()
         val now = System.currentTimeMillis()
-        val id = if (recording != null) {
-            // Es wird schon aufgezeichnet: nur bei demselben Fahrzeug weitermachen (dann wurde die
-            // Trennung verpasst oder die GPS-Aufzeichnung fehlt nach Prozess-Tod)
+        val id = if (recording != null && runsHere(recording.id)) {
+            // Läuft schon (in diesem Prozess begonnen oder vom Dienst aufgezeichnet), z.B. zweite Verbindung desselben
+            // Geräts per Bluetooth LE: nur bei demselben Fahrzeug weitermachen (unten ggf. GPS erneut starten)
             if (recording.vehicleId != vehicle.id) return
             recording.id
         } else {
+            // Eine offene Aufzeichnung, die hier nicht läuft, ist verwaist: Die Trennung wurde verpasst (z.B. nach
+            // "Beenden erzwingen"). Abschließen statt fortsetzen – sonst entstünde Tage später eine Fahrt mit
+            // altem Startdatum. Die Ortsnamen brauchen ggf. Netz, darauf wartet die neue Fahrt nicht.
+            if (recording != null) end(context, recording.id)
             val recent = dao.ghostTrips().first().firstOrNull {
-                it.vehicleId == vehicle.id && it.endTime != null && now - it.endTime.time < REOPEN_MS
+                it.id != recording?.id && it.vehicleId == vehicle.id && now - (it.endTime?.time ?: 0) < REOPEN_MS
             }
             if (recent != null) {
                 dao.updateTrip(recent.copy(endTime = null))
@@ -66,7 +81,20 @@ internal object Ghosts {
         // Nur das Auto-Bluetooth dieses Fahrzeugs beendet die Fahrt, nicht Kopfhörer, Uhr usw.
         val vehicle = ghost.vehicleId?.let { dao.vehicle(it) }
         if (!address.equals(vehicle?.bluetoothDeviceAddress, ignoreCase = true)) return
-        if (TrackingService.live.value?.tripId == ghost.id) TrackingService.stop(context) else finish(context, ghost.id)
+        end(context, ghost.id).join()
+    }
+
+    /**
+     * Beendet die automatische Aufzeichnung [id] von außen: Fahrzeug-Formular beim Wechseln oder Entfernen
+     * des Bluetooth-Geräts (die Trennung des alten Geräts beendet sie sonst nicht mehr) und "Aufzeichnung
+     * beenden" im Fahrtformular. Zeichnet der Dienst sie auf, wird er gestoppt und schließt sie ab, sonst [finish].
+     * Kehrt sofort zurück; das Abschließen läuft weiter, auch wenn der Bildschirm geschlossen wird.
+     */
+    fun end(context: Context, id: Long): Job {
+        val app = context.applicationContext
+        return scope.launch {
+            if (TrackingService.live.value?.tripId == id) TrackingService.stop(app) else finish(app, id)
+        }
     }
 
     /** Nach einem Neustart: Eine schon vorher begonnene Aufzeichnung ist verwaist, die Verbindung ist längst weg */
@@ -75,9 +103,11 @@ internal object Ghosts {
         val bootTime = System.currentTimeMillis() - SystemClock.elapsedRealtime()
         // Ausnahme: Das Auto hat sich nach dem Boot schon wieder verbunden und die Aufzeichnung fortgesetzt.
         // BOOT_COMPLETED läuft über eine eigene, langsame Warteschlange und kann nach ACL_CONNECTED kommen.
-        val resumed = ghost.id == connectedId || ghost.id == TrackingService.live.value?.tripId
-        if (ghost.date.time < bootTime && !resumed) finish(context, ghost.id)
+        if (ghost.date.time < bootTime && !runsHere(ghost.id)) finish(context, ghost.id)
     }
+
+    /** Läuft die Aufzeichnung [id] in diesem Prozess (hier per Bluetooth begonnen/fortgesetzt oder vom Dienst aufgezeichnet)? */
+    private fun runsHere(id: Long) = id == connectedId || id == TrackingService.live.value?.tripId
 
     /**
      * Schließt eine automatische Aufzeichnung ab: Ende = jetzt, End-Kilometerstand aus der GPS-Strecke
@@ -87,11 +117,12 @@ internal object Ghosts {
     suspend fun finish(context: Context, id: Long) {
         val dao = context.dao
         val ghost = dao.trip(id)?.takeIf { it.isGhost && it.endTime == null } ?: return
-        // Eine während der Aufzeichnung von Hand gestartete (oder nachgetragene) Fahrt desselben Fahrzeugs
-        // ist maßgeblich, der Ghost wäre ein Duplikat. Typisch: Das Auto-Bluetooth verbindet sich beim
-        // Motorstart, erst danach startet der Nutzer die Fahrt in der App. Geprüft wird hier, damit es für
-        // jede Reihenfolge gilt und auch ohne laufenden Dienst (z.B. ohne Standortberechtigung).
-        if (dao.allTrips().any { it.vehicleId == ghost.vehicleId && !it.isCancelled && it.date >= ghost.date }) {
+        // Eine echte Fahrt desselben Fahrzeugs, die sich mit der Aufzeichnung überschneidet (läuft noch oder
+        // endete erst nach deren Beginn), ist maßgeblich – der Ghost wäre ein Duplikat. Typisch: Das Auto-Bluetooth
+        // verbindet sich beim Motorstart, erst danach startet der Nutzer die Fahrt in der App; deren Abfahrtszeit
+        // kann dabei vor dem Ghost liegen (Formular schon vorher geöffnet). Geprüft wird hier, damit es für jede
+        // Reihenfolge gilt und auch ohne laufenden Dienst (z.B. ohne Standortberechtigung).
+        if (dao.allTrips().any { it.vehicleId == ghost.vehicleId && !it.isCancelled && (it.isActive || (it.endTime ?: it.date) >= ghost.date) }) {
             dao.deleteTrip(ghost)
             return
         }
