@@ -12,6 +12,7 @@ import de.fosstenbuch.data.db
 import de.fosstenbuch.logic.export.Export
 import de.fosstenbuch.logic.export.ExportData
 import de.fosstenbuch.logic.export.Options
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -81,8 +82,8 @@ class ExportViewModel(private val app: Application, private val state: SavedStat
         busy.value = true
         val o = options.value
         viewModelScope.launch {
-            result.value = runCatching {
-                withContext(Dispatchers.IO) {
+            result.value = try {
+                Result.success(withContext(Dispatchers.IO) {
                     // Die Vorversion legte Exporte direkt im Cache ab, wo sie über den FileProvider
                     // weiter teilbar blieben – diese Altdateien mit personenbezogenen Daten wegräumen
                     app.cacheDir.listFiles { f -> f.isFile && f.name.startsWith("fahrtenbuch_") && f.extension in LEGACY_EXT }
@@ -100,7 +101,11 @@ class ExportViewModel(private val app: Application, private val state: SavedStat
                     val data = ExportData(o, trips, purposes, dao.allVehicles(), logs, driver)
                     val file = Export.write(File(app.cacheDir, "exports"), data)
                     Done(file, o.format.mime, if (o.incremental && o.markExported) ids.toLongArray() else LongArray(0))
-                }
+                })
+            } catch (e: CancellationException) {
+                throw e // ViewModel wird verworfen – kein Fehler, den jemand anzeigen müsste
+            } catch (e: Exception) {
+                Result.failure(e)
             }
             busy.value = false
         }
@@ -123,6 +128,8 @@ class ExportViewModel(private val app: Application, private val state: SavedStat
                 try {
                     // In Blöcken, weil SQLite bis Android 11 max. 999 Parameter erlaubt
                     app.db.withTransaction { ids.asList().chunked(500).forEach { dao.markExported(it) } }
+                } catch (e: CancellationException) {
+                    throw e
                 } catch (e: Exception) {
                     state[KEY_MARK] = ids // Rückfrage erneut zeigen, so lässt sich das Markieren nachholen
                     result.value = Result.failure(IllegalStateException(app.getString(R.string.export_mark_failed), e))
