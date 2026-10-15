@@ -61,12 +61,13 @@ class ExportData(
     /** Änderungsprotokoll je Fahrt-ID; leer = ohne Protokoll */
     val auditLogs: Map<Long, List<TripAuditLog>> = emptyMap(),
     val driver: String = "",
-    /** Erstellungsdatum (Fußzeile, Unterschrift) */
-    val today: LocalDate = LocalDate.now()
+    /** Erstellungszeitpunkt (Dateiname, Fußzeile, Unterschrift) */
+    val created: Date = Date()
 ) {
     private val purposes = purposes.associateBy { it.id }
     private val vehicles = vehicles.associateBy { it.id }
 
+    /** Kategorie bzw. Fahrzeug einer Fahrt; null, wenn keins zugeordnet (oder inzwischen gelöscht) */
     fun purpose(t: Trip): TripPurpose? = t.purposeId?.let { purposes[it] }
     fun vehicle(t: Trip): Vehicle? = t.vehicleId?.let { vehicles[it] }
 
@@ -92,9 +93,12 @@ class Summary(trips: List<Trip>, isBusiness: (Trip) -> Boolean) {
     val cancelled = trips.size - count
 }
 
+/** Tagesbeginn in lokaler Zeit – Brücke von den LocalDate-Filtern zu [Fmt] und dem Datumsdialog */
+fun LocalDate.toDate(): Date = Date.from(atStartOfDay(ZoneId.systemDefault()).toInstant())
+
 /** Reine Export-Logik (Filter, Dateiname, CSV, Gruppierung) – ohne Android, daher per JUnit testbar */
 object Export {
-    private val DAY = DateTimeFormatter.ofPattern("dd.MM.yyyy")
+    // Fmt kennt keinen Monatsnamen, daher hier ein eigenes Format nur dafür
     private val MONTH = DateTimeFormatter.ofPattern("MMMM yyyy", Locale.GERMANY)
     private const val KEEP_MS = 24 * 60 * 60 * 1000L
 
@@ -105,10 +109,9 @@ object Export {
      * [purposeIds] = IDs aller vorhandenen Kategorien.
      */
     fun filter(trips: List<Trip>, o: Options, purposeIds: Collection<Long>): List<Trip> {
-        val zone = ZoneId.systemDefault()
-        val start = o.from.atStartOfDay(zone).toInstant().toEpochMilli()
+        val start = o.from.toDate().time
         // Ende exklusiv = Beginn des Folgetags, so zählt auch 23:59:59.999 noch mit
-        val end = o.to.plusDays(1).atStartOfDay(zone).toInstant().toEpochMilli()
+        val end = o.to.plusDays(1).toDate().time
         // Nichts abgewählt: alle Fahrten, auch ohne Kategorie. Sonst nur die gewählten Kategorien –
         // alles abgewählt ergibt also bewusst keine Fahrten (nicht stillschweigend alle).
         val allPurposes = purposeIds.none { it in o.excludedPurposes }
@@ -124,12 +127,12 @@ object Export {
      * Schreibt die Exportdatei nach [dir] und räumt dabei alte Exporte auf.
      * Blockiert (Dateizugriff, PDF-Rendering) – nur im Hintergrund aufrufen.
      */
-    fun write(dir: File, d: ExportData, now: Date = Date()): File {
+    fun write(dir: File, d: ExportData): File {
         dir.mkdirs()
         // Exporte enthalten personenbezogene Daten, daher nach einem Tag löschen. Nicht sofort alle:
         // Eine Ziel-App (z.B. ein Mail-Entwurf) liest eine geteilte Datei evtl. erst später.
-        dir.listFiles()?.forEach { if (now.time - it.lastModified() > KEEP_MS) it.delete() }
-        val file = File(dir, fileName(d.options, now))
+        dir.listFiles()?.forEach { if (d.created.time - it.lastModified() > KEEP_MS) it.delete() }
+        val file = File(dir, fileName(d.options, d.created))
         try {
             file.outputStream().use { out ->
                 if (d.options.format == Format.CSV) out.write(csv(d).toByteArray()) else writePdf(d, out)
@@ -144,6 +147,7 @@ object Export {
     /** Dateiname mit Zeitstempel: Ein neuer Export überschreibt nie eine Datei, die gerade geteilt wird */
     fun fileName(o: Options, now: Date): String {
         val kind = if (o.format == Format.FINANZAMT_PDF) "fahrtenbuch_finanzamt" else "fahrtenbuch"
+        // Sortierbar und ohne Doppelpunkt (in Dateinamen z.B. unter Windows unzulässig), daher nicht Fmt
         val stamp = SimpleDateFormat("yyyyMMdd-HHmmss", Locale.ROOT).format(now)
         return "${kind}_${o.from}_${o.to}_$stamp.${o.format.ext}"
     }
@@ -174,6 +178,7 @@ object Export {
             val v = d.vehicle(t)
             row(
                 Fmt.dateTime(t.date), t.endTime?.let(Fmt::dateTime), t.startLocation, t.endLocation,
+                // Reine Zahl ohne Einheit/Tausenderpunkt (nicht Fmt.km), damit Excel damit rechnen kann
                 String.format(Locale.GERMANY, "%.2f", t.distanceKm), t.purpose, d.purpose(t)?.name,
                 if (d.isBusiness(t)) "Ja" else "Nein", t.businessPartner, t.route, v?.let { "${it.make} ${it.model}" },
                 v?.licensePlate, t.startOdometer, t.endOdometer, t.notes, if (t.isCancelled) "STORNIERT" else null,
@@ -205,9 +210,8 @@ object Export {
     /** z.B. "Januar 2024" */
     fun monthName(ym: YearMonth): String = ym.format(MONTH)
 
-    fun day(d: LocalDate): String = d.format(DAY)
-
-    fun range(o: Options) = "${day(o.from)} – ${day(o.to)}"
+    /** Zeitraum für die PDF-Köpfe, z.B. "01.01.2024 – 31.12.2024" */
+    fun range(o: Options) = "${Fmt.date(o.from.toDate())} – ${Fmt.date(o.to.toDate())}"
 
     /** Eindeutige Bezeichnung einer Fahrt (für das Änderungsprotokoll), z.B. "05.02.2024 08:15 Berlin → Hamburg" */
     fun tripLabel(t: Trip) = "${Fmt.dateTime(t.date)} ${t.startLocation} → ${t.endLocation}"

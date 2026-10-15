@@ -21,6 +21,7 @@ private const val BOTTOM = H - 40f     // darunter steht nur noch die Fußzeile
 private const val TEXT_W = W - 2 * M
 private const val PAD = 2.5f           // Innenabstand der Tabellenzellen
 
+/** Schrift für das PDF (feste Farben: Papier ist immer weiß, unabhängig vom Dunkelmodus) */
 private fun paint(size: Float, color: Int = Color.BLACK, style: Int = Typeface.NORMAL) =
     Paint(Paint.ANTI_ALIAS_FLAG).apply {
         textSize = size
@@ -52,7 +53,7 @@ internal fun writePdf(d: ExportData, out: OutputStream) {
     val finanzamt = d.options.format == Format.FINANZAMT_PDF
     val w = PdfWriter(
         footer = if (finanzamt) "FOSStenbuch — Fahrtenbuch gem. § 6 Abs. 1 Nr. 4 EStG" else "FOSStenbuch",
-        created = "Erstellt: ${Export.day(d.today)}",
+        created = "Erstellt: ${Fmt.date(d.created)}",
         headerColor = if (finanzamt) Color.rgb(0x37, 0x47, 0x4F) else Color.rgb(0x62, 0x00, 0xEE)
     )
     try {
@@ -99,7 +100,7 @@ private fun standard(w: PdfWriter, d: ExportData) {
     if (d.driver.isNotEmpty()) {
         w.y += 8f
         w.text(d.driver)
-        w.text(Export.day(d.today), small)
+        w.text(Fmt.date(d.created), small)
     }
 }
 
@@ -286,6 +287,7 @@ private class PdfWriter(private val footer: String, private val created: String,
         if (page == null || y + height > BOTTOM) newPage()
     }
 
+    /** Schließt die aktuelle Seite ab und beginnt eine neue (mit wiederholtem Tabellenkopf) */
     fun newPage() {
         finishPage()
         page = doc.startPage(PdfDocument.PageInfo.Builder(W, H, ++pageNo).create())
@@ -293,6 +295,7 @@ private class PdfWriter(private val footer: String, private val created: String,
         onNewPage?.invoke()
     }
 
+    /** Fußzeile (Programm, Erstellungsdatum, Seitenzahl) zeichnen und Seite abschließen */
     private fun finishPage() {
         val p = page ?: return
         val baseline = H - 14f
@@ -350,6 +353,7 @@ private class PdfWriter(private val footer: String, private val created: String,
         onNewPage = null
     }
 
+    /** Letzte Seite abschließen und das Dokument nach [out] schreiben */
     fun finish(out: OutputStream) {
         finishPage()
         doc.writeTo(out)

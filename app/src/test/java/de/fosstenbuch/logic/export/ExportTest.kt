@@ -160,7 +160,8 @@ class ExportTest {
     }
 
     @Test
-    fun `Dateiname enthält Zeitraum und Zeitstempel`() {
+    fun `Dateiname enthält Zeitraum und Zeitstempel, Anzeige des Zeitraums deutsch`() {
+        assertEquals("01.01.2024 – 31.12.2024", Export.range(year2024))
         val now = at(2026, 10, 15, 14, 30, 5)
         assertEquals("fahrtenbuch_2024-01-01_2024-12-31_20261015-143005.csv", Export.fileName(year2024, now))
         assertEquals(

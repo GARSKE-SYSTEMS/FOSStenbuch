@@ -2,11 +2,9 @@ package de.fosstenbuch.ui.export
 
 import android.app.Dialog
 import android.content.res.ColorStateList
-import android.graphics.Color
 import android.os.Bundle
 import android.view.View
 import android.widget.CompoundButton
-import androidx.core.graphics.toColorInt
 import androidx.core.view.isVisible
 import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
@@ -15,11 +13,12 @@ import com.google.android.material.chip.Chip
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import de.fosstenbuch.R
 import de.fosstenbuch.databinding.FragmentExportBinding
-import de.fosstenbuch.logic.export.Export
+import de.fosstenbuch.logic.Fmt
 import de.fosstenbuch.logic.export.Format
-import de.fosstenbuch.logic.export.Options
+import de.fosstenbuch.logic.export.toDate
 import de.fosstenbuch.ui.common.collect
 import de.fosstenbuch.ui.common.confirm
+import de.fosstenbuch.ui.common.hexColor
 import de.fosstenbuch.ui.common.pickDate
 import de.fosstenbuch.ui.common.setDropdown
 import de.fosstenbuch.ui.common.shareFile
@@ -46,22 +45,15 @@ class ExportFragment : Fragment(R.layout.fragment_export) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val b = FragmentExportBinding.bind(view)
         val initial = vm.options.value
-        // Erst die Werte aus dem ViewModel setzen, dann die Listener – sonst schreiben die Listener
-        // beim Befüllen alte Werte zurück. Stellt Android danach eigene Zustände wieder her (Drehen),
-        // melden die Listener genau diese ans ViewModel.
+        // Format und Firma erst aus dem ViewModel setzen, dann die Listener – sonst meldeten diese den
+        // Startwert als Nutzeränderung. Stellt Android danach eigene Zustände wieder her (Drehen),
+        // sind das dieselben Werte wie im ViewModel.
         val radios = listOf(b.radioCsv, b.radioPdf, b.radioFinanzamt)
         radios[initial.format.ordinal].isChecked = true
         b.radioFormat.setOnCheckedChangeListener { _, id ->
             val format = Format.entries[radios.indexOfFirst { it.id == id }]
             vm.options.update { it.copy(format = format) }
         }
-        fun bind(switch: CompoundButton, value: Boolean, change: Options.(Boolean) -> Options) {
-            switch.isChecked = value
-            switch.setOnCheckedChangeListener { _, checked -> vm.options.update { it.change(checked) } }
-        }
-        bind(b.switchAudit, initial.withAudit) { copy(includeAudit = it) }
-        bind(b.switchOnlyNew, initial.onlyNew) { copy(onlyNew = it) }
-        bind(b.switchMark, initial.markExported) { copy(markExported = it) }
         b.editCompany.setText(initial.company)
         b.editCompany.doAfterTextChanged { text -> vm.options.update { it.copy(company = text.toString().trim()) } }
 
@@ -85,14 +77,17 @@ class ExportFragment : Fragment(R.layout.fragment_export) {
         }
 
         collect(vm.options) { o ->
-            b.editFrom.setText(Export.day(o.from))
-            b.editTo.setText(Export.day(o.to))
+            b.editFrom.setText(Fmt.date(o.from.toDate()))
+            b.editTo.setText(Fmt.date(o.to.toDate()))
             val finanzamt = o.format == Format.FINANZAMT_PDF
             b.textFinanzamtHint.isVisible = finanzamt
             b.layoutCompany.isVisible = finanzamt
-            // Das Finanzamt-PDF enthält das Änderungsprotokoll immer
+            // Das Finanzamt-PDF enthält das Änderungsprotokoll immer: Der Schalter zeigt dann "an",
+            // die eigene Wahl (includeAudit) für CSV/PDF bleibt unverändert erhalten
             b.switchAudit.isEnabled = !finanzamt
-            b.switchAudit.isChecked = o.withAudit
+            b.switchAudit.show(o.withAudit) { c -> vm.options.update { it.copy(includeAudit = c) } }
+            b.switchOnlyNew.show(o.onlyNew) { c -> vm.options.update { it.copy(onlyNew = c) } }
+            b.switchMark.show(o.markExported) { c -> vm.options.update { it.copy(markExported = c) } }
             b.groupTracking.isVisible = o.incremental
             b.textPdfHint.isVisible = !o.incremental
         }
@@ -110,10 +105,8 @@ class ExportFragment : Fragment(R.layout.fragment_export) {
             for (p in purposes) {
                 val chip = layoutInflater.inflate(R.layout.item_export_purpose, b.chipsPurposes, false) as Chip
                 chip.text = getString(if (p.isBusinessRelevant) R.string.export_purpose_business else R.string.export_purpose_private, p.name)
-                chip.chipStrokeColor = ColorStateList.valueOf(runCatching { p.color.toColorInt() }.getOrDefault(Color.GRAY))
-                // Zustand vor dem Listener setzen, sonst meldet der Listener ihn als Nutzeränderung
-                chip.isChecked = p.id !in vm.options.value.excludedPurposes
-                chip.setOnCheckedChangeListener { _, checked ->
+                hexColor(p.color)?.let { chip.chipStrokeColor = ColorStateList.valueOf(it) }
+                chip.show(p.id !in vm.options.value.excludedPurposes) { checked ->
                     vm.options.update { it.copy(excludedPurposes = if (checked) it.excludedPurposes - p.id else it.excludedPurposes + p.id) }
                 }
                 b.chipsPurposes.addView(chip)
@@ -146,7 +139,7 @@ class ExportFragment : Fragment(R.layout.fragment_export) {
                 // Der Teilen-Dialog meldet nicht, ob die Datei wirklich gespeichert oder versendet wurde.
                 // Würde sofort markiert, fehlten die Fahrten nach einem Abbruch in jedem "Nur neue"-Export.
                 if (done.markIds.isNotEmpty()) vm.askMark(done.markIds)
-            }.onFailure { toast(getString(R.string.export_error, it.message)) }
+            }.onFailure { toast(getString(R.string.export_error, it.message.orEmpty())) }
         }
 
         // Die Rückfrage hängt am Zustand im ViewModel, nicht am Dialog: Wird die Activity neu erzeugt,
@@ -171,7 +164,16 @@ class ExportFragment : Fragment(R.layout.fragment_export) {
         super.onDestroyView()
     }
 
-    private fun LocalDate.toDate(): Date = Date.from(atStartOfDay(ZoneId.systemDefault()).toInstant())
+    /**
+     * Zeigt [checked] an, ohne dass das als Nutzeränderung zählt: Der Listener wird erst danach
+     * gesetzt und meldet nur echte Änderungen über [onUser]. (Ein OnClickListener genügte nicht –
+     * Ziehen des Schalters löst keinen Klick aus.)
+     */
+    private fun CompoundButton.show(checked: Boolean, onUser: (Boolean) -> Unit) {
+        setOnCheckedChangeListener(null)
+        isChecked = checked
+        setOnCheckedChangeListener { _, c -> onUser(c) }
+    }
 
     private fun Date.toLocalDate(): LocalDate = toInstant().atZone(ZoneId.systemDefault()).toLocalDate()
 }
