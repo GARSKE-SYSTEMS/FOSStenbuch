@@ -5,6 +5,7 @@ import android.os.SystemClock
 import de.fosstenbuch.data.Trip
 import de.fosstenbuch.data.dao
 import de.fosstenbuch.logic.Geo
+import de.fosstenbuch.logic.Trips
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -12,7 +13,6 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.util.Date
-import kotlin.math.roundToInt
 
 /**
  * Automatische Fahrterkennung: Verbindet sich das Handy mit dem Auto-Bluetooth eines Fahrzeugs,
@@ -155,7 +155,7 @@ internal object Ghosts {
         }
         val ended = ghost.copy(
             endTime = Date(),
-            endOdometer = endOdometer(ghost.startOdometer, ghost.gpsDistanceKm),
+            endOdometer = Trips.estimatedEndOdometer(ghost.startOdometer, ghost.gpsDistanceKm) ?: ghost.startOdometer,
             startLocation = UNKNOWN,
             endLocation = UNKNOWN
         )
@@ -175,7 +175,4 @@ internal object Ghosts {
     private suspend fun placeName(context: Context, lat: Double?, lng: Double?): String =
         if (lat != null && lng != null) Geo.placeName(context, lat, lng) else UNKNOWN
 
-    /** Geschätzter End-Kilometerstand: Start + gerundete GPS-Strecke; ohne GPS-Strecke = Start */
-    fun endOdometer(startOdometer: Int?, gpsKm: Double?): Int? =
-        if (startOdometer != null && gpsKm != null && gpsKm > 0) startOdometer + gpsKm.roundToInt() else startOdometer
 }

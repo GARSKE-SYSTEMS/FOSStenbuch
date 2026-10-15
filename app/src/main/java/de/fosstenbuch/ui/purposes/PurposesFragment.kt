@@ -50,8 +50,7 @@ class PurposesFragment : Fragment(R.layout.fragment_masterdata_list) {
         deleteUnused(
             R.string.delete_purpose_title, R.string.delete_purpose_message, R.plurals.masterdata_purpose_in_use,
             count = { tripCountForPurpose(p.id) },
-            unlink = { t -> t.copy(purposeId = null).takeIf { t.purposeId == p.id } },
-            delete = { deletePurpose(p) }
+            delete = { detachTemplatesFromPurpose(p.id); deletePurpose(p) }
         ) { ctx ->
             // Auch die Vorauswahl für neue Fahrten darf nicht auf eine gelöschte Kategorie zeigen
             if (Settings.get(ctx, Settings.DEFAULT_PURPOSE_ID, 0L) == p.id) Settings.set(ctx, Settings.DEFAULT_PURPOSE_ID, null)

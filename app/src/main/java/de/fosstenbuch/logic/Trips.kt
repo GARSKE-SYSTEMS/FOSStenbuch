@@ -10,6 +10,7 @@ import de.fosstenbuch.data.db
 import de.fosstenbuch.tracking.TrackingService
 import java.security.MessageDigest
 import java.util.Date
+import kotlin.math.roundToInt
 
 /**
  * Alle Schreibzugriffe auf Fahrten mit ihren Geschäftsregeln:
@@ -158,6 +159,10 @@ object Trips {
         // Lief für diese Fahrt noch die GPS-Aufzeichnung, wird sie beendet
         if (TrackingService.live.value?.tripId == trip.id) TrackingService.stop(context)
     }
+
+    /** Geschätzter End-Kilometerstand aus Start + gerundeter GPS-Strecke; null ohne Start oder GPS-Strecke */
+    fun estimatedEndOdometer(startOdometer: Int?, gpsKm: Double?): Int? =
+        if (startOdometer != null && gpsKm != null && gpsKm > 0) startOdometer + gpsKm.roundToInt() else null
 
     /** Distanz laut Kilometerstand, null wenn ein Stand fehlt */
     fun odometerDistance(t: Trip): Double? {

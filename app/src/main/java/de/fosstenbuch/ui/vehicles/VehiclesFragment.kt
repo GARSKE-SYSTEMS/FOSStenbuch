@@ -10,7 +10,6 @@ import androidx.fragment.app.Fragment
 import androidx.room.withTransaction
 import de.fosstenbuch.R
 import de.fosstenbuch.data.AppDao
-import de.fosstenbuch.data.TripTemplate
 import de.fosstenbuch.data.Vehicle
 import de.fosstenbuch.data.dao
 import de.fosstenbuch.data.db
@@ -62,8 +61,7 @@ class VehiclesFragment : Fragment(R.layout.fragment_masterdata_list) {
                 deleteUnused(
                     R.string.delete_vehicle_title, R.string.delete_vehicle_message, R.plurals.masterdata_vehicle_in_use,
                     count = { tripCountForVehicle(v.id) },
-                    unlink = { t -> t.copy(vehicleId = null).takeIf { t.vehicleId == v.id } },
-                    delete = { deleteVehicle(v) }
+                    delete = { detachTemplatesFromVehicle(v.id); deleteVehicle(v) }
                 )
             }
         }
@@ -76,15 +74,13 @@ class VehiclesFragment : Fragment(R.layout.fragment_masterdata_list) {
  * Fremdschlüssel ihre Zuordnung; dann nennt [inUse] (Plural) die Anzahl. Zählen und Löschen laufen in
  * einer Transaktion, damit dazwischen keine Fahrt entstehen kann.
  *
- * Vorlagen haben keinen Fremdschlüssel: [unlink] liefert eine betroffene Vorlage ohne den Verweis
- * (sonst null), sonst scheiterte später das Speichern einer Fahrt aus der Vorlage.
+ * [delete] löst auch die Verweise der Vorlagen (diese haben keinen Fremdschlüssel).
  */
 internal fun Fragment.deleteUnused(
     @StringRes title: Int,
     @StringRes message: Int,
     @PluralsRes inUse: Int,
     count: suspend AppDao.() -> Int,
-    unlink: (TripTemplate) -> TripTemplate?,
     delete: suspend AppDao.() -> Unit,
     onDeleted: suspend (Context) -> Unit = {}
 ) = confirm(getString(title), getString(message), getString(R.string.delete)) {
@@ -93,10 +89,7 @@ internal fun Fragment.deleteUnused(
         val dao = ctx.dao
         val trips = ctx.db.withTransaction {
             dao.count().also { n ->
-                if (n == 0) {
-                    dao.allTemplates().mapNotNull(unlink).forEach { dao.saveTemplate(it) }
-                    dao.delete()
-                }
+                if (n == 0) dao.delete()
             }
         }
         if (trips > 0) toast(resources.getQuantityString(inUse, trips, trips)) else onDeleted(ctx)

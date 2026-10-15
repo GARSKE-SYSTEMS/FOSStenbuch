@@ -109,8 +109,7 @@ class TripsFragment : Fragment(R.layout.fragment_trips) {
                 R.string.ghost_recording_banner_device, vehicle?.bluetoothDeviceName ?: vehicle?.label.orEmpty()
             )
             val km = live?.takeIf { it.tripId == ghost.id }?.km ?: ghost.gpsDistanceKm ?: 0.0
-            val minutes = ((System.currentTimeMillis() - ghost.date.time) / 60_000).coerceAtLeast(0)
-            b.textRecordingDistance.text = getString(R.string.trips_recording_progress, Fmt.km(km), minutes)
+            b.textRecordingDistance.text = TrackingService.status(requireContext(), km, ghost.date)
             // Das Formular bietet "Aufzeichnung beenden" an, z.B. wenn die Bluetooth-Trennung verpasst wurde
             b.cardRecording.setOnClickListener { navigate(R.id.navigation_trip_edit, ARG_ID to ghost.id) }
         }

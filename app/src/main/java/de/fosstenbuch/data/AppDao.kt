@@ -198,6 +198,14 @@ interface AppDao {
     @Upsert
     suspend fun saveTemplate(template: TripTemplate): Long
 
+    // Vorlagen haben keinen Fremdschlüssel: Verweise vor dem Löschen von Fahrzeug/Kategorie lösen,
+    // sonst scheitert später das Speichern einer Fahrt aus der Vorlage
+    @Query("UPDATE trip_templates SET vehicleId = NULL WHERE vehicleId = :vehicleId")
+    suspend fun detachTemplatesFromVehicle(vehicleId: Long)
+
+    @Query("UPDATE trip_templates SET purposeId = NULL WHERE purposeId = :purposeId")
+    suspend fun detachTemplatesFromPurpose(purposeId: Long)
+
     @Delete
     suspend fun deleteTemplate(template: TripTemplate)
 

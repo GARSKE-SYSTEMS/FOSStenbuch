@@ -30,6 +30,7 @@ import de.fosstenbuch.databinding.ItemTemplateBinding
 import de.fosstenbuch.logic.Fmt
 import de.fosstenbuch.logic.Geo
 import de.fosstenbuch.logic.Trips
+import de.fosstenbuch.tracking.Ghosts
 import de.fosstenbuch.tracking.TrackingService
 import de.fosstenbuch.ui.common.SimpleAdapter
 import de.fosstenbuch.ui.common.argId
@@ -47,7 +48,6 @@ import de.fosstenbuch.ui.common.toast
 import de.fosstenbuch.ui.locations.LocationEditFragment
 import kotlinx.coroutines.Job
 import java.util.Date
-import kotlin.math.roundToInt
 
 /**
  * Formular für eine Fahrt. Was es anbietet, ergibt sich allein aus der geladenen Fahrt ([Mode]):
@@ -349,9 +349,9 @@ class TripEditFragment : Fragment(R.layout.fragment_trip_edit) {
      * Der TrackingService schließt die Fahrt danach ab, sie erscheint dann unter den automatischen Fahrten.
      * Ohne laufendes GPS beendet sie erst die Bluetooth-Trennung; Ghosts.end übernimmt künftig beide Fälle.
      */
+    /** Beendet die noch laufende automatische Aufzeichnung (z.B. wenn die Bluetooth-Trennung verpasst wurde) */
     private fun endRecording() {
-        if (TrackingService.live.value?.tripId != argId) return toast(R.string.trips_recording_not_running)
-        TrackingService.stop(requireContext())
+        Ghosts.end(requireContext(), argId)
         close()
     }
 
@@ -430,7 +430,7 @@ class TripEditFragment : Fragment(R.layout.fragment_trip_edit) {
 
     /** Trägt Start + Strecke (GPS oder Vorlage) als End-Km ein, solange der Nutzer das Feld nicht geändert hat; true = eingetragen */
     private fun suggestEndKm(km: Double?): Boolean {
-        val end = endKmSuggestion(b.editStartKm.intOrNull(), km)?.toString() ?: return false
+        val end = Trips.estimatedEndOdometer(b.editStartKm.intOrNull(), km)?.toString() ?: return false
         if (!isReplaceable(b.editEndKm.text.toString(), suggestedEndKm)) return false
         b.editEndKm.setText(end)
         suggestedEndKm = end
@@ -583,9 +583,6 @@ private class PlaceAdapter(
 /** Ein Km-Vorschlag darf ersetzt werden, solange der Nutzer das Feld nicht selbst geändert hat */
 internal fun isReplaceable(current: String, lastSuggestion: String?) = current.isBlank() || current == lastSuggestion
 
-/** End-Km-Vorschlag = Start + gerundete Strecke; null ohne Start oder ohne Strecke */
-internal fun endKmSuggestion(startKm: Int?, km: Double?): Int? =
-    if (startKm != null && km != null && km > 0) startKm + km.roundToInt() else null
 
 /**
  * Kategorie-Text der Fahrt: Bei unveränderter Kategorie bleibt der gespeicherte Text (alter

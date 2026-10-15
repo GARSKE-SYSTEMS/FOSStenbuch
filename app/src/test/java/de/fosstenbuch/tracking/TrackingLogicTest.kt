@@ -3,7 +3,6 @@ package de.fosstenbuch.tracking
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -62,14 +61,6 @@ class TrackingLogicTest {
 
     // ── Automatische Fahrten ─────────────────────────────────────────────────
 
-    @Test
-    fun `End-Kilometerstand aus GPS-Strecke`() {
-        assertEquals(1012, Ghosts.endOdometer(1000, 12.4))
-        assertEquals(1013, Ghosts.endOdometer(1000, 12.5))
-        assertEquals(1000, Ghosts.endOdometer(1000, 0.0))
-        assertEquals(1000, Ghosts.endOdometer(1000, null))
-        assertNull(Ghosts.endOdometer(null, 12.0))
-    }
 
     // ── Erinnerung ───────────────────────────────────────────────────────────
 

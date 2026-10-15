@@ -3,6 +3,7 @@ package de.fosstenbuch.ui.trips
 import de.fosstenbuch.data.Trip
 import de.fosstenbuch.data.TripPurpose
 import de.fosstenbuch.ui.trips.TripEditFragment.Mode
+import de.fosstenbuch.logic.Trips
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -61,10 +62,10 @@ class TripsUiLogicTest {
 
     @Test
     fun `End-Km-Vorschlag aus Start und gerundeter Strecke`() {
-        assertEquals(1013, endKmSuggestion(1000, 12.6))
-        assertNull(endKmSuggestion(null, 12.6))
-        assertNull(endKmSuggestion(1000, 0.0))
-        assertNull(endKmSuggestion(1000, null))
+        assertEquals(1013, Trips.estimatedEndOdometer(1000, 12.6))
+        assertNull(Trips.estimatedEndOdometer(null, 12.6))
+        assertNull(Trips.estimatedEndOdometer(1000, 0.0))
+        assertNull(Trips.estimatedEndOdometer(1000, null))
     }
 
     @Test
