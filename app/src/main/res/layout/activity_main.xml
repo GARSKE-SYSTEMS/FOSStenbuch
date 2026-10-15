@@ -5,8 +5,7 @@
     android:id="@+id/drawer_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fitsSystemWindows="true"
-    app:statusBarBackground="@color/status_bar">
+    android:fitsSystemWindows="true">
 
     <!-- fitsSystemWindows: Ab Android 15 wird randlos gezeichnet; so bleiben Status- und Navigationsleiste frei -->
     <LinearLayout
@@ -30,12 +29,13 @@
             app:navGraph="@navigation/nav_graph" />
     </LinearLayout>
 
+    <!-- fitsSystemWindows=false: Das DrawerLayout setzt das Menü dann unter die Statusleiste (sonst liegt der Kopf dahinter) -->
     <com.google.android.material.navigation.NavigationView
         android:id="@+id/nav_view"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
         android:layout_gravity="start"
-        android:fitsSystemWindows="true"
+        android:fitsSystemWindows="false"
         app:headerLayout="@layout/nav_header"
         app:menu="@menu/drawer_menu" />
 

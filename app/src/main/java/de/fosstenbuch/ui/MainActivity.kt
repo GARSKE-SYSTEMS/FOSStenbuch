@@ -30,6 +30,9 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         setSupportActionBar(binding.toolbar)
+        // Dunkler Hintergrund hinter der Statusleiste (sonst nähme das DrawerLayout colorPrimary,
+        // im Dunkelmodus hellviolett – die weißen Symbole wären unlesbar)
+        binding.drawerLayout.setStatusBarBackgroundColor(getColor(R.color.status_bar))
 
         // Hauptbildschirme zeigen das Menü-Symbol statt des Zurück-Pfeils
         appBarConfig = AppBarConfiguration(

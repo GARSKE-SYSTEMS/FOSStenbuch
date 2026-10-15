@@ -49,7 +49,6 @@ internal object Ghosts {
         // Keine Doppelerfassung neben einer manuell gestarteten Fahrt
         if (dao.activeTrip() != null) return
         val recording = dao.recordingGhost()
-        val now = System.currentTimeMillis()
         val id = if (recording != null && runsHere(recording.id)) {
             // Läuft schon (in diesem Prozess begonnen oder vom Dienst aufgezeichnet), z.B. zweite Verbindung desselben
             // Geräts per Bluetooth LE: nur bei demselben Fahrzeug weitermachen (unten ggf. GPS erneut starten)
@@ -66,6 +65,9 @@ internal object Ghosts {
                 val app = context.applicationContext
                 close(app, recording.id)?.let { scope.launch { addPlaceNames(app, it) } }
             }
+            // Erst NACH dem Abschließen: Die neue Fahrt muss später beginnen als die Waise endet,
+            // sonst hielte close() sie später für ein Duplikat der (ggf. übernommenen) Waise
+            val now = System.currentTimeMillis()
             val recent = dao.ghostTrips().first().firstOrNull {
                 it.id != recording?.id && it.vehicleId == vehicle.id && now - (it.endTime?.time ?: 0) < REOPEN_MS
             }
@@ -121,7 +123,7 @@ internal object Ghosts {
     suspend fun closeStale(context: Context) {
         val ghost = context.dao.recordingGhost() ?: return
         val bootTime = System.currentTimeMillis() - SystemClock.elapsedRealtime()
-        // Ausnahme: Das Auto hat sich nach dem Boot schon wieder verbunden und die Aufzeichnung fortgesetzt.
+        // Ausnahme: Das Auto hat sich nach dem Boot schon wieder verbunden und eine neue Aufzeichnung begonnen.
         // BOOT_COMPLETED läuft über eine eigene, langsame Warteschlange und kann nach ACL_CONNECTED kommen.
         if (ghost.date.time < bootTime && !runsHere(ghost.id)) finish(context, ghost.id)
     }
@@ -149,7 +151,7 @@ internal object Ghosts {
         // verbindet sich beim Motorstart, erst danach startet der Nutzer die Fahrt in der App; deren Abfahrtszeit
         // kann dabei vor dem Ghost liegen (Formular schon vorher geöffnet). Geprüft wird hier, damit es für jede
         // Reihenfolge gilt und auch ohne laufenden Dienst (z.B. ohne Standortberechtigung).
-        if (dao.allTrips().any { it.vehicleId == ghost.vehicleId && !it.isCancelled && (it.isActive || (it.endTime ?: it.date) >= ghost.date) }) {
+        if (dao.allTrips().any { it.vehicleId == ghost.vehicleId && !it.isCancelled && (it.isActive || it.date >= ghost.date || it.endTime?.after(ghost.date) == true) }) {
             dao.deleteTrip(ghost)
             return null
         }

@@ -41,6 +41,7 @@
     <!-- Löschen -->
     <string name="delete">Löschen</string>
     <string name="cancel">Abbrechen</string>
+    <string name="ok">OK</string>
     <string name="delete_trip_title">Fahrt löschen?</string>
     <string name="delete_trip_message">Möchten Sie diese Fahrt wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.</string>
 

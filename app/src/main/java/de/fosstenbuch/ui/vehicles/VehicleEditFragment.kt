@@ -25,6 +25,7 @@ import de.fosstenbuch.databinding.FragmentVehicleEditBinding
 import de.fosstenbuch.logic.Geo
 import de.fosstenbuch.logic.Trips
 import de.fosstenbuch.tracking.Ghosts
+import de.fosstenbuch.ui.common.clearErrorsOnEdit
 import de.fosstenbuch.ui.common.argId
 import de.fosstenbuch.ui.common.choose
 import de.fosstenbuch.ui.common.close
@@ -89,6 +90,7 @@ class VehicleEditFragment : Fragment(R.layout.fragment_vehicle_edit) {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val b = FragmentVehicleEditBinding.bind(view).also { _b = it }
+        view.clearErrorsOnEdit()
         b.fuel.setDropdown(resources.getStringArray(R.array.fuel_types).toList()) {}
 
         // Klick- statt Checked-Listener: feuert nur bei echter Nutzeraktion, nicht beim Befüllen

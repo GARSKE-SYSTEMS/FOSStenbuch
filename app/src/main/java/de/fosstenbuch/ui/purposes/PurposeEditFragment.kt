@@ -10,6 +10,7 @@ import de.fosstenbuch.R
 import de.fosstenbuch.data.TripPurpose
 import de.fosstenbuch.data.dao
 import de.fosstenbuch.databinding.FragmentPurposeEditBinding
+import de.fosstenbuch.ui.common.clearErrorsOnEdit
 import de.fosstenbuch.ui.common.argId
 import de.fosstenbuch.ui.common.close
 import de.fosstenbuch.ui.common.hexColor
@@ -41,6 +42,7 @@ class PurposeEditFragment : Fragment(R.layout.fragment_purpose_edit) {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val b = FragmentPurposeEditBinding.bind(view)
+        view.clearErrorsOnEdit()
         // Die Vorschau folgt der Eingabe; das feuert auch beim Befüllen und beim Wiederherstellen
         b.color.doAfterTextChanged { text ->
             val color = hexColor(text?.toString())

@@ -14,6 +14,7 @@ import de.fosstenbuch.data.dao
 import de.fosstenbuch.databinding.DialogMasterdataSearchBinding
 import de.fosstenbuch.databinding.FragmentLocationEditBinding
 import de.fosstenbuch.logic.Geo
+import de.fosstenbuch.ui.common.clearErrorsOnEdit
 import de.fosstenbuch.ui.common.argId
 import de.fosstenbuch.ui.common.choose
 import de.fosstenbuch.ui.common.close
@@ -66,6 +67,7 @@ class LocationEditFragment : Fragment(R.layout.fragment_location_edit) {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val b = FragmentLocationEditBinding.bind(view).also { _b = it }
+        view.clearErrorsOnEdit()
         b.locate.setOnClickListener {
             if (Geo.hasPermission(requireContext())) locate() else locationPermission.launch(Geo.PERMISSIONS)
         }

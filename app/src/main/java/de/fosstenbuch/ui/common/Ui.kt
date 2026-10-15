@@ -1,13 +1,16 @@
 package de.fosstenbuch.ui.common
 
+import android.app.AlertDialog
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
 import android.content.Context
+import android.content.DialogInterface
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.SystemClock
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
@@ -18,6 +21,7 @@ import androidx.annotation.StringRes
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.core.os.bundleOf
+import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -187,8 +191,8 @@ fun Fragment.pickDateTime(initial: Date, onPicked: (Date) -> Unit) {
             cal.set(y, m, d, h, min, 0)
             cal.set(Calendar.MILLISECOND, 0)
             onPicked(cal.time)
-        }, cal.get(Calendar.HOUR_OF_DAY), cal.get(Calendar.MINUTE), true).show()
-    }, cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH)).show()
+        }, cal.get(Calendar.HOUR_OF_DAY), cal.get(Calendar.MINUTE), true).germanButtons().show()
+    }, cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH)).germanButtons().show()
 }
 
 /** Nur ein Datum wählen; liefert 00:00 Uhr des gewählten Tages */
@@ -198,7 +202,19 @@ fun Fragment.pickDate(initial: Date, onPicked: (Date) -> Unit) {
         cal.clear()
         cal.set(y, m, d)
         onPicked(cal.time)
-    }, cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH)).show()
+    }, cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH)).germanButtons().show()
+}
+
+/** Deutsche Knöpfe für Datums-/Zeitauswahl – die System-Dialoge folgen sonst der Gerätesprache */
+fun <T> T.germanButtons(): T where T : AlertDialog, T : DialogInterface.OnClickListener = apply {
+    setButton(DialogInterface.BUTTON_POSITIVE, context.getString(R.string.ok), this)
+    setButton(DialogInterface.BUTTON_NEGATIVE, context.getString(R.string.cancel), this)
+}
+
+/** Entfernt die Fehlermeldung eines Eingabefelds, sobald der Nutzer es ändert (für alle Felder unter [this]) */
+fun View.clearErrorsOnEdit() {
+    if (this is TextInputLayout) editText?.doAfterTextChanged { error = null }
+    else if (this is ViewGroup) (0 until childCount).forEach { getChildAt(it).clearErrorsOnEdit() }
 }
 
 // ── Teilen & Links ───────────────────────────────────────────────────────────

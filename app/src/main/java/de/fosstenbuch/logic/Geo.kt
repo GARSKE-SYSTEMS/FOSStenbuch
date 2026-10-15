@@ -91,7 +91,7 @@ object Geo {
         val text = get("search?format=json&limit=5&q=" + URLEncoder.encode(query, "UTF-8"))
         val json = try { JSONArray(text) } catch (e: JSONException) { throw IOException("Ungültige Antwort der Adresssuche", e) }
         return (0 until json.length()).mapNotNull { i ->
-            val o = json.getJSONObject(i)
+            val o = json.optJSONObject(i) ?: return@mapNotNull null
             val lat = o.optString("lat").toDoubleOrNull()
             val lon = o.optString("lon").toDoubleOrNull()
             val name = o.optString("display_name")

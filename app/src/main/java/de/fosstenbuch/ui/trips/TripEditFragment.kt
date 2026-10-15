@@ -32,6 +32,7 @@ import de.fosstenbuch.logic.Geo
 import de.fosstenbuch.logic.Trips
 import de.fosstenbuch.tracking.Ghosts
 import de.fosstenbuch.tracking.TrackingService
+import de.fosstenbuch.ui.common.clearErrorsOnEdit
 import de.fosstenbuch.ui.common.SimpleAdapter
 import de.fosstenbuch.ui.common.argId
 import de.fosstenbuch.ui.common.askText
@@ -137,6 +138,7 @@ class TripEditFragment : Fragment(R.layout.fragment_trip_edit) {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         _b = FragmentTripEditBinding.bind(view)
+        view.clearErrorsOnEdit()
         b.editDate.setOnClickListener { pickDateTime(date) { date = it; showTimes() } }
         b.editEndTime.setOnClickListener { pickDateTime(endTime ?: Date()) { endTime = it; showTimes() } }
         b.editStartKm.doAfterTextChanged { showDistance() }
@@ -230,8 +232,9 @@ class TripEditFragment : Fragment(R.layout.fragment_trip_edit) {
             b.editRoute.setText(t.route)
             b.editNotes.setText(t.notes)
         }
-        populated = true
+        // Erst danach als befüllt merken: Bricht das Drehen die Km-Abfrage ab, läuft populate erneut
         suggestOdometer()
+        populated = true
         // Ortsvorschlag nur, wo die Fahrt gerade hier beginnt bzw. endet
         if (mode == Mode.NEW || mode == Mode.ACTIVE) suggestPermission.launch(Geo.PERMISSIONS)
     }
@@ -345,11 +348,9 @@ class TripEditFragment : Fragment(R.layout.fragment_trip_edit) {
     }
 
     /**
-     * Beendet eine laufende automatische Aufzeichnung (z.B. wenn die Bluetooth-Trennung verpasst wurde).
-     * Der TrackingService schließt die Fahrt danach ab, sie erscheint dann unter den automatischen Fahrten.
-     * Ohne laufendes GPS beendet sie erst die Bluetooth-Trennung; Ghosts.end übernimmt künftig beide Fälle.
+     * Beendet die noch laufende automatische Aufzeichnung (z.B. wenn die Bluetooth-Trennung verpasst wurde).
+     * Ghosts.end stoppt den Dienst bzw. schließt die Fahrt direkt ab – auch wenn der Bildschirm schließt.
      */
-    /** Beendet die noch laufende automatische Aufzeichnung (z.B. wenn die Bluetooth-Trennung verpasst wurde) */
     private fun endRecording() {
         Ghosts.end(requireContext(), argId)
         close()

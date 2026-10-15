@@ -18,6 +18,7 @@ import de.fosstenbuch.data.Settings
 import de.fosstenbuch.data.dao
 import de.fosstenbuch.databinding.FragmentSettingsBinding
 import de.fosstenbuch.tracking.Reminder
+import de.fosstenbuch.ui.common.germanButtons
 import de.fosstenbuch.ui.common.collect
 import de.fosstenbuch.ui.common.confirm
 import de.fosstenbuch.ui.common.granted
@@ -129,7 +130,7 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
             TimePickerDialog(ctx, { _, h, m ->
                 // Locale.ROOT: immer westliche Ziffern, Reminder.parseTime liest das Format beim Planen wieder
                 saveReminder(Settings.REMINDER_TIME, String.format(Locale.ROOT, "%02d:%02d", h, m))
-            }, hour, minute, true).show()
+            }, hour, minute, true).germanButtons().show()
         }
 
         // ── Datenverwaltung ──
