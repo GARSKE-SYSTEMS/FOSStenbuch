@@ -29,7 +29,7 @@ import kotlinx.coroutines.flow.flow
 /**
  * Startbildschirm: alle echten Fahrten mit Filter und Sortierung. Darüber Karten für die
  * laufende Fahrt, eine laufende automatische Aufzeichnung und noch zu prüfende automatische Fahrten.
- * Langes Drücken auf eine Fahrt bietet Stornieren und Löschen an.
+ * Langes Drücken auf eine Fahrt bietet Stornieren und Löschen (laufende: Verwerfen) an.
  */
 class TripsFragment : Fragment(R.layout.fragment_trips) {
 
@@ -127,14 +127,15 @@ class TripsFragment : Fragment(R.layout.fragment_trips) {
 
     /**
      * Aktionen zu einer Fahrt: Stornieren (nicht bei laufenden/stornierten), Löschen (nicht bei
-     * änderungssicheren – außer einer laufenden Fahrt, z.B. versehentlich gestartet; Trips.delete erlaubt das)
+     * änderungssicheren). Eine laufende Fahrt (z.B. versehentlich gestartet) lässt sich immer verwerfen –
+     * Trips.delete erlaubt das; Menü und Rückfrage heißen dann gleich "Verwerfen".
      */
     private fun showActions(trip: Trip) = launch {
         val ctx = requireContext()
         val locked = !trip.isActive && trip.vehicleId?.let { ctx.dao.vehicle(it) }?.auditProtected == true
         val actions = buildList<Pair<Int, () -> Unit>> {
             if (!trip.isCancelled && !trip.isActive) add(R.string.cancel_trip_action to { cancel(trip) })
-            if (!locked) add(R.string.delete to { confirmDelete(trip) })
+            if (!locked) add((if (trip.isActive) R.string.ghost_discard else R.string.delete) to { confirmDelete(trip) })
         }
         if (actions.isEmpty()) return@launch
         val title = "${getString(R.string.trip_route_format, trip.startLocation, trip.endLocation)} (${Fmt.date(trip.date)})"

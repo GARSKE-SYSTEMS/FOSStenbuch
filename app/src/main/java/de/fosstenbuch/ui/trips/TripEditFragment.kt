@@ -399,24 +399,33 @@ class TripEditFragment : Fragment(R.layout.fragment_trip_edit) {
      * Km-Vorschläge – nur in leere Felder oder anstelle des eigenen früheren Vorschlags (Fahrzeugwechsel),
      * nie über eine Eingabe des Nutzers:
      * - neue Fahrt: Start = letzter Km-Stand des Fahrzeugs
-     * - automatische Fahrt: Start = letzter Stand vor ihrem Beginn (sonst die beim Erkennen gespeicherte
-     *   Schätzung), Ende = Start + GPS-Strecke. Die Schätzung von damals ist oft überholt, z.B. wenn
-     *   inzwischen eine frühere automatische Fahrt mit korrigierten Km-Ständen übernommen wurde.
-     * Sonst nichts: Bei einer alten Fahrt ohne Start-Km (Altdaten) wäre der heutige Höchststand falsch
-     * und sähe trotzdem wie der gespeicherte Wert aus.
+     * - automatische Fahrt: Start = letzter Stand vor ihrem aufgezeichneten Beginn, Ende = Start + GPS-Strecke.
+     *   Die beim Erkennen gespeicherte Schätzung ist oft überholt (z.B. wenn inzwischen eine frühere
+     *   automatische Fahrt mit korrigierten Km-Ständen übernommen wurde) und dient nur als Rückfall – und
+     *   nur für das aufzeichnende Fahrzeug. Maßgeblich ist der aufgezeichnete Beginn, nicht das Datum im
+     *   Formular: Ein später gelegter Beginn zählte sonst die eigene gespeicherte Schätzung mit.
+     * Ohne Vorschlag wird ein früherer Vorschlag geleert (sonst bliebe nach einem Fahrzeugwechsel der
+     * Stand des alten Fahrzeugs stehen). Sonst nichts: Bei einer alten Fahrt ohne Start-Km (Altdaten)
+     * wäre der heutige Höchststand falsch und sähe trotzdem wie der gespeicherte Wert aus.
      */
     private suspend fun suggestOdometer() {
         val dao = requireContext().dao
+        val ghost = trip
         val start = when (mode) {
             Mode.NEW -> vehicleId?.let { dao.lastOdometer(it) }
-            Mode.GHOST -> vehicleId?.let { dao.odometerBefore(it, date) } ?: trip?.startOdometer
+            Mode.GHOST -> ghost?.let { g ->
+                vehicleId?.let { dao.odometerBefore(it, g.date) } ?: g.startOdometer?.takeIf { vehicleId == g.vehicleId }
+            }
             else -> return
         }?.toString()
         if (isReplaceable(b.editStartKm.text.toString(), suggestedKm)) {
             b.editStartKm.setText(start)
             suggestedKm = start
         }
-        if (mode == Mode.GHOST) suggestEndKm(trip?.gpsDistanceKm)
+        if (mode == Mode.GHOST && !suggestEndKm(ghost?.gpsDistanceKm) && isReplaceable(b.editEndKm.text.toString(), suggestedEndKm)) {
+            b.editEndKm.setText(null)
+            suggestedEndKm = null
+        }
     }
 
     /** Trägt Start + Strecke (GPS oder Vorlage) als End-Km ein, solange der Nutzer das Feld nicht geändert hat; true = eingetragen */
