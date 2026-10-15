@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Texte der Fahrten-Bildschirme (Liste, Formular, automatische Fahrten) -->
+<resources>
+    <string name="trips_no_match">Keine Fahrten für diesen Filter</string>
+    <string name="trips_save_completed">Fahrt nachtragen</string>
+    <string name="trips_new_hint">„Fahrt starten“: Startort, Km-Stand und Fahrzeug genügen – den Rest tragen Sie beim Beenden ein.\n„Fahrt nachtragen“: eine bereits gefahrene Fahrt vollständig erfassen.</string>
+    <string name="trips_recording_hint">Diese Fahrt wird gerade automatisch aufgezeichnet. Nach dem Ende der Aufzeichnung können Sie sie prüfen und übernehmen.</string>
+    <!-- Typografische Anführungszeichen: gerade " würden von aapt entfernt -->
+    <string name="trips_add_location">„%s“ als neuen Standort speichern…</string>
+    <string name="trips_distance">Distanz: %s</string>
+    <string name="trips_template_applied">Vorlage angewendet</string>
+    <string name="trips_audit_log">Änderungsprotokoll</string>
+    <!-- %1$s = Zeitpunkt, %2$s = Feld, %3$s = alter Wert, %4$s = neuer Wert -->
+    <string name="trips_audit_entry">%1$s · %2$s: %3$s → %4$s</string>
+</resources>
