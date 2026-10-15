@@ -119,13 +119,15 @@ class TripsFragment : Fragment(R.layout.fragment_trips) {
         b.fab.setOnClickListener { navigate(R.id.navigation_trip_edit, ARG_ID to 0L) }
     }
 
-    /** Aktionen zu einer Fahrt: Stornieren (nicht bei laufenden/stornierten), Löschen (nicht bei änderungssicheren) */
+    /**
+     * Aktionen zu einer Fahrt: Stornieren (nicht bei laufenden/stornierten), Löschen (nicht bei
+     * änderungssicheren – außer einer laufenden Fahrt, z.B. versehentlich gestartet; Trips.delete erlaubt das)
+     */
     private fun showActions(trip: Trip) = launch {
         val ctx = requireContext()
-        if (trip.isActive) return@launch // Laufende Fahrten werden über das Formular beendet
-        val locked = trip.vehicleId?.let { ctx.dao.vehicle(it) }?.auditProtected == true
+        val locked = !trip.isActive && trip.vehicleId?.let { ctx.dao.vehicle(it) }?.auditProtected == true
         val actions = buildList<Pair<Int, () -> Unit>> {
-            if (!trip.isCancelled) add(R.string.cancel_trip_action to { cancel(trip) })
+            if (!trip.isCancelled && !trip.isActive) add(R.string.cancel_trip_action to { cancel(trip) })
             if (!locked) add(R.string.delete to { confirmDelete(trip) })
         }
         if (actions.isEmpty()) return@launch

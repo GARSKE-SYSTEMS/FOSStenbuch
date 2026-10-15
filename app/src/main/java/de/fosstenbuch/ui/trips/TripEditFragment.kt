@@ -48,7 +48,7 @@ import kotlin.math.roundToInt
 
 /**
  * Formular für eine Fahrt. Was es anbietet, ergibt sich allein aus der geladenen Fahrt ([Mode]):
- * neue Fahrt starten oder nachtragen, laufende Fahrt beenden, automatisch erkannte Fahrt
+ * neue Fahrt starten oder nachtragen, laufende Fahrt beenden oder verwerfen, automatisch erkannte Fahrt
  * übernehmen oder verwerfen, abgeschlossene Fahrt bearbeiten.
  *
  * Zustand: Feldtexte stellt Android nach Rotation und nach der Rückkehr aus "Neuen Standort
@@ -226,7 +226,9 @@ class TripEditFragment : Fragment(R.layout.fragment_trip_edit) {
                 else -> R.string.save
             }
         )
-        b.buttonDiscard.isVisible = mode == Mode.GHOST
+        // Laufende Fahrt verwerfen (z.B. versehentlich gestartet) – Trips.delete erlaubt das auch bei
+        // änderungssicheren Fahrzeugen und beendet die GPS-Aufzeichnung selbst
+        b.buttonDiscard.isVisible = mode == Mode.GHOST || mode == Mode.ACTIVE
         showHint(
             when {
                 locked -> getString(R.string.audit_locked_hint)
@@ -364,8 +366,11 @@ class TripEditFragment : Fragment(R.layout.fragment_trip_edit) {
     /**
      * Schlägt den letzten Km-Stand des Fahrzeugs als Start vor – in ein leeres Feld oder anstelle
      * des eigenen früheren Vorschlags (Fahrzeugwechsel), nie über eine Eingabe des Nutzers.
+     * Nur für neue und automatische Fahrten: Bei einer alten Fahrt ohne Start-Km (Altdaten) wäre
+     * der heutige Höchststand falsch und sähe trotzdem wie der gespeicherte Wert aus.
      */
     private suspend fun suggestStartKm() {
+        if (mode != Mode.NEW && mode != Mode.GHOST) return
         val km = vehicleId?.let { requireContext().dao.lastOdometer(it) }?.toString()
         if (isReplaceable(b.editStartKm.text.toString(), suggestedKm)) {
             b.editStartKm.setText(km)
