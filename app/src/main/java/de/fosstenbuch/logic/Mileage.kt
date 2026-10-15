@@ -81,12 +81,12 @@ object Mileage {
     //    *einfachen* Entfernung. Der Höchstbetrag von 4.500 € gilt nicht bei eigenem oder
     //    überlassenem Pkw – also nicht für ein Fahrtenbuch – und wird deshalb nicht angewandt.
     //  - Dienstreisen (Auswärtstätigkeit) mit dem Pkw: 0,30 € je *gefahrenem* km, Hin- und
-    //    Rückweg zählen (§ 9 Abs. 1 Satz 3 Nr. 4a EStG i. V. m. § 5 Abs. 1 BRKG). Annahmen:
-    //    *eigener* Pkw (Motorrad/Motorroller: 0,20 €/km, nicht abgebildet) und *keine* Erstattung
-    //    durch den Arbeitgeber – eine steuerfreie Erstattung mindert den absetzbaren Betrag. Beim
-    //    Firmenwagen (dem typischen Fahrtenbuch-Fall) trägt der Arbeitgeber die Kosten, dann ist
-    //    für Dienstreisen gar nichts absetzbar. Die App kennt weder Halter noch Erstattung und
-    //    zeigt den Betrag deshalb nur als bedingten Vergleich.
+    //    Rückweg zählen (§ 9 Abs. 1 Satz 3 Nr. 4a EStG i. V. m. § 5 Abs. 2 BRKG). Annahmen:
+    //    *eigener* Pkw (Motorrad/Motorroller: 0,20 €/km nach § 5 Abs. 1 BRKG, nicht abgebildet)
+    //    und *keine* Erstattung durch den Arbeitgeber – eine steuerfreie Erstattung mindert den
+    //    absetzbaren Betrag. Beim Firmenwagen (dem typischen Fahrtenbuch-Fall) trägt der
+    //    Arbeitgeber die Kosten, dann ist für Dienstreisen gar nichts absetzbar. Die App kennt
+    //    weder Halter noch Erstattung und zeigt den Betrag deshalb nur als bedingten Vergleich.
 
     /** Reisekostenpauschale für Dienstreisen mit dem *eigenen* Pkw in €/gefahrenem km (nicht Motorrad, nicht Firmenwagen) */
     const val BUSINESS_TRIP_RATE = 0.30
