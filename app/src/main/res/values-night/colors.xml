@@ -9,4 +9,5 @@
     <color name="on_secondary">#FF003731</color>
     <color name="secondary_container">#FF004D40</color>
     <color name="on_secondary_container">#FFB2EBE9</color>
+    <color name="status_bar">#FF4F378B</color>
 </resources>

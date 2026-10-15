@@ -1,9 +1,11 @@
 package de.fosstenbuch.data
 
 import android.content.Context
+import androidx.datastore.core.handlers.ReplaceFileCorruptionHandler
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
@@ -11,8 +13,14 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
-/** Einstellungsdatei (Name nicht ändern, sonst sind bestehende Einstellungen weg) */
-private val Context.dataStore by preferencesDataStore(name = "fosstenbuch_settings")
+/**
+ * Einstellungsdatei (Name nicht ändern, sonst sind bestehende Einstellungen weg).
+ * Ist die Datei beschädigt, startet sie leer – sonst stürzte die App bei jedem Start ab (App.onCreate liest sie).
+ */
+private val Context.dataStore by preferencesDataStore(
+    name = "fosstenbuch_settings",
+    corruptionHandler = ReplaceFileCorruptionHandler { emptyPreferences() }
+)
 
 /**
  * App-Einstellungen. Verwendung: `Settings.get(context, Settings.DRIVER_NAME, "")`.

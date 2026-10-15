@@ -10,6 +10,9 @@
         <item name="colorOnSecondary">@color/on_secondary</item>
         <item name="colorSecondaryContainer">@color/secondary_container</item>
         <item name="colorOnSecondaryContainer">@color/on_secondary_container</item>
+        <!-- Bis Android 14; ab 15 zeichnet das DrawerLayout den Hintergrund (statusBarBackground) -->
+        <item name="android:statusBarColor">@color/status_bar</item>
+        <item name="android:windowLightStatusBar">false</item>
         <!-- Alle Textfelder umrandet, damit Layouts keinen Style angeben müssen -->
         <item name="textInputStyle">@style/Widget.Material3.TextInputLayout.OutlinedBox</item>
     </style>

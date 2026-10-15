@@ -20,7 +20,9 @@ import java.util.Locale
  *
  * Fehler werden als Exception gemeldet; die Meldung ist für den Nutzer gedacht:
  *  - [Invalid]: Feldfehler fürs Formular
- *  - IllegalStateException: Regelverstoß (z.B. gesperrte Fahrt)
+ *  - [Rejected]: Regelverstoß (z.B. gesperrte Fahrt)
+ * Bewusst keine IllegalStateException: Davon erbt auch CancellationException, ein breites
+ * catch würde sonst den Abbruch der Coroutine (Bildschirm verlassen) verschlucken.
  */
 object Trips {
 
@@ -28,6 +30,12 @@ object Trips {
     enum class Field { START_LOCATION, END_LOCATION, DISTANCE, PURPOSE, DATE, END_TIME, START_ODOMETER, ODOMETER, VEHICLE }
 
     class Invalid(val errors: Map<Field, String>) : Exception(errors.values.joinToString("\n"))
+    class Rejected(message: String) : Exception(message)
+
+    /** Wie require(), aber mit [Rejected] */
+    private inline fun require(condition: Boolean, message: () -> String) {
+        if (!condition) throw Rejected(message())
+    }
 
     private const val MAX_TEXT = 200
     private const val MAX_DISTANCE_KM = 99_999
@@ -77,7 +85,7 @@ object Trips {
         val db = context.db
         return db.withTransaction {
             val dao = db.dao()
-            check(dao.activeTrip() == null) { "Es läuft bereits eine Fahrt" }
+            require(dao.activeTrip() == null) { "Es läuft bereits eine Fahrt" }
             dao.insertTrip(t).also { recomputeChain(dao, t.vehicleId) }
         }
     }
@@ -105,7 +113,7 @@ object Trips {
             val old = if (t.id != 0L) dao.trip(t.id) else null
             // Nur Änderungen an bereits abgeschlossenen Fahrten werden gesperrt bzw. protokolliert
             if (old != null && !old.isActive && !old.isGhost) {
-                check(!isProtected(dao, old.vehicleId)) { "Änderungssicher – Bearbeitung gesperrt" }
+                require(!isProtected(dao, old.vehicleId)) { "Änderungssicher – Bearbeitung gesperrt" }
                 dao.insertAuditLogs(auditDiff(old, t))
             }
             // Eine gerade übernommene automatische Fahrt ist noch nie exportiert worden
@@ -123,7 +131,7 @@ object Trips {
         db.withTransaction {
             val dao = db.dao()
             val old = dao.trip(trip.id) ?: return@withTransaction
-            check(!old.isActive && !old.isGhost && !old.isCancelled) { "Diese Fahrt kann nicht storniert werden" }
+            require(!old.isActive && !old.isGhost && !old.isCancelled) { "Diese Fahrt kann nicht storniert werden" }
             val new = old.copy(isCancelled = true, cancellationReason = reason.trim().ifEmpty { null })
             dao.insertAuditLogs(auditDiff(old, new))
             dao.updateTrip(new)
@@ -136,7 +144,7 @@ object Trips {
         val db = context.db
         db.withTransaction {
             val dao = db.dao()
-            check(trip.isGhost || trip.isActive || !isProtected(dao, trip.vehicleId)) {
+            require(trip.isGhost || trip.isActive || !isProtected(dao, trip.vehicleId)) {
                 "Fahrten von änderungssicheren Fahrzeugen können nicht gelöscht werden"
             }
             dao.deleteTrip(trip)

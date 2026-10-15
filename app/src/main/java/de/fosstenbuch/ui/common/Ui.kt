@@ -25,6 +25,7 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import androidx.viewbinding.ViewBinding
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import de.fosstenbuch.R
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
@@ -77,12 +78,13 @@ fun Context.toast(text: CharSequence) = Toast.makeText(this, text, Toast.LENGTH_
 fun Fragment.toast(text: CharSequence) = requireContext().toast(text)
 
 /** Sicherheitsabfrage; [onConfirm] läuft nur nach Bestätigung */
-fun Fragment.confirm(title: String, message: String, positive: String = "OK", onConfirm: () -> Unit) {
+fun Fragment.confirm(title: String, message: String, positive: String, onConfirm: () -> Unit) {
     MaterialAlertDialogBuilder(requireContext())
         .setTitle(title)
         .setMessage(message)
         .setPositiveButton(positive) { _, _ -> onConfirm() }
-        .setNegativeButton(android.R.string.cancel, null)
+        // App-eigener Text: android.R.string.cancel wäre auf englischen Geräten "Cancel"
+        .setNegativeButton(R.string.cancel, null)
         .show()
 }
 

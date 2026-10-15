@@ -9,6 +9,8 @@
     <color name="on_secondary">#FFFFFFFF</color>
     <color name="secondary_container">#FFB2EBE9</color>
     <color name="on_secondary_container">#FF004D40</color>
+    <!-- Statusleiste: in beiden Modi dunkel, damit die weißen Symbole lesbar bleiben -->
+    <color name="status_bar">#FF3700B3</color>
     <!-- Hintergrund des App-Icons -->
     <color name="ic_background">#FFE3F2FD</color>
 </resources>

@@ -44,7 +44,7 @@ object Geo {
         return 6_371_000.0 * 2 * atan2(sqrt(a), sqrt(1 - a))
     }
 
-    /** Nächstgelegener gespeicherter Ort innerhalb von [radiusMeters], sonst null */
+    /** Nächstgelegener gespeicherter Ort innerhalb von [radiusMeters] (Standard für alle Vorschläge: 500 m), sonst null */
     fun nearest(locations: List<SavedLocation>, lat: Double, lng: Double, radiusMeters: Double = 500.0): SavedLocation? =
         locations
             .map { it to distanceMeters(lat, lng, it.latitude, it.longitude) }

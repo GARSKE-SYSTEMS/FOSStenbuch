@@ -7,6 +7,7 @@ import androidx.room.Query
 import androidx.room.Update
 import androidx.room.Upsert
 import kotlinx.coroutines.flow.Flow
+import java.util.Date
 
 /**
  * Alle Datenbankzugriffe der App. SQL nur für Lesen/Schreiben – Auswertungen (Summen,
@@ -35,8 +36,8 @@ interface AppDao {
     @Query("SELECT * FROM trips WHERE isGhost = 0 OR endTime IS NOT NULL ORDER BY id")
     suspend fun backupTrips(): List<Trip>
 
-    /** Automatisch erkannte, noch nicht übernommene Fahrten (inkl. gerade aufgezeichneter) */
-    @Query("SELECT * FROM trips WHERE isGhost = 1 ORDER BY date DESC")
+    /** Automatisch erkannte, abgeschlossene und noch nicht übernommene Fahrten (ohne laufende Aufzeichnung) */
+    @Query("SELECT * FROM trips WHERE isGhost = 1 AND endTime IS NOT NULL ORDER BY date DESC")
     fun ghostTrips(): Flow<List<Trip>>
 
     @Query("SELECT * FROM trips WHERE id = :id")
@@ -59,9 +60,17 @@ interface AppDao {
     @Query("SELECT * FROM trips WHERE isGhost = 1 AND endTime IS NULL ORDER BY date DESC LIMIT 1")
     suspend fun recordingGhost(): Trip?
 
-    /** Höchster End-Kilometerstand eines Fahrzeugs = Vorschlag für den Start der nächsten Fahrt */
-    @Query("SELECT MAX(endOdometer) FROM trips WHERE vehicleId = :vehicleId AND isGhost = 0 AND isCancelled = 0")
+    /**
+     * Höchster End-Kilometerstand eines Fahrzeugs = Vorschlag für den Start der nächsten Fahrt.
+     * Abgeschlossene automatische Fahrten zählen mit (GPS-Schätzung) – sonst begännen mehrere
+     * noch nicht geprüfte automatische Fahrten alle beim selben Stand und überlappten sich.
+     */
+    @Query("SELECT MAX(endOdometer) FROM trips WHERE vehicleId = :vehicleId AND isCancelled = 0")
     suspend fun lastOdometer(vehicleId: Long): Int?
+
+    /** Wie [lastOdometer], aber nur Fahrten vor [date] – Vorschlag beim Prüfen einer automatischen Fahrt */
+    @Query("SELECT MAX(endOdometer) FROM trips WHERE vehicleId = :vehicleId AND isCancelled = 0 AND date < :date")
+    suspend fun odometerBefore(vehicleId: Long, date: Date): Int?
 
     /** Fahrten eines Fahrzeugs in der Reihenfolge der Hash-Kette (Einfügereihenfolge) */
     @Query("SELECT * FROM trips WHERE vehicleId = :vehicleId AND isGhost = 0 ORDER BY id")
@@ -182,9 +191,6 @@ interface AppDao {
     suspend fun deleteLocation(location: SavedLocation)
 
     // ── Vorlagen ─────────────────────────────────────────────────────────────
-
-    @Query("SELECT * FROM trip_templates ORDER BY name")
-    fun templates(): Flow<List<TripTemplate>>
 
     @Query("SELECT * FROM trip_templates ORDER BY name")
     suspend fun allTemplates(): List<TripTemplate>

@@ -1,7 +1,10 @@
 package de.fosstenbuch.ui
 
 import android.os.Bundle
+import android.view.View
+import androidx.activity.addCallback
 import androidx.appcompat.app.AppCompatActivity
+import androidx.drawerlayout.widget.DrawerLayout
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.NavigationUI
@@ -50,6 +53,12 @@ class MainActivity : AppCompatActivity() {
             binding.drawerLayout.close()
             true
         }
+        // Zurück schließt zuerst das offene Seitenmenü (DrawerLayout tut das nicht von selbst)
+        val closeDrawer = onBackPressedDispatcher.addCallback(this, false) { binding.drawerLayout.close() }
+        binding.drawerLayout.addDrawerListener(object : DrawerLayout.SimpleDrawerListener() {
+            override fun onDrawerOpened(drawerView: View) { closeDrawer.isEnabled = true }
+            override fun onDrawerClosed(drawerView: View) { closeDrawer.isEnabled = false }
+        })
     }
 
     override fun onSupportNavigateUp() = navController.navigateUp(appBarConfig) || super.onSupportNavigateUp()
