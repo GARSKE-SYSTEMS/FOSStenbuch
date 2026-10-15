@@ -1,85 +1,7 @@
 plugins {
     id("com.android.application")
+    // KSP erzeugt den Room-Code (DAO-Implementierungen, Schema)
     id("com.google.devtools.ksp")
-    id("com.google.dagger.hilt.android")
-    id("androidx.navigation.safeargs.kotlin")
-    id("org.jetbrains.kotlinx.kover")
-}
-
-kover {
-    reports {
-        filters {
-            excludes {
-                // Exclude Android UI, DI, generated code from coverage
-                classes(
-                    // UI layer
-                    "*Fragment",
-                    "*Fragment\$*",
-                    "*Activity",
-                    "*Activity\$*",
-                    "*Adapter",
-                    "*Adapter\$*",
-                    "*Application",
-                    "*Application\$*",
-                    "*ViewModel",
-                    "*ViewModel\$*",
-                    "*UiState",
-                    "*UiState\$*",
-                    "*Receiver",
-                    "*Receiver\$*",
-                    // Service (Android-dependent, not unit-testable)
-                    "*Service",
-                    "*Service\$*",
-                    // UI helper classes
-                    "de.fosstenbuch.ui.stats.StatItem",
-                    "de.fosstenbuch.ui.trips.TripFilter",
-                    "de.fosstenbuch.ui.trips.TripSort",
-                    "de.fosstenbuch.ui.trips.TripPhase",
-                    "de.fosstenbuch.ui.stats.StatsFilterMode",
-                    "de.fosstenbuch.ui.common.*",
-                    // DI modules
-                    "*Module",
-                    "*Module\$*",
-                    // Hilt / Dagger generated
-                    "*_Factory",
-                    "*_Factory\$*",
-                    "*_HiltModules*",
-                    "*_MembersInjector",
-                    "*Binding*",
-                    "hilt_aggregated_deps.*",
-                    "*_HiltComponents*",
-                    "*_ComponentTreeDeps*",
-                    "*_GeneratedInjector",
-                    "*Hilt_*",
-                    // Room generated DAO implementations
-                    "*_Impl",
-                    "*_Impl\$*",
-                    // Navigation generated
-                    "*BuildConfig",
-                    "*Directions",
-                    "*Directions\$*",
-                    "*Args",
-                    "*Args\$*",
-                    // DAOs (interfaces, covered via repository tests)
-                    "*Dao",
-                    "*Dao\$*",
-                    // Android-dependent classes not unit-testable
-                    "*PdfTripExporter",
-                    "*PdfTripExporter\$*",
-                    "*BackupManager",
-                    "*BackupManager\$*",
-                    "*PreferencesManager",
-                    "*PreferencesManager\$*",
-                    "*PreferencesManagerKt",
-                    "*TimberDebugTree",
-                    // Room database
-                    "de.fosstenbuch.data.local.AppDatabase",
-                    "de.fosstenbuch.data.local.AppDatabase\$*"
-                )
-                annotatedBy("dagger.Module", "dagger.internal.DaggerGenerated", "androidx.room.Database")
-            }
-        }
-    }
 }
 
 android {
@@ -92,27 +14,25 @@ android {
         targetSdk = 35
         versionCode = 20260304
         versionName = "2026.03.04"
-
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     signingConfigs {
-        // Use a consistent debug keystore from CI secrets so debug APK updates
-        // work without uninstalling. Falls back to default local debug keystore.
+        // Fester Debug-Keystore aus CI-Secrets, damit Debug-Updates ohne Neuinstallation gehen.
+        // Lokal greift der Standard-Debug-Keystore.
         getByName("debug") {
-            val debugKsPath = System.getenv("DEBUG_KEYSTORE_PATH")
-            if (!debugKsPath.isNullOrBlank() && file(debugKsPath).exists()) {
-                storeFile = file(debugKsPath)
+            val path = System.getenv("DEBUG_KEYSTORE_PATH")
+            if (!path.isNullOrBlank() && file(path).exists()) {
+                storeFile = file(path)
                 storePassword = System.getenv("DEBUG_KEYSTORE_PASSWORD") ?: "android"
                 keyAlias = System.getenv("DEBUG_KEY_ALIAS") ?: "androiddebugkey"
                 keyPassword = System.getenv("DEBUG_KEY_PASSWORD") ?: "android"
             }
         }
-        // Release signing via CI secrets so Gradle produces a signed APK directly.
+        // Release-Signatur über CI-Secrets, damit Gradle direkt ein signiertes APK baut
         create("release") {
-            val releaseKsPath = System.getenv("RELEASE_KEYSTORE_PATH")
-            if (releaseKsPath != null) {
-                storeFile = file(releaseKsPath)
+            val path = System.getenv("RELEASE_KEYSTORE_PATH")
+            if (path != null) {
+                storeFile = file(path)
                 storePassword = System.getenv("RELEASE_KEYSTORE_PASSWORD")
                 keyAlias = System.getenv("RELEASE_KEY_ALIAS")
                 keyPassword = System.getenv("RELEASE_KEY_PASSWORD")
@@ -121,12 +41,8 @@ android {
     }
 
     buildTypes {
-        debug {
-            signingConfig = signingConfigs.getByName("debug")
-        }
         release {
             isMinifyEnabled = false
-            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
             signingConfig = signingConfigs.getByName("release")
         }
     }
@@ -138,8 +54,6 @@ android {
 
     buildFeatures {
         viewBinding = true
-        dataBinding = false
-        buildConfig = true
     }
 }
 
@@ -148,48 +62,17 @@ dependencies {
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("com.google.android.material:material:1.11.0")
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
-
-    // Testing
-    testImplementation("junit:junit:4.13.2")
-    androidTestImplementation("androidx.test.ext:junit:1.1.5")
-    androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
-    
-    // Mocking for tests
-    testImplementation("io.mockk:mockk:1.13.9")
-    androidTestImplementation("io.mockk:mockk-android:1.13.9")
-    
-    // Coroutines test
-    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
-
-    // Room for database
-    implementation("androidx.room:room-runtime:2.8.5")
-    ksp("androidx.room:room-compiler:2.8.5")
-    implementation("androidx.room:room-ktx:2.8.5")
-    implementation("androidx.room:room-paging:2.8.5")
-
-    // Paging 3
-    implementation("androidx.paging:paging-runtime-ktx:3.3.6")
-
-    // Coroutines
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
-
-    // Lifecycle
-    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0")
-    implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.7.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
-    implementation("androidx.lifecycle:lifecycle-common-java8:2.7.0")
-
-    // Navigation
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0")
     implementation("androidx.navigation:navigation-fragment-ktx:2.7.7")
     implementation("androidx.navigation:navigation-ui-ktx:2.7.7")
-
-    // Hilt for Dependency Injection
-    implementation("com.google.dagger:hilt-android:2.60.1")
-    ksp("com.google.dagger:hilt-compiler:2.60.1")
-
-    // Timber for logging
-    implementation("com.jakewharton.timber:timber:5.0.1")
-
-    // DataStore for preferences
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
     implementation("androidx.datastore:datastore-preferences:1.0.0")
+
+    // Room (SQLite)
+    implementation("androidx.room:room-runtime:2.8.5")
+    implementation("androidx.room:room-ktx:2.8.5")
+    ksp("androidx.room:room-compiler:2.8.5")
+
+    testImplementation("junit:junit:4.13.2")
 }

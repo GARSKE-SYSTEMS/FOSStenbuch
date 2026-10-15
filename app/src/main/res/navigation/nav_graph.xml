@@ -1,170 +1,70 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  Alle Bildschirme der App. Navigiert wird per Ziel-ID (siehe ui/common/Ui.kt: navigate()).
+  Detail-Bildschirme bekommen die Datensatz-ID im Bundle-Schlüssel "id" (0 = neu anlegen).
+-->
 <navigation xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/nav_graph"
     app:startDestination="@id/navigation_trips">
 
+    <!-- Fahrten -->
     <fragment
         android:id="@+id/navigation_trips"
         android:name="de.fosstenbuch.ui.trips.TripsFragment"
-        android:label="@string/title_trips"
-        tools:layout="@layout/fragment_trips">
-
-        <action
-            android:id="@+id/action_trips_to_add_edit_trip"
-            app:destination="@id/navigation_add_edit_trip" />
-
-        <action
-            android:id="@+id/action_trips_to_ghost_trips"
-            app:destination="@id/navigation_ghost_trips" />
-
-    </fragment>
-
+        android:label="@string/title_trips" />
     <fragment
-        android:id="@+id/navigation_add_edit_trip"
-        android:name="de.fosstenbuch.ui.trips.AddEditTripFragment"
-        android:label="@string/add_edit_trip"
-        tools:layout="@layout/fragment_add_edit_trip">
+        android:id="@+id/navigation_trip_edit"
+        android:name="de.fosstenbuch.ui.trips.TripEditFragment"
+        android:label="@string/add_edit_trip" />
+    <fragment
+        android:id="@+id/navigation_ghost_trips"
+        android:name="de.fosstenbuch.ui.trips.GhostTripsFragment"
+        android:label="@string/title_ghost_trips" />
 
-        <argument
-            android:name="tripId"
-            app:argType="long"
-            android:defaultValue="0L" />
-
-        <action
-            android:id="@+id/action_add_edit_trip_to_add_edit_location"
-            app:destination="@id/navigation_add_edit_location" />
-
-    </fragment>
-
+    <!-- Auswertung -->
     <fragment
         android:id="@+id/navigation_stats"
         android:name="de.fosstenbuch.ui.stats.StatsFragment"
-        android:label="@string/title_stats"
-        tools:layout="@layout/fragment_stats" />
+        android:label="@string/title_stats" />
+    <fragment
+        android:id="@+id/navigation_mileage_calculator"
+        android:name="de.fosstenbuch.ui.stats.MileageFragment"
+        android:label="@string/title_mileage_calculator" />
+    <fragment
+        android:id="@+id/navigation_export"
+        android:name="de.fosstenbuch.ui.export.ExportFragment"
+        android:label="@string/title_export" />
+
+    <!-- Stammdaten -->
+    <fragment
+        android:id="@+id/navigation_vehicles"
+        android:name="de.fosstenbuch.ui.vehicles.VehiclesFragment"
+        android:label="@string/title_vehicles" />
+    <fragment
+        android:id="@+id/navigation_vehicle_edit"
+        android:name="de.fosstenbuch.ui.vehicles.VehicleEditFragment"
+        android:label="@string/add_edit_vehicle" />
+    <fragment
+        android:id="@+id/navigation_purposes"
+        android:name="de.fosstenbuch.ui.purposes.PurposesFragment"
+        android:label="@string/title_purposes" />
+    <fragment
+        android:id="@+id/navigation_purpose_edit"
+        android:name="de.fosstenbuch.ui.purposes.PurposeEditFragment"
+        android:label="@string/add_edit_purpose" />
+    <fragment
+        android:id="@+id/navigation_saved_locations"
+        android:name="de.fosstenbuch.ui.locations.LocationsFragment"
+        android:label="@string/title_saved_locations" />
+    <!-- Optional zusätzlich "name": Vorbelegung des Namens beim Anlegen aus dem Fahrtformular -->
+    <fragment
+        android:id="@+id/navigation_location_edit"
+        android:name="de.fosstenbuch.ui.locations.LocationEditFragment"
+        android:label="@string/add_edit_location" />
 
     <fragment
         android:id="@+id/navigation_settings"
         android:name="de.fosstenbuch.ui.settings.SettingsFragment"
-        android:label="@string/title_settings"
-        tools:layout="@layout/fragment_settings" />
-
-    <fragment
-        android:id="@+id/navigation_vehicles"
-        android:name="de.fosstenbuch.ui.vehicles.VehiclesFragment"
-        android:label="@string/title_vehicles"
-        tools:layout="@layout/fragment_vehicles">
-
-        <action
-            android:id="@+id/action_vehicles_to_add_edit_vehicle"
-            app:destination="@id/navigation_add_edit_vehicle" />
-
-    </fragment>
-
-    <fragment
-        android:id="@+id/navigation_add_edit_vehicle"
-        android:name="de.fosstenbuch.ui.vehicles.AddEditVehicleFragment"
-        android:label="@string/add_edit_vehicle"
-        tools:layout="@layout/fragment_add_edit_vehicle">
-
-        <argument
-            android:name="vehicleId"
-            app:argType="long"
-            android:defaultValue="0L" />
-
-    </fragment>
-
-    <!-- Saved Locations -->
-    <fragment
-        android:id="@+id/navigation_saved_locations"
-        android:name="de.fosstenbuch.ui.locations.SavedLocationsFragment"
-        android:label="@string/title_saved_locations"
-        tools:layout="@layout/fragment_saved_locations">
-
-        <action
-            android:id="@+id/action_saved_locations_to_add_edit_location"
-            app:destination="@id/navigation_add_edit_location" />
-
-    </fragment>
-
-    <fragment
-        android:id="@+id/navigation_add_edit_location"
-        android:name="de.fosstenbuch.ui.locations.AddEditLocationFragment"
-        android:label="@string/add_edit_location"
-        tools:layout="@layout/fragment_add_edit_location">
-
-        <argument
-            android:name="locationId"
-            app:argType="long"
-            android:defaultValue="0L" />
-
-    </fragment>
-
-    <!-- Trip Purposes -->
-    <fragment
-        android:id="@+id/navigation_purposes"
-        android:name="de.fosstenbuch.ui.purposes.PurposesFragment"
-        android:label="@string/title_purposes"
-        tools:layout="@layout/fragment_purposes">
-
-        <action
-            android:id="@+id/action_purposes_to_add_edit_purpose"
-            app:destination="@id/navigation_add_edit_purpose" />
-
-    </fragment>
-
-    <fragment
-        android:id="@+id/navigation_add_edit_purpose"
-        android:name="de.fosstenbuch.ui.purposes.AddEditPurposeFragment"
-        android:label="@string/add_edit_purpose"
-        tools:layout="@layout/fragment_add_edit_purpose">
-
-        <argument
-            android:name="purposeId"
-            app:argType="long"
-            android:defaultValue="0L" />
-
-    </fragment>
-
-    <!-- Export -->
-    <fragment
-        android:id="@+id/navigation_export"
-        android:name="de.fosstenbuch.ui.export.ExportFragment"
-        android:label="@string/title_export"
-        tools:layout="@layout/fragment_export" />
-
-    <!-- Mileage Calculator -->
-    <fragment
-        android:id="@+id/navigation_mileage_calculator"
-        android:name="de.fosstenbuch.ui.mileage.MileageCalculatorFragment"
-        android:label="@string/title_mileage_calculator"
-        tools:layout="@layout/fragment_mileage_calculator" />
-
-    <!-- Ghost Trips (automatic Bluetooth-tracked trips) -->
-    <fragment
-        android:id="@+id/navigation_ghost_trips"
-        android:name="de.fosstenbuch.ui.trips.ghost.GhostTripsFragment"
-        android:label="@string/title_ghost_trips"
-        tools:layout="@layout/fragment_ghost_trips">
-
-        <action
-            android:id="@+id/action_ghost_trips_to_ghost_trip_detail"
-            app:destination="@id/navigation_ghost_trip_detail" />
-
-    </fragment>
-
-    <fragment
-        android:id="@+id/navigation_ghost_trip_detail"
-        android:name="de.fosstenbuch.ui.trips.ghost.GhostTripDetailFragment"
-        android:label="@string/title_ghost_trip_detail"
-        tools:layout="@layout/fragment_ghost_trip_detail">
-
-        <argument
-            android:name="tripId"
-            app:argType="long"
-            android:defaultValue="0L" />
-
-    </fragment>
-
+        android:label="@string/title_settings" />
 </navigation>

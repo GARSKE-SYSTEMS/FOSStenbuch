@@ -1,0 +1,204 @@
+package de.fosstenbuch.data
+
+import androidx.room.Dao
+import androidx.room.Delete
+import androidx.room.Insert
+import androidx.room.Query
+import androidx.room.Update
+import androidx.room.Upsert
+import kotlinx.coroutines.flow.Flow
+
+/**
+ * Alle Datenbankzugriffe der App. SQL nur für Lesen/Schreiben – Auswertungen (Summen,
+ * Filter nach Zeitraum usw.) passieren in Kotlin, das ist einfacher und bei einigen
+ * tausend Fahrten schnell genug.
+ *
+ * Flow-Abfragen liefern bei jeder Datenänderung automatisch neue Werte (für die UI),
+ * suspend-Abfragen lesen genau einmal (für Logik und Hintergrundarbeit).
+ *
+ * Fahrten-Schreibzugriffe mit Geschäftsregeln (Validierung, Hash-Kette, Änderungsprotokoll)
+ * laufen über logic/Trips.kt, nicht direkt über diese Methoden.
+ */
+@Dao
+interface AppDao {
+
+    // ── Fahrten ──────────────────────────────────────────────────────────────
+
+    /** Alle echten Fahrten (ohne automatisch erkannte), neueste zuerst; inkl. laufender und stornierter */
+    @Query("SELECT * FROM trips WHERE isGhost = 0 ORDER BY date DESC")
+    fun trips(): Flow<List<Trip>>
+
+    @Query("SELECT * FROM trips WHERE isGhost = 0 ORDER BY date DESC")
+    suspend fun allTrips(): List<Trip>
+
+    /** Automatisch erkannte, noch nicht übernommene Fahrten (inkl. gerade aufgezeichneter) */
+    @Query("SELECT * FROM trips WHERE isGhost = 1 ORDER BY date DESC")
+    fun ghostTrips(): Flow<List<Trip>>
+
+    @Query("SELECT * FROM trips WHERE id = :id")
+    fun tripFlow(id: Long): Flow<Trip?>
+
+    @Query("SELECT * FROM trips WHERE id = :id")
+    suspend fun trip(id: Long): Trip?
+
+    /** Die laufende manuelle Fahrt (es gibt höchstens eine) */
+    @Query("SELECT * FROM trips WHERE isActive = 1 AND isGhost = 0 LIMIT 1")
+    fun activeTripFlow(): Flow<Trip?>
+
+    @Query("SELECT * FROM trips WHERE isActive = 1 AND isGhost = 0 LIMIT 1")
+    suspend fun activeTrip(): Trip?
+
+    /** Die automatische Fahrt, die gerade aufgezeichnet wird (Bluetooth verbunden, noch kein Ende) */
+    @Query("SELECT * FROM trips WHERE isGhost = 1 AND endTime IS NULL ORDER BY date DESC LIMIT 1")
+    fun recordingGhostFlow(): Flow<Trip?>
+
+    @Query("SELECT * FROM trips WHERE isGhost = 1 AND endTime IS NULL ORDER BY date DESC LIMIT 1")
+    suspend fun recordingGhost(): Trip?
+
+    /** Höchster End-Kilometerstand eines Fahrzeugs = Vorschlag für den Start der nächsten Fahrt */
+    @Query("SELECT MAX(endOdometer) FROM trips WHERE vehicleId = :vehicleId AND isGhost = 0 AND isCancelled = 0")
+    suspend fun lastOdometer(vehicleId: Long): Int?
+
+    /** Fahrten eines Fahrzeugs in der Reihenfolge der Hash-Kette (Einfügereihenfolge) */
+    @Query("SELECT * FROM trips WHERE vehicleId = :vehicleId AND isGhost = 0 ORDER BY id")
+    suspend fun chainTrips(vehicleId: Long): List<Trip>
+
+    @Query("UPDATE trips SET chainHash = :hash WHERE id = :id")
+    suspend fun setChainHash(id: Long, hash: String?)
+
+    /** Max. 999 IDs pro Aufruf (SQLite-Grenze) – Aufrufer teilt größere Listen auf */
+    @Query("UPDATE trips SET isExported = 1 WHERE id IN (:ids)")
+    suspend fun markExported(ids: List<Long>)
+
+    /** Zwischenstand einer automatischen Aufzeichnung; die erste Position wird zum Startpunkt */
+    @Query(
+        """UPDATE trips SET gpsDistanceKm = :km,
+           startLatitude = COALESCE(startLatitude, :lat), startLongitude = COALESCE(startLongitude, :lng),
+           endLatitude = :lat, endLongitude = :lng WHERE id = :id"""
+    )
+    suspend fun updateGhostGps(id: Long, km: Double, lat: Double, lng: Double)
+
+    /** Anzahl Fahrten (inkl. automatischer) eines Fahrzeugs – solche Fahrzeuge sind nicht löschbar */
+    @Query("SELECT COUNT(*) FROM trips WHERE vehicleId = :vehicleId")
+    suspend fun tripCountForVehicle(vehicleId: Long): Int
+
+    /** Anzahl Fahrten einer Kategorie – solche Kategorien sind nicht löschbar */
+    @Query("SELECT COUNT(*) FROM trips WHERE purposeId = :purposeId")
+    suspend fun tripCountForPurpose(purposeId: Long): Int
+
+    @Insert
+    suspend fun insertTrip(trip: Trip): Long
+
+    @Update
+    suspend fun updateTrip(trip: Trip)
+
+    @Delete
+    suspend fun deleteTrip(trip: Trip)
+
+    // ── Änderungsprotokoll ───────────────────────────────────────────────────
+
+    @Query("SELECT * FROM trip_audit_log WHERE tripId = :tripId ORDER BY changedAt DESC")
+    fun auditLog(tripId: Long): Flow<List<TripAuditLog>>
+
+    @Query("SELECT * FROM trip_audit_log ORDER BY changedAt")
+    suspend fun allAuditLogs(): List<TripAuditLog>
+
+    @Insert
+    suspend fun insertAuditLogs(logs: List<TripAuditLog>)
+
+    // ── Fahrzeuge ────────────────────────────────────────────────────────────
+
+    @Query("SELECT * FROM vehicles ORDER BY isPrimary DESC, make, model")
+    fun vehicles(): Flow<List<Vehicle>>
+
+    @Query("SELECT * FROM vehicles ORDER BY isPrimary DESC, make, model")
+    suspend fun allVehicles(): List<Vehicle>
+
+    @Query("SELECT * FROM vehicles WHERE id = :id")
+    suspend fun vehicle(id: Long): Vehicle?
+
+    @Query("SELECT * FROM vehicles WHERE bluetoothDeviceAddress = :address COLLATE NOCASE LIMIT 1")
+    suspend fun vehicleByBluetooth(address: String): Vehicle?
+
+    /** Macht genau dieses Fahrzeug zum Hauptfahrzeug (alle anderen verlieren den Status) */
+    @Query("UPDATE vehicles SET isPrimary = (id = :id)")
+    suspend fun setPrimaryVehicle(id: Long)
+
+    /** Neu anlegen (id = 0, liefert neue ID) oder aktualisieren (liefert -1) */
+    @Upsert
+    suspend fun saveVehicle(vehicle: Vehicle): Long
+
+    @Delete
+    suspend fun deleteVehicle(vehicle: Vehicle)
+
+    // ── Kategorien ───────────────────────────────────────────────────────────
+
+    @Query("SELECT * FROM trip_purposes ORDER BY isDefault DESC, name")
+    fun purposes(): Flow<List<TripPurpose>>
+
+    @Query("SELECT * FROM trip_purposes ORDER BY isDefault DESC, name")
+    suspend fun allPurposes(): List<TripPurpose>
+
+    @Query("SELECT * FROM trip_purposes WHERE id = :id")
+    suspend fun purpose(id: Long): TripPurpose?
+
+    /** Für die Duplikatprüfung (Groß-/Kleinschreibung egal) */
+    @Query("SELECT * FROM trip_purposes WHERE name = :name COLLATE NOCASE LIMIT 1")
+    suspend fun purposeByName(name: String): TripPurpose?
+
+    @Upsert
+    suspend fun savePurpose(purpose: TripPurpose): Long
+
+    @Delete
+    suspend fun deletePurpose(purpose: TripPurpose)
+
+    // ── Gespeicherte Orte ────────────────────────────────────────────────────
+
+    @Query("SELECT * FROM saved_locations ORDER BY usageCount DESC, name")
+    fun locations(): Flow<List<SavedLocation>>
+
+    @Query("SELECT * FROM saved_locations ORDER BY usageCount DESC, name")
+    suspend fun allLocations(): List<SavedLocation>
+
+    @Query("SELECT * FROM saved_locations WHERE id = :id")
+    suspend fun location(id: Long): SavedLocation?
+
+    /** Zählt, wie oft ein Ort in Fahrten verwendet wurde (für die Sortierung) */
+    @Query("UPDATE saved_locations SET usageCount = usageCount + 1 WHERE name = :name")
+    suspend fun countLocationUsage(name: String)
+
+    @Upsert
+    suspend fun saveLocation(location: SavedLocation): Long
+
+    @Delete
+    suspend fun deleteLocation(location: SavedLocation)
+
+    // ── Vorlagen ─────────────────────────────────────────────────────────────
+
+    @Query("SELECT * FROM trip_templates ORDER BY name")
+    fun templates(): Flow<List<TripTemplate>>
+
+    @Query("SELECT * FROM trip_templates ORDER BY name")
+    suspend fun allTemplates(): List<TripTemplate>
+
+    @Upsert
+    suspend fun saveTemplate(template: TripTemplate): Long
+
+    @Delete
+    suspend fun deleteTemplate(template: TripTemplate)
+
+    // ── Backup-Wiederherstellung (immer innerhalb einer Transaktion aufrufen) ─
+
+    @Query("DELETE FROM trip_audit_log") suspend fun deleteAllAuditLogs()
+    @Query("DELETE FROM trips") suspend fun deleteAllTrips()
+    @Query("DELETE FROM trip_templates") suspend fun deleteAllTemplates()
+    @Query("DELETE FROM saved_locations") suspend fun deleteAllLocations()
+    @Query("DELETE FROM vehicles") suspend fun deleteAllVehicles()
+    @Query("DELETE FROM trip_purposes") suspend fun deleteAllPurposes()
+
+    @Insert suspend fun insertVehicles(items: List<Vehicle>)
+    @Insert suspend fun insertPurposes(items: List<TripPurpose>)
+    @Insert suspend fun insertLocations(items: List<SavedLocation>)
+    @Insert suspend fun insertTrips(items: List<Trip>)
+    @Insert suspend fun insertTemplates(items: List<TripTemplate>)
+}

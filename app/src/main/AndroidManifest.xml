@@ -1,49 +1,44 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <!-- Adresssuche und Ortsnamen (OpenStreetMap Nominatim) -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- GPS-Aufzeichnung von Fahrten; Hintergrund-Standort für automatisch erkannte Fahrten -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
-    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
-    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE"
-        tools:ignore="ProtectedPermissions" />
+    <!-- Erinnerung und Aufzeichnungs-Benachrichtigung -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <!-- Erkennen, wann sich das Auto-Bluetooth verbindet/trennt -->
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
-    <uses-permission android:name="android.permission.BLUETOOTH_SCAN"
-        android:usesPermissionFlags="neverForLocation"
-        tools:targetApi="s" />
-    <!-- Required for BT discovery on API < 31 -->
-    <uses-permission android:name="android.permission.BLUETOOTH"
+    <uses-permission
+        android:name="android.permission.BLUETOOTH"
         android:maxSdkVersion="30" />
-    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN"
-        android:maxSdkVersion="30" />
+    <!-- Ohne Akku-Optimierung darf die App bei Bluetooth-Verbindung die GPS-Aufzeichnung starten -->
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
 
     <application
-        android:name=".MainApplication"
+        android:name=".App"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.FOSStenbuch"
-        tools:targetApi="31">
+        android:theme="@style/Theme.FOSStenbuch">
 
         <activity
-            android:name=".ui.main.MainActivity"
-            android:exported="true"
-            android:label="@string/app_name"
-            android:theme="@style/Theme.FOSStenbuch">
+            android:name=".ui.MainActivity"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
 
+        <!-- Teilen von Export- und Backup-Dateien aus dem Cache-Verzeichnis -->
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"
@@ -54,28 +49,21 @@
                 android:resource="@xml/file_paths" />
         </provider>
 
-        <receiver
-            android:name=".domain.notification.TripReminderReceiver"
-            android:exported="false" />
-
+        <!-- GPS-Aufzeichnung für manuelle und automatisch erkannte Fahrten -->
         <service
-            android:name=".domain.service.LocationTrackingService"
+            android:name=".tracking.TrackingService"
             android:exported="false"
-            android:stopWithTask="false"
             android:foregroundServiceType="location" />
 
-        <service
-            android:name=".domain.service.BluetoothTrackingService"
-            android:exported="false"
-            android:stopWithTask="false"
-            android:foregroundServiceType="connectedDevice|location" />
-
+        <!-- Systemereignisse: Bluetooth verbunden/getrennt, Neustart, App-Update, Erinnerungs-Alarm.
+             exported=true, weil die Ereignisse vom System (Bluetooth-Dienst) kommen. -->
         <receiver
-            android:name=".domain.notification.BootReceiver"
+            android:name=".tracking.SystemReceiver"
             android:exported="true">
             <intent-filter>
+                <action android:name="android.bluetooth.device.action.ACL_CONNECTED" />
+                <action android:name="android.bluetooth.device.action.ACL_DISCONNECTED" />
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
-                <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED" />
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
             </intent-filter>
         </receiver>

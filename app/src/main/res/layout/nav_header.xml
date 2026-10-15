@@ -1,30 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Kopf des Seitenmenüs -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="?attr/colorPrimary"
-    android:fitsSystemWindows="true"
-    android:gravity="center_vertical"
+    android:background="?attr/colorPrimaryContainer"
     android:orientation="vertical"
-    android:paddingStart="16dp"
-    android:paddingEnd="16dp"
-    android:paddingBottom="16dp"
-    android:paddingTop="16dp"
-    android:theme="@style/ThemeOverlay.MaterialComponents.Dark">
+    android:padding="16dp">
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/app_name"
-        android:textAppearance="@style/TextAppearance.MaterialComponents.Headline6"
-        android:textColor="@color/white" />
+        android:textAppearance="?attr/textAppearanceTitleLarge"
+        android:textColor="?attr/colorOnPrimaryContainer" />
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/nav_header_subtitle"
-        android:textColor="@color/white"
-        android:alpha="0.7" />
+        android:textColor="?attr/colorOnPrimaryContainer" />
 
 </LinearLayout>
