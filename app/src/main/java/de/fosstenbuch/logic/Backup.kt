@@ -59,7 +59,7 @@ object Backup {
     // ── Datei & Datenbank ────────────────────────────────────────────────────
 
     /**
-     * Schreibt das Backup nach cacheDir und liefert die Datei (zum Teilen per shareFile).
+     * Schreibt das Backup nach cacheDir/backup und liefert die Datei (zum Teilen per shareFile).
      * Frühere Backup-Dateien im Cache werden dabei gelöscht – sie enthalten sämtliche Fahrtdaten.
      */
     suspend fun export(context: Context): File {
@@ -77,6 +77,8 @@ object Backup {
         }
         return withContext(Dispatchers.IO) {
             val text = toText(encode(content, System.currentTimeMillis()))
+            // Die Vorversion legte Backups direkt in cacheDir ab und räumte sie nie auf
+            context.cacheDir.listFiles { f -> f.isFile && f.name.startsWith(FILE_PREFIX) && f.extension == "json" }?.forEach { it.delete() }
             // Eigener Unterordner: Nur exports/ und backup/ sind über den FileProvider teilbar
             val dir = File(context.cacheDir, "backup").apply { deleteRecursively(); mkdirs() }
             val name = FILE_PREFIX + SimpleDateFormat("yyyy-MM-dd_HHmmss", Locale.ROOT).format(Date()) + ".json"
@@ -87,7 +89,8 @@ object Backup {
     /**
      * Ersetzt ALLE Daten durch das Backup in [uri]. Die Datei wird zuerst komplett gelesen und
      * geprüft, erst danach wird in einer Transaktion geleert und eingefügt. Jeder Fehler – auch
-     * ein Abbruch mittendrin – lässt die bisherigen Daten unverändert.
+     * ein Abbruch mittendrin – lässt die bisherigen Daten unverändert. Die Standard-Kategorie
+     * wird schon vor dem Einspielen abgewählt und bleibt es auch, falls das Einspielen scheitert.
      * @param force trotz [BrokenChain] wiederherstellen (nur nach Rückfrage beim Nutzer)
      * @throws IllegalStateException während einer GPS-Aufzeichnung
      */
@@ -104,6 +107,10 @@ object Backup {
             // daher hier im Hintergrund statt im Main-Thread des Aufrufers (viewModelScope)
             decode(fromText(text)).also { if (!force) checkChains(it) }
         }
+        // Vorher zurücksetzen: Die Kategorie-IDs stammen aus dem Backup und können dort eine ganz
+        // andere Kategorie bezeichnen. Danach gesetzt, entfiele das, wenn der Aufrufer abbricht,
+        // während Room die Transaktion noch committet – die Daten wären dann trotzdem ersetzt.
+        Settings.set(context, Settings.DEFAULT_PURPOSE_ID, null)
         val db = context.db
         db.withTransaction {
             val dao = db.dao()

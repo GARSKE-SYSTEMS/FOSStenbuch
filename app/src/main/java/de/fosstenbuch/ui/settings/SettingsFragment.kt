@@ -2,13 +2,11 @@ package de.fosstenbuch.ui.settings
 
 import android.Manifest
 import android.app.TimePickerDialog
-import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.view.View
 import android.widget.CompoundButton
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.core.widget.doAfterTextChanged
 import androidx.datastore.preferences.core.Preferences
@@ -22,6 +20,7 @@ import de.fosstenbuch.databinding.FragmentSettingsBinding
 import de.fosstenbuch.tracking.Reminder
 import de.fosstenbuch.ui.common.collect
 import de.fosstenbuch.ui.common.confirm
+import de.fosstenbuch.ui.common.granted
 import de.fosstenbuch.ui.common.launch
 import de.fosstenbuch.ui.common.setDropdown
 import de.fosstenbuch.ui.common.shareFile
@@ -55,14 +54,12 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
 
     private val askNotifications = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         if (granted) saveReminder(Settings.REMINDER_ENABLED, true)
-        else toast(getString(R.string.notification_permission_required))
+        else toast(R.string.notification_permission_required)
     }
 
     /** Reagiert nur auf Nutzeraktionen; programmatisch wird der Schalter über [setChecked] gesetzt */
     private val onReminderToggled = CompoundButton.OnCheckedChangeListener { switch, on ->
-        if (on && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-            ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
-        ) {
+        if (on && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !requireContext().granted(Manifest.permission.POST_NOTIFICATIONS)) {
             // Erst nach Zustimmung einschalten (siehe askNotifications), bis dahin bleibt der Schalter aus
             setChecked(switch, false)
             askNotifications.launch(Manifest.permission.POST_NOTIFICATIONS)
@@ -121,16 +118,16 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
             setChecked(b.switchReminder, on)
             b.buttonReminderTime.isVisible = on
         }
-        var reminderTime = DEFAULT_REMINDER_TIME
-        collect(Settings.flow(ctx, Settings.REMINDER_TIME, DEFAULT_REMINDER_TIME)) {
-            reminderTime = it
-            b.buttonReminderTime.text = getString(R.string.settings_reminder_time_format, it)
+        // Leer = noch nie gewählt: parseTime liefert dann dieselbe Standardzeit, mit der Reminder plant
+        var reminderTime = Reminder.parseTime("")
+        collect(Settings.flow(ctx, Settings.REMINDER_TIME, "")) {
+            reminderTime = Reminder.parseTime(it)
+            b.buttonReminderTime.text = getString(R.string.settings_reminder_time_format, reminderTime.first, reminderTime.second)
         }
         b.buttonReminderTime.setOnClickListener {
-            val hour = reminderTime.substringBefore(":").toIntOrNull() ?: 18
-            val minute = reminderTime.substringAfter(":", "").toIntOrNull() ?: 0
+            val (hour, minute) = reminderTime
             TimePickerDialog(ctx, { _, h, m ->
-                // Locale.ROOT: immer westliche Ziffern, das Format wird beim Planen wieder gelesen
+                // Locale.ROOT: immer westliche Ziffern, Reminder.parseTime liest das Format beim Planen wieder
                 saveReminder(Settings.REMINDER_TIME, String.format(Locale.ROOT, "%02d:%02d", h, m))
             }, hour, minute, true).show()
         }
@@ -179,9 +176,5 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
                 Reminder.sync(app)
             }
         }
-    }
-
-    private companion object {
-        const val DEFAULT_REMINDER_TIME = "18:00"
     }
 }
