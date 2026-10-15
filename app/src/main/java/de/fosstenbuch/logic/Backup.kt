@@ -89,8 +89,8 @@ object Backup {
     /**
      * Ersetzt ALLE Daten durch das Backup in [uri]. Die Datei wird zuerst komplett gelesen und
      * geprüft, erst danach wird in einer Transaktion geleert und eingefügt. Jeder Fehler – auch
-     * ein Abbruch mittendrin – lässt die bisherigen Daten unverändert. Danach ist keine
-     * Standard-Kategorie mehr gewählt.
+     * ein Abbruch mittendrin – lässt die bisherigen Daten unverändert. Die Standard-Kategorie
+     * wird schon vor dem Einspielen abgewählt und bleibt es auch, falls das Einspielen scheitert.
      * @param force trotz [BrokenChain] wiederherstellen (nur nach Rückfrage beim Nutzer)
      * @throws IllegalStateException während einer GPS-Aufzeichnung
      */
@@ -107,6 +107,10 @@ object Backup {
             // daher hier im Hintergrund statt im Main-Thread des Aufrufers (viewModelScope)
             decode(fromText(text)).also { if (!force) checkChains(it) }
         }
+        // Vorher zurücksetzen: Die Kategorie-IDs stammen aus dem Backup und können dort eine ganz
+        // andere Kategorie bezeichnen. Danach gesetzt, entfiele das, wenn der Aufrufer abbricht,
+        // während Room die Transaktion noch committet – die Daten wären dann trotzdem ersetzt.
+        Settings.set(context, Settings.DEFAULT_PURPOSE_ID, null)
         val db = context.db
         db.withTransaction {
             val dao = db.dao()
@@ -119,8 +123,6 @@ object Backup {
             dao.insertTemplates(content.templates)
             dao.insertAuditLogs(content.auditLogs)
         }
-        // Die Kategorie-IDs stammen aus dem Backup und können dort eine ganz andere Kategorie bezeichnen
-        Settings.set(context, Settings.DEFAULT_PURPOSE_ID, null)
     }
 
     /** Löscht alle Daten und legt die zwei Standard-Kategorien neu an – alles in einer Transaktion */
