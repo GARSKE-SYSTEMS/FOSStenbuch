@@ -55,7 +55,7 @@
             android:exported="false"
             android:foregroundServiceType="location" />
 
-        <!-- Systemereignisse: Bluetooth verbunden/getrennt, Neustart, App-Update, Erinnerungs-Alarm.
+        <!-- Systemereignisse: Bluetooth verbunden/getrennt, Neustart, App-Update, Zeitumstellung, Erinnerungs-Alarm.
              exported=true, weil die Ereignisse vom System (Bluetooth-Dienst) kommen. -->
         <receiver
             android:name=".tracking.SystemReceiver"
@@ -65,6 +65,8 @@
                 <action android:name="android.bluetooth.device.action.ACL_DISCONNECTED" />
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+                <action android:name="android.intent.action.TIME_SET" />
             </intent-filter>
         </receiver>
 

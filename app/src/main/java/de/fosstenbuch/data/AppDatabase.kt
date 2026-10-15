@@ -34,10 +34,17 @@ abstract class AppDatabase : RoomDatabase() {
                 .also { instance = it }
         }
 
-        /** Legt die beiden Standard-Kategorien an (neue Datenbank bzw. nach "Alle Daten löschen") */
-        fun seedPurposes(db: SupportSQLiteDatabase) {
-            db.execSQL("INSERT INTO trip_purposes (name, isBusinessRelevant, color, isDefault) VALUES ('Beruflich', 1, '#6200EE', 1)")
-            db.execSQL("INSERT INTO trip_purposes (name, isBusinessRelevant, color, isDefault) VALUES ('Privat', 0, '#018786', 1)")
+        /** Die beiden Standard-Kategorien (neue Datenbank bzw. nach "Alle Daten löschen") */
+        val DEFAULT_PURPOSES = listOf(
+            TripPurpose(name = "Beruflich", isBusinessRelevant = true, color = "#6200EE", isDefault = true),
+            TripPurpose(name = "Privat", isBusinessRelevant = false, color = "#018786", isDefault = true)
+        )
+
+        private fun seedPurposes(db: SupportSQLiteDatabase) = DEFAULT_PURPOSES.forEach {
+            db.execSQL(
+                "INSERT INTO trip_purposes (name, isBusinessRelevant, color, isDefault) VALUES (?, ?, ?, 1)",
+                arrayOf<Any>(it.name, if (it.isBusinessRelevant) 1 else 0, it.color)
+            )
         }
 
         private fun migration(from: Int, vararg sql: String) = object : Migration(from, from + 1) {

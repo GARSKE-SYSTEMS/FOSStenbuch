@@ -31,6 +31,10 @@ interface AppDao {
     @Query("SELECT * FROM trips WHERE isGhost = 0 ORDER BY date DESC")
     suspend fun allTrips(): List<Trip>
 
+    /** Alles fürs Backup: echte Fahrten und abgeschlossene automatische (laufende Aufzeichnung nicht) */
+    @Query("SELECT * FROM trips WHERE isGhost = 0 OR endTime IS NOT NULL ORDER BY id")
+    suspend fun backupTrips(): List<Trip>
+
     /** Automatisch erkannte, noch nicht übernommene Fahrten (inkl. gerade aufgezeichneter) */
     @Query("SELECT * FROM trips WHERE isGhost = 1 ORDER BY date DESC")
     fun ghostTrips(): Flow<List<Trip>>
@@ -70,11 +74,15 @@ interface AppDao {
     @Query("UPDATE trips SET isExported = 1 WHERE id IN (:ids)")
     suspend fun markExported(ids: List<Long>)
 
-    /** Zwischenstand einer automatischen Aufzeichnung; die erste Position wird zum Startpunkt */
+    /**
+     * Zwischenstand einer automatischen Aufzeichnung; die erste Position wird zum Startpunkt.
+     * Wirkt nur, solange die Aufzeichnung läuft – eine verspätete Position kann eine
+     * abgeschlossene oder übernommene (evtl. änderungssichere) Fahrt nicht mehr verändern.
+     */
     @Query(
         """UPDATE trips SET gpsDistanceKm = :km,
            startLatitude = COALESCE(startLatitude, :lat), startLongitude = COALESCE(startLongitude, :lng),
-           endLatitude = :lat, endLongitude = :lng WHERE id = :id"""
+           endLatitude = :lat, endLongitude = :lng WHERE id = :id AND isGhost = 1 AND endTime IS NULL"""
     )
     suspend fun updateGhostGps(id: Long, km: Double, lat: Double, lng: Double)
 

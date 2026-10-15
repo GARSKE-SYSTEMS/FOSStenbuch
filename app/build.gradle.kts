@@ -80,4 +80,6 @@ dependencies {
     ksp("androidx.room:room-compiler:2.8.5")
 
     testImplementation("junit:junit:4.13.2")
+    // Echte org.json-Implementierung für Unit-Tests (android.jar enthält nur Stubs)
+    testImplementation("org.json:json:20260814")
 }

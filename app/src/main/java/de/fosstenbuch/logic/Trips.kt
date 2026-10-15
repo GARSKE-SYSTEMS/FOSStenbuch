@@ -35,8 +35,9 @@ object Trips {
     // ── Validierung ──────────────────────────────────────────────────────────
 
     /** Pflichtangaben beim Starten einer Fahrt */
-    fun validateStart(t: Trip): Map<Field, String> = buildMap {
+    fun validateStart(t: Trip, now: Date = Date()): Map<Field, String> = buildMap {
         checkText(t.startLocation, "Startort", Field.START_LOCATION)
+        if (t.date.after(now)) put(Field.DATE, "Datum darf nicht in der Zukunft liegen")
         when {
             t.startOdometer == null -> put(Field.START_ODOMETER, "Kilometerstand ist erforderlich")
             t.startOdometer < 0 -> put(Field.START_ODOMETER, "Kilometerstand darf nicht negativ sein")
@@ -107,7 +108,9 @@ object Trips {
                 check(!isProtected(dao, old.vehicleId)) { "Änderungssicher – Bearbeitung gesperrt" }
                 dao.insertAuditLogs(auditDiff(old, t))
             }
-            val id = if (old == null) dao.insertTrip(t.copy(id = 0)) else t.id.also { dao.updateTrip(t) }
+            // Eine gerade übernommene automatische Fahrt ist noch nie exportiert worden
+            val final = if (old?.isGhost == true) t.copy(isExported = false) else t
+            val id = if (old == null) dao.insertTrip(final.copy(id = 0)) else final.id.also { dao.updateTrip(final) }
             recomputeChain(dao, t.vehicleId)
             if (old != null && old.vehicleId != t.vehicleId) recomputeChain(dao, old.vehicleId)
             id

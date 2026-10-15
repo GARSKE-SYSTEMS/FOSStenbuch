@@ -19,7 +19,7 @@ import kotlinx.coroutines.withTimeoutOrNull
  * - Auto-Bluetooth verbunden/getrennt → automatische Fahrt ([Ghosts]). ACL_CONNECTED/ACL_DISCONNECTED
  *   sind von der Sperre impliziter Broadcasts ausgenommen; ab Android 12 kommen sie nur mit der
  *   Berechtigung BLUETOOTH_CONNECT an.
- * - Erinnerungs-Alarm, Neustart, App-Update → [Reminder].
+ * - Erinnerungs-Alarm, Neustart, App-Update, Zeitumstellung → [Reminder].
  */
 class SystemReceiver : BroadcastReceiver() {
 
@@ -39,6 +39,8 @@ class SystemReceiver : BroadcastReceiver() {
                     Reminder.sync(app)
                     Ghosts.closeStale(app)
                 }
+                // Erinnerung soll weiter zur gewohnten Ortszeit kommen
+                Intent.ACTION_TIMEZONE_CHANGED, Intent.ACTION_TIME_CHANGED -> Reminder.sync(app)
                 Intent.ACTION_MY_PACKAGE_REPLACED -> {
                     // Kanal des früheren Bluetooth-Dauerdienstes aus den System-Einstellungen entfernen
                     app.getSystemService(NotificationManager::class.java)?.deleteNotificationChannel("bt_tracking_channel")

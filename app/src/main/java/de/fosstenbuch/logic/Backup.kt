@@ -3,6 +3,7 @@ package de.fosstenbuch.logic
 import android.content.Context
 import android.net.Uri
 import androidx.room.withTransaction
+import de.fosstenbuch.data.AppDatabase
 import de.fosstenbuch.data.AppDao
 import de.fosstenbuch.data.SavedLocation
 import de.fosstenbuch.data.Settings
@@ -14,7 +15,6 @@ import de.fosstenbuch.data.Vehicle
 import de.fosstenbuch.data.db
 import de.fosstenbuch.tracking.TrackingService
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
@@ -65,29 +65,22 @@ object Backup {
     suspend fun export(context: Context): File {
         val db = context.db
         val dao = db.dao()
-        // Room-Flows nicht innerhalb der Transaktion lesen. Wird eine dieser Fahrten inzwischen
-        // übernommen, steht sie unten auch in allTrips() und wird hier aussortiert (sonst doppelte ID).
-        // Eine laufende Aufzeichnung (endTime == null) ist noch keine Fahrt: Wiederhergestellt würde sie
-        // als Dauer-Aufzeichnung gelten und die Bluetooth-Erkennung blockieren.
-        val ghosts = dao.ghostTrips().first().filter { it.endTime != null }
         // Eine Transaktion = ein stimmiger Stand (z.B. kein Protokolleintrag ohne seine Fahrt)
         val content = db.withTransaction {
             val vehicles = dao.allVehicles()
             // Ältere App-Versionen haben automatische Fahrten in die Kette eingerechnet, die im
             // Backup fehlen. Neu berechnen heilt solche Ketten, sonst scheitert die Wiederherstellung.
             vehicles.filter { it.auditProtected }.forEach { Trips.recomputeChain(context, it.id) }
-            val trips = dao.allTrips()
-            val ids = trips.mapTo(HashSet()) { it.id }
-            Content(
-                vehicles, dao.allPurposes(), dao.allLocations(), trips + ghosts.filterNot { it.id in ids },
-                dao.allTemplates(), dao.allAuditLogs()
-            )
+            // Eine laufende Aufzeichnung ist noch keine Fahrt und fehlt deshalb (backupTrips):
+            // Wiederhergestellt würde sie als Dauer-Aufzeichnung die Bluetooth-Erkennung blockieren.
+            Content(vehicles, dao.allPurposes(), dao.allLocations(), dao.backupTrips(), dao.allTemplates(), dao.allAuditLogs())
         }
         return withContext(Dispatchers.IO) {
             val text = toText(encode(content, System.currentTimeMillis()))
-            context.cacheDir.listFiles { f -> f.name.startsWith(FILE_PREFIX) }?.forEach { it.delete() }
+            // Eigener Unterordner: Nur exports/ und backup/ sind über den FileProvider teilbar
+            val dir = File(context.cacheDir, "backup").apply { deleteRecursively(); mkdirs() }
             val name = FILE_PREFIX + SimpleDateFormat("yyyy-MM-dd_HHmmss", Locale.ROOT).format(Date()) + ".json"
-            File(context.cacheDir, name).apply { writeText(text) }
+            File(dir, name).apply { writeText(text) }
         }
     }
 
@@ -131,13 +124,7 @@ object Backup {
         db.withTransaction {
             val dao = db.dao()
             clear(dao)
-            // Gleiche Werte wie AppDatabase.seedPurposes (Erstinstallation)
-            dao.insertPurposes(
-                listOf(
-                    TripPurpose(name = "Beruflich", isBusinessRelevant = true, color = "#6200EE", isDefault = true),
-                    TripPurpose(name = "Privat", isBusinessRelevant = false, color = "#018786", isDefault = true)
-                )
-            )
+            dao.insertPurposes(AppDatabase.DEFAULT_PURPOSES)
         }
         // Die gewählte Standard-Kategorie ist weg (SQLite vergibt ihre ID nicht erneut)
         Settings.set(context, Settings.DEFAULT_PURPOSE_ID, null)

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Ordner im Cache, deren Dateien die App über den FileProvider teilen darf (sonst nichts) -->
 <paths>
-    <cache-path
-        name="export_cache"
-        path="/" />
+    <cache-path name="exports" path="exports/" />
+    <cache-path name="backup" path="backup/" />
 </paths>
