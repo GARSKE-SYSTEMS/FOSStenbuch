@@ -1,19 +1,25 @@
-FOSStenbuch ist ein quelloffenes, digitales Fahrtenbuch für Android – entwickelt für Privatpersonen, Selbstständige und Unternehmen, die ihre Fahrten einfach, datenschutzfreundlich und ohne Cloud-Zwang dokumentieren möchten.
+FOSStenbuch ist ein quelloffenes, digitales Fahrtenbuch für Android – für Privatpersonen, Selbstständige und Unternehmen, die ihre Fahrten einfach und datenschutzfreundlich dokumentieren möchten. Ihre Fahrten werden nur auf Ihrem Gerät gespeichert.
 
-Funktionen:
+<b>Funktionen</b>
 
-* Fahrtenerfassung – Fahrten mit Start-/Zielort, Kilometerstand, Zweck und Fahrzeug anlegen
-* GPS-Tracking – Standorterfassung im Hintergrund via Foreground Service
-* Fahrzeugverwaltung – Mehrere Fahrzeuge verwalten
-* Fahrzwecke – Individuelle Fahrzwecke (dienstlich, privat, etc.) definieren
-* Gespeicherte Orte – Häufig genutzte Orte speichern und wiederverwenden
-* Kilometerstand-Tracking – Lückenlose Dokumentation der Kilometerstände
-* Statistiken – Auswertungen und Übersichten über Fahrten und Kilometer
-* Export – Fahrten als PDF oder CSV exportieren und teilen
-* Backup & Restore – Lokale Datensicherung und Wiederherstellung
-* Erinnerungen – Benachrichtigungen zur Fahrtenerfassung
-* Audit-Log – Nachvollziehbare Änderungshistorie der Fahrten
-* Vorlagen – Wiederkehrende Fahrten als Vorlage speichern
-* Material Design – Moderne Android-Oberfläche mit Material 3 Komponenten
-* Offline-first – Alle Daten werden lokal auf dem Gerät gespeichert (Room-Datenbank)
-* Kein Tracking, keine Werbung, keine Cloud – Volle Datenkontrolle
+* Fahrten starten und beenden – Start- und Zielort, Kilometerstände, Kategorie (beruflich/privat), Geschäftspartner, Route und Fahrzeug; jede spätere Änderung wird protokolliert
+* GPS-Strecke – misst während der Fahrt die gefahrene Strecke
+* Automatische Fahrterkennung – verbindet sich das Handy mit dem Bluetooth des Autos, wird die Fahrt aufgezeichnet; Sie prüfen und übernehmen sie später. Dafür nutzt die App den Standort auch im Hintergrund, wenn sie geschlossen ist (nur wenn Sie die Erkennung einrichten)
+* Mehrere Fahrzeuge, eigene Kategorien, gespeicherte Standorte und Vorlagen für wiederkehrende Fahrten
+* Änderungssicher – abgeschlossene Fahrten lassen sich nur noch stornieren (protokolliert); eine Hash-Kette prüft Backups beim Wiederherstellen
+* Statistik und Rechner für die Kilometerpauschale
+* Export als PDF oder CSV, Backup und Wiederherstellung
+* Tägliche Erinnerung, Fahrten einzutragen
+* Österreichische und deutsche Kennzeichen
+* Helles und dunkles Design
+
+<b>Datenschutz</b>
+
+* Kein Konto, keine Werbung, keine Analyse- oder Tracking-Dienste
+* Einzige Online-Funktion: Adresssuche und Ortsnamen über OpenStreetMap (Nominatim). Dafür gehen Ihr Suchbegriff bzw. die Start- und Zielkoordinaten automatisch erkannter Fahrten an die OpenStreetMap Foundation.
+* Freie Software unter MIT-Lizenz: https://github.com/GARSKE-SYSTEMS/FOSStenbuch
+
+Datenschutzerklärung: https://github.com/GARSKE-SYSTEMS/FOSStenbuch/blob/main/docs/datenschutz.md
+Es gelten die Nutzungsbedingungen: https://github.com/GARSKE-SYSTEMS/FOSStenbuch/blob/main/docs/nutzungsbedingungen.md
+
+Adressdaten © OpenStreetMap-Mitwirkende (ODbL).

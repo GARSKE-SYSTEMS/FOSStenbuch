@@ -10,22 +10,22 @@ FOSStenbuch ist ein quelloffenes, digitales Fahrtenbuch für Android – entwick
 
 ## Features
 
-- **Fahrtenerfassung** – Fahrten mit Start-/Zielort, Kilometerstand, Zweck und Fahrzeug anlegen
+- **Fahrten starten und beenden** – mit Start-/Zielort, Kilometerstand, Kategorie und Fahrzeug; Nachtragen gibt es bewusst nicht, jede spätere Änderung wird protokolliert
 - **GPS-Tracking** – Gefahrene Strecke wird während der Fahrt per GPS mitgeschrieben
 - **Automatische Fahrterkennung** – Verbindet sich das Handy mit dem Auto-Bluetooth, wird die Fahrt automatisch aufgezeichnet und kann später geprüft und übernommen werden
 - **Fahrzeugverwaltung** – Mehrere Fahrzeuge verwalten
-- **Fahrzwecke** – Individuelle Fahrzwecke (dienstlich, privat, etc.) definieren
+- **Kategorien** – Eigene Kategorien (beruflich, privat usw.) definieren
 - **Gespeicherte Orte** – Häufig genutzte Orte speichern und wiederverwenden
 - **Kilometerstand-Tracking** – Lückenlose Dokumentation der Kilometerstände
 - **Statistiken** – Auswertungen und Übersichten über Fahrten und Kilometer
 - **Export** – Fahrten als PDF oder CSV exportieren und teilen
 - **Backup & Restore** – Lokale Datensicherung und Wiederherstellung
 - **Erinnerungen** – Benachrichtigungen zur Fahrtenerfassung
-- **Änderungssicher** – Änderungsprotokoll und Hash-Kette je Fahrzeug machen nachträgliche Änderungen erkennbar
+- **Änderungssicher** – abgeschlossene Fahrten lassen sich nur noch stornieren (protokolliert); eine Hash-Kette prüft Backups beim Wiederherstellen
 - **Vorlagen** – Wiederkehrende Fahrten als Vorlage speichern
 - **Material Design** – Moderne Android-Oberfläche mit Material 3 Komponenten
 - **Offline-first** – Alle Daten werden lokal auf dem Gerät gespeichert (Room-Datenbank)
-- **Kein Tracking, keine Werbung, keine Cloud** – Volle Datenkontrolle
+- **Keine Werbung, keine Analyse- oder Tracking-Dienste, keine Cloud** – Volle Datenkontrolle
 
 ---
 
@@ -45,7 +45,7 @@ FOSStenbuch ist ein quelloffenes, digitales Fahrtenbuch für Android – entwick
 |----------------------|--------------------------------------------------|
 | Sprache              | Kotlin                                           |
 | Min SDK              | 26 (Android 8.0)                                 |
-| Target SDK           | 35 (Android 15)                                  |
+| Target SDK           | 36 (Android 16)                                  |
 | Architektur          | Bewusst schlicht (KISS): Daten / Logik / UI      |
 | Datenbank            | Room (SQLite), ein DAO                           |
 | Navigation           | Jetpack Navigation                               |
@@ -62,7 +62,7 @@ FOSStenbuch ist ein quelloffenes, digitales Fahrtenbuch für Android – entwick
 ## Voraussetzungen
 
 - **JDK 17 oder neuer** (getestet bis JDK 25)
-- **Android SDK** mit API Level 35
+- **Android SDK** mit API Level 36
 - **Gradle** 9.x (wird über den Gradle Wrapper mitgeliefert)
 - Optional: Android Studio (aktuelle Version mit AGP-9-Unterstützung)
 
@@ -121,9 +121,8 @@ app/src/main/java/de/fosstenbuch/
 | `ACCESS_BACKGROUND_LOCATION`                   | GPS bei automatisch erkannten Fahrten (App nicht geöffnet)       |
 | `FOREGROUND_SERVICE` / `FOREGROUND_SERVICE_LOCATION` | Aufzeichnung als Vordergrunddienst mit Benachrichtigung     |
 | `BLUETOOTH_CONNECT` (bzw. `BLUETOOTH` bis Android 11) | Erkennen, wann sich das Auto-Bluetooth verbindet/trennt     |
-| `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS`         | Ohne Akku-Optimierung darf die automatische Aufzeichnung starten |
 | `POST_NOTIFICATIONS`                           | Erinnerung und Aufzeichnungs-Benachrichtigung                    |
-| `RECEIVE_BOOT_COMPLETED`                       | Erinnerung nach Neustart wieder planen                           |
+| `RECEIVE_BOOT_COMPLETED`                       | Erinnerung nach Neustart wieder planen; unterbrochene automatische Aufzeichnung abschließen |
 | `INTERNET`                                     | Adresssuche und Ortsnamen über OpenStreetMap                     |
 
 ---
@@ -150,11 +149,20 @@ Beiträge sind herzlich willkommen! So kannst du mitmachen:
 ## Roadmap
 
 - [ ] F-Droid Veröffentlichung
-- [x] Finanzamt-konformer PDF-Export
+- [ ] Google Play Veröffentlichung
+- [x] PDF-Export im Fahrtenbuch-Format
 - [x] Dunkelmodus (Dark Theme)
 - [ ] Widget für Schnellerfassung
 - [x] Automatische Fahrterkennung (Bluetooth)
 - [ ] Multi-Language Support (Englisch)
+
+---
+
+## Datenschutz und Rechtliches
+
+- [Datenschutzerklärung](docs/datenschutz.md) – alle Daten werden nur auf dem Gerät gespeichert; einzige Online-Funktion sind Adresssuche und Ortsnamen automatisch erkannter Fahrten über OpenStreetMap Nominatim
+- [Nutzungsbedingungen](docs/nutzungsbedingungen.md)
+- [Impressum](https://garske-systems.de/impressum)
 
 ---
 
@@ -172,7 +180,7 @@ Copyright (c) 2026 FOSStenbuch Contributors
 
 - **Icons:** [Material Icons](https://github.com/google/material-design-icons) von Google, [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0).
 - **Adressdaten:** Adresssuche und Ortsnamen kommen von [OpenStreetMap](https://www.openstreetmap.org) über [Nominatim](https://nominatim.org) – Daten © OpenStreetMap-Mitwirkende, [Open Database License (ODbL)](https://www.openstreetmap.org/copyright). Die App zeigt diese Quellenangabe in der Adresssuche und im Seitenmenü, sendet einen eindeutigen User-Agent, stellt höchstens eine Anfrage pro Sekunde und sucht nur auf Knopfdruck (keine Autovervollständigung).
-- **Datenschutz:** Für die Ortsnamen automatisch erkannter Fahrten sendet die App die Koordinaten von Fahrtbeginn und -ende (auf ca. 1 m gerundet) an nominatim.openstreetmap.org – außer ein gespeicherter Ort liegt in 500 m Nähe. Es gilt die [Datenschutzerklärung der OSM Foundation](https://osmfoundation.org/wiki/Privacy_Policy).
+- **Datenschutz:** Für die Ortsnamen automatisch erkannter Fahrten sendet die App die Koordinaten von Fahrtbeginn und -ende (auf ca. 10 m gerundet) an nominatim.openstreetmap.org – außer ein gespeicherter Ort liegt in 500 m Nähe. Es gilt die [Datenschutzerklärung der OSM Foundation](https://osmfoundation.org/wiki/Privacy_Policy).
 - **Bibliotheken:** AndroidX (u.a. Room, DataStore, Navigation), Material Components, Kotlin-Standardbibliothek und Kotlin Coroutines (Apache License 2.0); DataStore enthält Protocol Buffers von Google (BSD-3-Clause).
 
 ---

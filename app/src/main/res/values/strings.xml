@@ -12,8 +12,8 @@
     <string name="filter_private">Privat</string>
     <string name="sort_by">Sortierung</string>
     <string name="no_trips">Keine Fahrten vorhanden</string>
-    <string name="add_first_trip">Tippen Sie auf +, um eine Fahrt hinzuzufügen</string>
-    <string name="add_trip">Fahrt hinzufügen</string>
+    <string name="add_first_trip">Tippen Sie auf +, um eine Fahrt zu starten</string>
+    <string name="add_trip">Fahrt starten</string>
     <string name="trip_route_format">%1$s → %2$s</string>
     <string name="business">Beruflich</string>
     <string name="private_trip">Privat</string>
@@ -62,10 +62,10 @@
 
     <!-- Änderungssicherheit -->
     <string name="audit_protection">Änderungssichere Protokollierung (Finanzamt)</string>
-    <string name="audit_protection_hint">Wenn aktiviert, können zugehörige Fahrten nicht gelöscht werden. Änderungen werden protokolliert. Diese Einstellung kann nicht rückgängig gemacht werden.</string>
+    <string name="audit_protection_hint">Wenn aktiviert, lassen sich abgeschlossene Fahrten dieses Fahrzeugs weder bearbeiten noch löschen, nur noch stornieren (wird protokolliert). Diese Einstellung kann nicht rückgängig gemacht werden.</string>
     <string name="audit_protection_active">Änderungssichere Protokollierung ist aktiv und kann nicht deaktiviert werden.</string>
     <string name="audit_protection_warning_title">Änderungssichere Protokollierung aktivieren?</string>
-    <string name="audit_protection_warning_message">Diese Einstellung kann nicht rückgängig gemacht werden!\n\nWenn aktiviert:\n• Zugehörige Fahrten können nicht gelöscht werden\n• Alle Änderungen an Fahrten werden protokolliert\n• Das Fahrzeug kann nicht gelöscht werden, solange Fahrten existieren</string>
+    <string name="audit_protection_warning_message">Diese Einstellung kann nicht rückgängig gemacht werden!\n\nWenn aktiviert:\n• Abgeschlossene Fahrten können nicht mehr bearbeitet oder gelöscht, nur noch storniert werden (wird protokolliert)\n• Hersteller, Modell, Kennzeichen und Kraftstoff sind gesperrt\n• Das Fahrzeug kann nicht gelöscht werden, solange Fahrten existieren</string>
     <string name="audit_protected">Änderungssicher</string>
     <string name="enable">Aktivieren</string>
 
@@ -206,7 +206,7 @@
     <string name="settings_restore_subtitle">Daten aus JSON-Backup laden</string>
     <string name="settings_delete_all">Alle Daten löschen</string>
     <string name="settings_delete_all_title">Alle Daten löschen?</string>
-    <string name="settings_delete_all_message">Möchten Sie wirklich alle Daten unwiderruflich löschen? Es werden alle Fahrten, Fahrzeuge, Standorte und Kategorien entfernt.\n\nDiese Aktion kann nicht rückgängig gemacht werden!</string>
+    <string name="settings_delete_all_message">Möchten Sie wirklich alle Daten unwiderruflich löschen? Es werden alle Fahrten, Fahrzeuge, Standorte, Kategorien und der Fahrername entfernt.\n\nDiese Aktion kann nicht rückgängig gemacht werden!</string>
     <string name="restore_success">Daten erfolgreich wiederhergestellt</string>
     <string name="restore_warning_title">Backup wiederherstellen?</string>
     <string name="restore_warning_message">Alle vorhandenen Daten werden durch die Backup-Daten ersetzt.\n\nMöchten Sie fortfahren?</string>
@@ -292,6 +292,10 @@
     <string name="info_github_url">github.com/GARSKE-SYSTEMS/FOSStenbuch</string>
     <string name="info_developed_by">Entwickelt von Garske Systems</string>
     <string name="info_website">garske-systems.de</string>
+    <string name="legal">Rechtliches</string>
+    <string name="legal_privacy">Datenschutzerklärung</string>
+    <string name="legal_terms">Nutzungsbedingungen</string>
+    <string name="legal_imprint">Impressum</string>
     <!-- Pflichtangabe für Adressdaten aus OpenStreetMap (ODbL, Nominatim-Nutzungsbedingungen) -->
     <string name="data_sources">Datenquellen (Adressen)</string>
     <string name="osm_attribution">© OpenStreetMap-Mitwirkende (ODbL)</string>

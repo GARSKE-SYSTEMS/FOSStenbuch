@@ -6,14 +6,14 @@ plugins {
 
 android {
     namespace = "de.fosstenbuch"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "de.garsys.fosstenbuch"
         minSdk = 26
-        targetSdk = 35
-        versionCode = 20260304
-        versionName = "2026.03.04"
+        targetSdk = 36
+        versionCode = 20261016
+        versionName = "2026.10.16"
     }
 
     signingConfigs {

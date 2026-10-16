@@ -87,4 +87,18 @@ class TripsTest {
         assertEquals("Hamburg", log[0].newValue)
         assertTrue(log.all { it.tripId == 1L })
     }
+
+    @Test
+    fun `beim Beenden zählt nur das Überschreiben erfasster Werte`() {
+        val running = Trip(id = 7, date = Date(1_000L), startLocation = "Büro", startOdometer = 100, vehicleId = 2, isActive = true)
+        val ended = running.copy(isActive = false, endLocation = "Kunde", endOdometer = 150, endTime = Date(2_000L), distanceKm = 50.0, purpose = "Beruflich")
+        assertTrue(Trips.auditDiff(running, ended).isEmpty())
+        // Korrigierter Start-Km-Stand beim Beenden wird protokolliert
+        assertEquals(listOf("Km-Stand Start"), Trips.auditDiff(running, ended.copy(startOdometer = 110)).map { it.fieldName })
+        // Automatische Fahrt: verschobene Abfahrt wird protokolliert (minutengenau), die erste Kategorie nicht
+        val ghost = running.copy(isActive = false, isGhost = true, endTime = Date(2_000L))
+        assertEquals(listOf("Abfahrt"), Trips.auditDiff(ghost, ended.copy(date = Date(3_601_000L))).map { it.fieldName })
+        // Bei abgeschlossenen Fahrten zählt auch das erste Ausfüllen (z.B. nachträgliche Notiz)
+        assertEquals(listOf("Notizen"), Trips.auditDiff(ended, ended.copy(notes = "neu")).map { it.fieldName })
+    }
 }

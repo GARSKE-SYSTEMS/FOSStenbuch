@@ -56,6 +56,20 @@
                 android:title="@string/info_website" />
         </menu>
     </item>
+    <!-- Pflichtangaben: Google Play verlangt die Datenschutzerklärung auch in der App, das DDG ein Impressum -->
+    <item android:title="@string/legal">
+        <menu>
+            <item
+                android:id="@+id/link_privacy"
+                android:title="@string/legal_privacy" />
+            <item
+                android:id="@+id/link_terms"
+                android:title="@string/legal_terms" />
+            <item
+                android:id="@+id/link_imprint"
+                android:title="@string/legal_imprint" />
+        </menu>
+    </item>
     <!-- Quellenangabe für Adressen und Ortsnamen aus OpenStreetMap (Pflicht laut ODbL) -->
     <item android:title="@string/data_sources">
         <menu>

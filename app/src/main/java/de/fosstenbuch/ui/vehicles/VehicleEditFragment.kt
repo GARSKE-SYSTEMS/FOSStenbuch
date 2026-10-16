@@ -6,7 +6,6 @@ import android.bluetooth.BluetoothManager
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
-import android.os.PowerManager
 import android.provider.Settings
 import android.view.View
 import androidx.activity.result.contract.ActivityResultContracts.RequestMultiplePermissions
@@ -43,7 +42,7 @@ import de.fosstenbuch.ui.common.toast
  *   Kennzeichen und Kraftstoff gesperrt, weil sie in den Exporten der bestehenden Fahrten erscheinen.
  * - Bluetooth-Gerät für die automatische Fahrterkennung. Die Erkennung selbst läuft über einen
  *   Manifest-Receiver (tracking/SystemReceiver); hier werden nur das Gerät und die nötigen
- *   Berechtigungen/Einstellungen eingerichtet.
+ *   Berechtigungen eingerichtet. Vor beidem steht der Hinweis zum Standort im Hintergrund ([disclose]).
  */
 class VehicleEditFragment : Fragment(R.layout.fragment_vehicle_edit) {
 
@@ -66,8 +65,8 @@ class VehicleEditFragment : Fragment(R.layout.fragment_vehicle_edit) {
         when {
             result.isEmpty() -> Unit // Anfrage abgebrochen
             result.values.none { it } -> denied()
-            // Standort im Vordergrund erlaubt → zweiter Schritt "Immer erlauben"
-            Manifest.permission.ACCESS_FINE_LOCATION in result && !locationAlways() -> fixLocation()
+            // Standort im Vordergrund erlaubt → zweiter Schritt "Immer zulassen"
+            Manifest.permission.ACCESS_FINE_LOCATION in result && !Geo.hasBackgroundPermission(requireContext()) -> fixLocation()
         }
         render()
     }
@@ -109,8 +108,7 @@ class VehicleEditFragment : Fragment(R.layout.fragment_vehicle_edit) {
             btName = null
             render()
         }
-        b.checkLocation.setOnClickListener { fixLocation() }
-        b.checkBattery.setOnClickListener { fixBattery() }
+        b.checkLocation.setOnClickListener { disclose { fixLocation() } }
         b.checkNotifications.setOnClickListener {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) permissions.launch(arrayOf(Manifest.permission.POST_NOTIFICATIONS))
         }
@@ -166,9 +164,7 @@ class VehicleEditFragment : Fragment(R.layout.fragment_vehicle_edit) {
         b.checks.isVisible = address != null
 
         val ctx = requireContext()
-        val power = ctx.getSystemService(PowerManager::class.java)
-        b.checkLocation.status(true, locationAlways(), R.string.masterdata_check_location)
-        b.checkBattery.status(true, power?.isIgnoringBatteryOptimizations(ctx.packageName) == true, R.string.masterdata_check_battery)
+        b.checkLocation.status(true, Geo.hasBackgroundPermission(ctx), R.string.masterdata_check_location)
         // Diese Berechtigungen gibt es erst ab Android 13 bzw. 12 – davor sind die Zeilen ausgeblendet
         b.checkNotifications.status(Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU, ctx.granted(Manifest.permission.POST_NOTIFICATIONS), R.string.masterdata_check_notifications)
         b.checkBluetooth.status(Build.VERSION.SDK_INT >= Build.VERSION_CODES.S, ctx.granted(Manifest.permission.BLUETOOTH_CONNECT), R.string.masterdata_check_bluetooth)
@@ -246,20 +242,33 @@ class VehicleEditFragment : Fragment(R.layout.fragment_vehicle_edit) {
         choose(getString(R.string.bluetooth_pick_title), names) { select(devices[it].address, devices[it].name) }
     }
 
-    /** Ein Gerät gehört zu höchstens einem Fahrzeug – sonst landen erkannte Fahrten beim falschen */
+    /**
+     * Ein Gerät gehört zu höchstens einem Fahrzeug – sonst landen erkannte Fahrten beim falschen.
+     * Mit dem Gerät beginnt die Aufzeichnung im Hintergrund, deshalb erst der Hinweis, dann ggf. die Standort-Anfrage
+     * (vor Android 10 ist schon die normale Standortberechtigung "immer", die Anfrage käme sonst nie mehr).
+     */
     private fun select(address: String, name: String?) = launch {
         val owner = requireContext().dao.vehicleByBluetooth(address)
-        if (owner != null && owner.id != argId) {
-            toast(getString(R.string.masterdata_bt_in_use, owner.label))
-        } else {
+        if (owner != null && owner.id != argId) return@launch toast(getString(R.string.masterdata_bt_in_use, owner.label))
+        disclose {
             btAddress = address
             btName = name
             render()
+            if (!Geo.hasBackgroundPermission(requireContext())) fixLocation()
         }
     }
 
     /**
-     * Standort "Immer erlauben" in zwei Schritten: erst Vordergrund, danach Hintergrund. Ab Android 11
+     * Deutlicher Hinweis zum Standort im Hintergrund, bevor die App ihn nutzt bzw. anfragt (Google-Play-Richtlinie).
+     * [then] läuft nur, wenn der Bildschirm noch offen ist (der Dialog gehört zur Activity).
+     */
+    private fun disclose(then: () -> Unit) =
+        confirm(getString(R.string.masterdata_location_disclosure_title), getString(R.string.masterdata_location_disclosure), getString(R.string.masterdata_continue)) {
+            if (_b != null) then()
+        }
+
+    /**
+     * Standort "Immer zulassen" in zwei Schritten: erst Vordergrund, danach Hintergrund. Ab Android 11
      * zeigt das System für den Hintergrund keinen Dialog, sondern öffnet die Standort-Einstellung der App.
      */
     private fun fixLocation() {
@@ -270,17 +279,6 @@ class VehicleEditFragment : Fragment(R.layout.fragment_vehicle_edit) {
         }
     }
 
-    /** Akku-Optimierung abschalten (die Berechtigung dafür steht im Manifest) */
-    @SuppressLint("BatteryLife") // bewusst: sonst verhindert Android den Start der Aufzeichnung aus dem Hintergrund
-    private fun fixBattery() {
-        // Manche Hersteller-ROMs haben den direkten Dialog nicht → App-Einstellungen als Ausweg
-        if (!openSettings(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)) openSettings(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
-    }
-
-    /** Standort auch im Hintergrund erlaubt? (vor Android 10 gilt die normale Berechtigung immer) */
-    private fun locationAlways() = Geo.hasPermission(requireContext()) &&
-        (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q || requireContext().granted(Manifest.permission.ACCESS_BACKGROUND_LOCATION))
-
     /** Nach "Nicht mehr fragen" zeigt Android keinen Dialog mehr – dann hilft nur die App-Einstellung */
     private fun denied() {
         val b = _b ?: return
@@ -289,7 +287,8 @@ class VehicleEditFragment : Fragment(R.layout.fragment_vehicle_edit) {
             .show()
     }
 
-    /** Öffnet eine System-Einstellung für diese App; false, wenn es sie auf dem Gerät nicht gibt */
-    private fun openSettings(action: String) =
-        runCatching { startActivity(Intent(action, ("package:" + requireContext().packageName).toUri())) }.isSuccess
+    /** Öffnet eine System-Einstellung für diese App (fehlt sie auf dem Gerät, passiert nichts) */
+    private fun openSettings(action: String) {
+        runCatching { startActivity(Intent(action, ("package:" + requireContext().packageName).toUri())) }
+    }
 }

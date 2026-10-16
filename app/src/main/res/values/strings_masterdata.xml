@@ -19,9 +19,12 @@
     <!-- %s = Fahrzeug, z. B. "VW Golf (B-AB 123)" -->
     <string name="masterdata_bt_in_use">Dieses Gerät ist bereits dem Fahrzeug %s zugeordnet. Entfernen Sie es dort zuerst.</string>
     <string name="masterdata_checks_title">Voraussetzungen</string>
-    <string name="masterdata_checks_hint">Die Erkennung läuft im Hintergrund, auch wenn die App geschlossen ist. Dafür braucht FOSStenbuch: Standort „Immer erlauben“ (sonst fehlen Strecke sowie Start- und Zielort), keine Akku-Optimierung (sonst verhindert Android den Start der Aufzeichnung), Benachrichtigungen (zeigen die laufende Aufzeichnung an) und die Bluetooth-Berechtigung (sonst erfährt die App nicht, wann sich das Auto verbindet).</string>
-    <string name="masterdata_check_location">Standort „Immer erlauben“</string>
-    <string name="masterdata_check_battery">Akku-Optimierung aus</string>
+    <string name="masterdata_checks_hint">Die Erkennung läuft im Hintergrund, auch wenn die App geschlossen ist. Dafür braucht FOSStenbuch: Standort „Immer zulassen“ (sonst fehlen Strecke sowie Start- und Zielort), Benachrichtigungen (zeigen die laufende Aufzeichnung an) und die Bluetooth-Berechtigung (sonst erfährt die App nicht, wann sich das Auto verbindet). Steht die Akkunutzung der App in den Android-Einstellungen auf „Eingeschränkt“, kann Android die Aufzeichnung verhindern.</string>
+    <!-- Hinweis vor Geräteauswahl und Standort-Anfrage (Google-Play-Richtlinie: "Standort", "Hintergrund/App geschlossen", Zweck, Weitergabe) -->
+    <string name="masterdata_location_disclosure_title">Standort im Hintergrund</string>
+    <string name="masterdata_location_disclosure">FOSStenbuch erfasst Standortdaten, um Fahrten mit diesem Fahrzeug automatisch aufzuzeichnen (Start- und Zielort sowie gefahrene Strecke), sobald sich Ihr Handy mit dem Bluetooth des Fahrzeugs verbindet – auch wenn die App geschlossen ist oder nicht verwendet wird.\n\nDie App speichert diese Daten nur auf Ihrem Gerät. Um die Adressen von Start- und Zielort zu ermitteln, sendet sie deren Koordinaten an OpenStreetMap (Nominatim), sofern dort kein gespeicherter Standort liegt.\n\nDafür braucht die App den Standort mit „Immer zulassen“ (ab Android 10). Mehr dazu: Menü › Rechtliches › Datenschutzerklärung.</string>
+    <string name="masterdata_continue">Weiter</string>
+    <string name="masterdata_check_location">Standort „Immer zulassen“</string>
     <string name="masterdata_check_notifications">Benachrichtigungen</string>
     <string name="masterdata_check_bluetooth">Bluetooth-Berechtigung</string>
     <!-- %s = eine der Voraussetzungen oben -->

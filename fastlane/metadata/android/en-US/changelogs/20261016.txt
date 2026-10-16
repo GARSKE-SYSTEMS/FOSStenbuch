@@ -1,0 +1,7 @@
+Completely reworked: more stable and battery-friendly.
+• Trips are started and ended (no more back-dated entries); every change is logged
+• Automatic trip detection via car Bluetooth without a permanent service
+• Many fixes for recording, export, backup and statistics
+• Austrian licence plates (e.g. W 1234AB)
+• New design and app icon
+• Privacy policy, terms of use and legal notice in the app

@@ -80,9 +80,12 @@ object Trips {
 
     // ── Schreiboperationen ───────────────────────────────────────────────────
 
-    /** Startet eine Fahrt (isActive). Es kann immer nur eine laufen. Liefert die neue ID. */
+    /**
+     * Startet eine Fahrt (isActive) – der einzige Weg zu einer neuen Fahrt (neben der automatischen
+     * Erkennung). Es kann immer nur eine laufen. Ende und Km-Stand Ende kommen erst beim Beenden. Liefert die neue ID.
+     */
     suspend fun start(context: Context, trip: Trip): Long {
-        val t = trip.copy(id = 0, isActive = true, isGhost = false, endTime = null, startLocation = trip.startLocation.trim())
+        val t = trip.copy(id = 0, isActive = true, isGhost = false, endTime = null, endOdometer = null, startLocation = trip.startLocation.trim())
         validateStart(t).let { if (it.isNotEmpty()) throw Invalid(it) }
         val db = context.db
         return db.withTransaction {
@@ -93,8 +96,9 @@ object Trips {
     }
 
     /**
-     * Speichert eine abgeschlossene Fahrt: neu anlegen (id = 0), laufende Fahrt beenden,
-     * automatische Fahrt übernehmen oder bestehende Fahrt bearbeiten.
+     * Speichert eine abgeschlossene Fahrt: laufende Fahrt beenden, automatische Fahrt übernehmen oder
+     * bestehende Fahrt bearbeiten. Nachtragen (neu anlegen) gibt es bewusst nicht: Fahrten werden gestartet,
+     * beendet und danach höchstens geändert – jede Änderung landet im Protokoll ([auditDiff]).
      * Die Distanz ergibt sich immer aus den Kilometerständen.
      *
      * Wichtig: Beim Bearbeiten [trip] per `geladeneFahrt.copy(...)` erzeugen, damit Felder
@@ -108,26 +112,25 @@ object Trips {
             endLocation = trip.endLocation.trim(),
             distanceKm = odometerDistance(trip) ?: trip.distanceKm
         )
+        require(t.id != 0L) { "Neue Fahrten bitte starten und beenden" }
         validate(t).let { if (it.isNotEmpty()) throw Invalid(it) }
         val db = context.db
         return db.withTransaction {
             val dao = db.dao()
-            val old = if (t.id != 0L) dao.trip(t.id) ?: throw Rejected("Die Fahrt wurde inzwischen gelöscht") else null
+            val old = dao.trip(t.id) ?: throw Rejected("Die Fahrt wurde inzwischen gelöscht")
             // Bluetooth hat sich kurz nach dem Trennen wieder verbunden: Die Fahrt läuft weiter
-            require(old == null || !old.isGhost || old.endTime != null) {
+            require(!old.isGhost || old.endTime != null) {
                 "Die Fahrt wird gerade wieder aufgezeichnet – bitte nach dem Ende übernehmen"
             }
-            // Nur Änderungen an bereits abgeschlossenen Fahrten werden gesperrt bzw. protokolliert
-            if (old != null && !old.isActive && !old.isGhost) {
-                require(!isProtected(dao, old.vehicleId)) { "Änderungssicher – Bearbeitung gesperrt" }
-                dao.insertAuditLogs(auditDiff(old, t))
-            }
+            // Abgeschlossene Fahrten änderungssicherer Fahrzeuge sind gesperrt
+            if (!old.isActive && !old.isGhost) require(!isProtected(dao, old.vehicleId)) { "Änderungssicher – Bearbeitung gesperrt" }
+            dao.insertAuditLogs(auditDiff(old, t))
             // Eine gerade übernommene automatische Fahrt ist noch nie exportiert worden
-            val final = if (old?.isGhost == true) t.copy(isExported = false) else t
-            val id = if (old == null) dao.insertTrip(final.copy(id = 0)) else final.id.also { dao.updateTrip(final) }
+            val final = if (old.isGhost) t.copy(isExported = false) else t
+            dao.updateTrip(final)
             recomputeChain(dao, t.vehicleId)
-            if (old != null && old.vehicleId != t.vehicleId) recomputeChain(dao, old.vehicleId)
-            id
+            if (old.vehicleId != t.vehicleId) recomputeChain(dao, old.vehicleId)
+            t.id
         }
     }
 
@@ -214,7 +217,12 @@ object Trips {
 
     // ── Änderungsprotokoll ───────────────────────────────────────────────────
 
-    /** Ein Protokolleintrag je geändertem Feld (lesbare Feldnamen und Werte) */
+    /**
+     * Ein Protokolleintrag je geändertem Feld (lesbare Feldnamen und Werte). Beim Beenden einer laufenden
+     * bzw. Übernehmen einer automatischen Fahrt ist das erste Ausfüllen (Ziel, Ankunft, Km-Stand Ende …)
+     * keine Änderung: Protokolliert wird dann nur das Überschreiben schon erfasster Werte; die Distanz
+     * folgt ohnehin aus den Km-Ständen.
+     */
     fun auditDiff(old: Trip, new: Trip, now: Date = Date()): List<TripAuditLog> {
         fun date(d: Date?) = d?.let(Fmt::dateTime)
         val fields: List<Triple<String, Any?, Any?>> = listOf(
@@ -233,7 +241,8 @@ object Trips {
             Triple("Storniert", old.isCancelled, new.isCancelled),
             Triple("Stornogrund", old.cancellationReason, new.cancellationReason)
         )
-        return fields.filter { (_, a, b) -> a != b }.map { (name, a, b) ->
+        val completing = old.isActive || old.isGhost
+        return fields.filter { (name, a, b) -> a != b && !(completing && (a == null || a == "" || name == "Distanz (km)")) }.map { (name, a, b) ->
             TripAuditLog(tripId = old.id, fieldName = name, oldValue = a?.toString(), newValue = b?.toString(), changedAt = now)
         }
     }

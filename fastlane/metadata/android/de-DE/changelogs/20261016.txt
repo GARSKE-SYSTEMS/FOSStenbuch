@@ -1,0 +1,7 @@
+Komplett überarbeitet: stabiler und sparsamer.
+• Fahrten werden gestartet und beendet (kein Nachtragen mehr); jede Änderung wird protokolliert
+• Automatische Fahrterkennung per Auto-Bluetooth ohne Dauerdienst
+• Viele Fehler bei Aufzeichnung, Export, Backup und Statistik behoben
+• Österreichische Kennzeichen (z. B. W 1234AB)
+• Neues Design und App-Icon
+• Datenschutzerklärung, Nutzungsbedingungen und Impressum in der App

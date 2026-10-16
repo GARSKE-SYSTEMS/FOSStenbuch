@@ -125,7 +125,10 @@ object Backup {
         }
     }
 
-    /** Löscht alle Daten und legt die zwei Standard-Kategorien neu an – alles in einer Transaktion */
+    /**
+     * Löscht alle Daten: die Datenbank in einer Transaktion (danach wieder mit den zwei Standard-Kategorien),
+     * anschließend Fahrername und Cache-Dateien
+     */
     suspend fun deleteAll(context: Context) {
         val db = context.db
         db.withTransaction {
@@ -135,6 +138,10 @@ object Backup {
         }
         // Die gewählte Standard-Kategorie ist weg (SQLite vergibt ihre ID nicht erneut)
         Settings.set(context, Settings.DEFAULT_PURPOSE_ID, null)
+        // Auch die übrigen persönlichen Daten: Fahrername und der ganze Cache (exports/, backup/ und Altdateien
+        // der Vorversion, die Exporte und Backups direkt in den Cache-Ordner legte)
+        Settings.set(context, Settings.DRIVER_NAME, null)
+        withContext(Dispatchers.IO) { context.cacheDir.listFiles()?.forEach { it.deleteRecursively() } }
         // Die aufgezeichnete Fahrt ist gelöscht. Nachzügler-Schreibzugriffe des Dienstes laufen ins
         // Leere, denn gelöschte IDs vergibt SQLite (AUTOINCREMENT) nie erneut.
         if (TrackingService.live.value != null) TrackingService.stop(context)

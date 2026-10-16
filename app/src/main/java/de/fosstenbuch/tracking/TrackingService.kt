@@ -236,8 +236,14 @@ class TrackingService : Service() {
         /** GPS-Aufzeichnung für eine manuell gestartete Fahrt (aus sichtbarer UI; im Hintergrund nur mit Startausnahme) */
         fun startManual(context: Context, tripId: Long) = start(context, tripId)
 
-        /** GPS-Aufzeichnung für eine automatisch erkannte Fahrt */
-        fun startGhost(context: Context, tripId: Long) = start(context, tripId)
+        /**
+         * GPS-Aufzeichnung für eine automatisch erkannte Fahrt – nur mit "Immer zulassen". Diese Berechtigung
+         * fragt die App erst nach dem Hinweisdialog an (Google-Play-Richtlinie); ohne sie bekäme ein aus dem
+         * Hintergrund gestarteter Dienst ab Android 11 ohnehin keine Positionen.
+         */
+        fun startGhost(context: Context, tripId: Long) {
+            if (Geo.hasBackgroundPermission(context)) start(context, tripId)
+        }
 
         /** Beendet die laufende Aufzeichnung */
         fun stop(context: Context) {
@@ -258,8 +264,8 @@ class TrackingService : Service() {
             try {
                 ContextCompat.startForegroundService(context, Intent(context, TrackingService::class.java).putExtra(EXTRA_TRIP_ID, tripId))
             } catch (e: IllegalStateException) {
-                // Ab Android 12 darf ein Vordergrunddienst aus dem Hintergrund nur mit Ausnahme starten
-                // (z.B. Akku-Optimierung für die App abgeschaltet). Die Fahrt bleibt ohne GPS erhalten.
+                // Ab Android 12 darf ein Vordergrunddienst aus dem Hintergrund nur mit Ausnahme starten (z.B. kurz
+                // nach Bluetooth-Verbindung oder App-Update, nicht bei Akkunutzung "Eingeschränkt"). Die Fahrt bleibt ohne GPS erhalten.
             }
         }
     }

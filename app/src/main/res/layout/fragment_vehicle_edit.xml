@@ -187,13 +187,6 @@
                 android:gravity="start|center_vertical" />
 
             <com.google.android.material.button.MaterialButton
-                android:id="@+id/check_battery"
-                style="@style/Widget.Material3.Button.TextButton"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="start|center_vertical" />
-
-            <com.google.android.material.button.MaterialButton
                 android:id="@+id/check_notifications"
                 style="@style/Widget.Material3.Button.TextButton"
                 android:layout_width="match_parent"

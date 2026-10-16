@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <!-- Adresssuche und Ortsnamen (OpenStreetMap Nominatim) -->
     <uses-permission android:name="android.permission.INTERNET" />
@@ -17,8 +18,6 @@
     <uses-permission
         android:name="android.permission.BLUETOOTH"
         android:maxSdkVersion="30" />
-    <!-- Ohne Akku-Optimierung darf die App bei Bluetooth-Verbindung die GPS-Aufzeichnung starten -->
-    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
 
     <application
         android:name=".App"
@@ -38,6 +37,20 @@
             </intent-filter>
         </activity>
 
+        <!-- Ohne den Emoji-Initialisierer von AppCompat: Er fragt beim Start bei den Google-Play-Diensten
+             eine Schriftart an. Die App braucht keine nachgeladenen Emojis und hat so keinen Google-Kontakt.
+             MissingClass: startup-runtime kommt nur zur Laufzeit über AppCompat mit. -->
+        <provider
+            android:name="androidx.startup.InitializationProvider"
+            android:authorities="${applicationId}.androidx-startup"
+            android:exported="false"
+            tools:ignore="MissingClass"
+            tools:node="merge">
+            <meta-data
+                android:name="androidx.emoji2.text.EmojiCompatInitializer"
+                tools:node="remove" />
+        </provider>
+
         <!-- Teilen von Export- und Backup-Dateien aus dem Cache-Verzeichnis -->
         <provider
             android:name="androidx.core.content.FileProvider"
@@ -56,7 +69,9 @@
             android:foregroundServiceType="location" />
 
         <!-- Systemereignisse: Bluetooth verbunden/getrennt, Neustart, App-Update, Zeitumstellung, Erinnerungs-Alarm.
-             exported=true, weil die Ereignisse vom System (Bluetooth-Dienst) kommen. -->
+             exported=true, weil die Ereignisse vom System (Bluetooth-Dienst) kommen. Nach ACL_CONNECTED/DISCONNECTED
+             darf die App 20 s lang einen Vordergrunddienst starten (Ausnahme des Bluetooth-Diensts) – deshalb
+             braucht die automatische Aufzeichnung keine Akku-Ausnahme. -->
         <receiver
             android:name=".tracking.SystemReceiver"
             android:exported="true">

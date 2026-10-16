@@ -139,6 +139,7 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
         b.buttonRestore.setOnClickListener { pickBackup.launch("*/*") }
         b.buttonDeleteAll.setOnClickListener {
             confirm(getString(R.string.settings_delete_all_title), getString(R.string.settings_delete_all_message), getString(R.string.delete)) {
+                b.editDriverName.text = null // wird mitgelöscht
                 vm.deleteAll()
             }
         }

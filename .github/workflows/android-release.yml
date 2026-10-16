@@ -5,6 +5,10 @@ on:
     tags:
       - '*'
 
+# Standard-Token im Repo ist nur lesend; zum Anlegen des Releases braucht es Schreibrecht
+permissions:
+  contents: write
+
 jobs:
   build:
     name: Build Release APK & AAB
@@ -12,13 +16,18 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
 
+    # Tag "2026.10.16" = versionName; versionCode ohne Punkte (20261016) benennt die Changelog-Datei
     - name: Extract version from tag
-      run: echo "VERSION_NAME=${GITHUB_REF_NAME}" >> $GITHUB_ENV
+      run: |
+        echo "VERSION_NAME=${GITHUB_REF_NAME}" >> $GITHUB_ENV
+        echo "VERSION_CODE=${GITHUB_REF_NAME//./}" >> $GITHUB_ENV
+        # Ohne Store-Changelog kein Release (action-gh-release v3 würde nur warnen)
+        test -s "fastlane/metadata/android/de-DE/changelogs/${GITHUB_REF_NAME//./}.txt"
 
     - name: Set up JDK 17
-      uses: actions/setup-java@v4
+      uses: actions/setup-java@v5
       with:
         java-version: '17'
         distribution: 'temurin'
@@ -59,9 +68,11 @@ jobs:
       run: rm -f ${{ github.workspace }}/release.keystore
 
     - name: Create GitHub Release
-      uses: softprops/action-gh-release@v2
+      uses: softprops/action-gh-release@v3
       with:
         name: FOSStenbuch ${{ env.VERSION_NAME }}
+        # Release-Text = Store-Changelog (ob er existiert, prüft "Extract version from tag")
+        body_path: fastlane/metadata/android/de-DE/changelogs/${{ env.VERSION_CODE }}.txt
         generate_release_notes: true
         files: |
           FOSStenbuch-${{ env.VERSION_NAME }}.apk

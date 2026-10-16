@@ -64,6 +64,11 @@ object Geo {
     fun hasPermission(context: Context): Boolean =
         PERMISSIONS.any { ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED }
 
+    /** Standort auch im Hintergrund ("Immer zulassen")? Vor Android 10 gilt die normale Berechtigung immer. */
+    fun hasBackgroundPermission(context: Context): Boolean = hasPermission(context) &&
+        (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q ||
+            ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_BACKGROUND_LOCATION) == PackageManager.PERMISSION_GRANTED)
+
     /** Aktuelle Position (max. 10 s warten, sonst letzte bekannte), null ohne Berechtigung/Empfang */
     @SuppressLint("MissingPermission") // geprüft über hasPermission()
     suspend fun currentLocation(context: Context): Location? {
@@ -102,9 +107,12 @@ object Geo {
         }
     }
 
-    /** Adresse zu Koordinaten als "Straße Nr, Ort", null bei Fehler */
+    /**
+     * Adresse zu Koordinaten als "Straße Nr, Ort", null bei Fehler. Gesendet wird auf 4 Nachkommastellen
+     * (ca. 10 m) gerundet: genauer sind die gefilterten GPS-Positionen (bis 30 m) ohnehin nicht – Datensparsamkeit.
+     */
     suspend fun reverse(lat: Double, lng: Double): String? = try {
-        val json = JSONObject(get(String.format(Locale.US, "reverse?format=json&lat=%.5f&lon=%.5f", lat, lng)))
+        val json = JSONObject(get(String.format(Locale.US, "reverse?format=json&lat=%.4f&lon=%.4f", lat, lng)))
         val a = json.optJSONObject("address")
         val street = listOf(a?.optString("road"), a?.optString("house_number")).filterNot { it.isNullOrEmpty() }.joinToString(" ")
         val city = listOf("city", "town", "village", "municipality").map { a?.optString(it).orEmpty() }.firstOrNull { it.isNotEmpty() }

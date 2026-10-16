@@ -52,8 +52,9 @@ import java.util.Date
 
 /**
  * Formular für eine Fahrt. Was es anbietet, ergibt sich allein aus der geladenen Fahrt ([Mode]):
- * neue Fahrt starten oder nachtragen, laufende Fahrt beenden oder verwerfen, automatisch erkannte Fahrt
- * übernehmen oder verwerfen, laufende automatische Aufzeichnung beenden, abgeschlossene Fahrt bearbeiten.
+ * neue Fahrt starten (Nachtragen gibt es bewusst nicht), laufende Fahrt beenden oder verwerfen, automatisch
+ * erkannte Fahrt übernehmen oder verwerfen, laufende automatische Aufzeichnung beenden, abgeschlossene Fahrt
+ * bearbeiten (jede Änderung wird protokolliert, siehe Trips.auditDiff).
  *
  * Zustand: Feldtexte stellt Android nach Rotation und nach der Rückkehr aus "Neuen Standort
  * speichern" selbst wieder her. Alles andere (Zeiten, gewählte IDs, Km-Vorschläge) steht in Feldern
@@ -99,7 +100,6 @@ class TripEditFragment : Fragment(R.layout.fragment_trip_edit) {
     private var purposes = emptyList<TripPurpose>()
     private var loading: Job? = null
 
-    private val suggestPermission = registerForActivityResult(RequestMultiplePermissions()) { suggestLocation() }
     private val startPermission = registerForActivityResult(RequestMultiplePermissions()) { start() }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -235,8 +235,9 @@ class TripEditFragment : Fragment(R.layout.fragment_trip_edit) {
         // Erst danach als befüllt merken: Bricht das Drehen die Km-Abfrage ab, läuft populate erneut
         suggestOdometer()
         populated = true
-        // Ortsvorschlag nur, wo die Fahrt gerade hier beginnt bzw. endet
-        if (mode == Mode.NEW || mode == Mode.ACTIVE) suggestPermission.launch(Geo.PERMISSIONS)
+        // Ortsvorschlag nur, wo die Fahrt gerade hier beginnt bzw. endet – und nur mit schon erteilter
+        // Berechtigung: Gefragt wird erst bei "Fahrt starten" (Google Play: Anfrage nur im Zusammenhang)
+        if ((mode == Mode.NEW || mode == Mode.ACTIVE) && Geo.hasPermission(ctx)) suggestLocation()
     }
 
     /** Hinweis und Knöpfe passend zum Modus; Fahrten änderungssicherer Fahrzeuge sind komplett gesperrt */
@@ -246,15 +247,18 @@ class TripEditFragment : Fragment(R.layout.fragment_trip_edit) {
         b.form.isVisible = mode != Mode.RECORDING
         if (locked) b.form.children.forEach { it.isEnabled = false }
         b.rowTemplates.isVisible = mode != Mode.RECORDING && !locked
-        b.buttonStart.isVisible = mode == Mode.NEW
-        b.buttonSave.isVisible = !locked
+        // Eine neue Fahrt beginnt jetzt (Startzeit beim Tippen auf "Fahrt starten"); Ankunft und
+        // Km-Stand Ende folgen beim Beenden
+        val starting = mode == Mode.NEW
+        for (v in listOf(b.layoutDate, b.layoutEndTime, b.layoutEndKm, b.textDistance)) v.isVisible = !starting
+        b.buttonStart.isVisible = starting
+        b.buttonSave.isVisible = !locked && !starting
         b.buttonSave.setText(
             when (mode) {
-                Mode.NEW -> R.string.trips_save_completed
                 Mode.ACTIVE -> R.string.end_trip
                 Mode.GHOST -> R.string.ghost_accept
                 Mode.RECORDING -> R.string.trips_end_recording
-                Mode.EDIT -> R.string.save
+                Mode.NEW, Mode.EDIT -> R.string.save
             }
         )
         // Laufende Fahrt verwerfen (z.B. versehentlich gestartet) – Trips.delete erlaubt das auch bei
@@ -316,14 +320,15 @@ class TripEditFragment : Fragment(R.layout.fragment_trip_edit) {
     private fun start() = submit {
         loading?.join() // nach einer Rotation kann die Antwort vor dem Laden ankommen
         val ctx = requireContext()
+        date = Date() // Startzeit = jetzt, nicht das Öffnen des Formulars
         TrackingService.startManual(ctx, Trips.start(ctx, formTrip())) // startet ohne Berechtigung nichts
         close()
     }
 
-    /** Speichert: Nachtrag, laufende Fahrt beenden, automatische Fahrt übernehmen oder Änderungen */
+    /** Speichert: laufende Fahrt beenden, automatische Fahrt übernehmen oder Änderungen */
     private fun save() = submit {
         val ctx = requireContext()
-        val old = trip ?: Trip(date = date, startLocation = "")
+        val old = trip ?: return@submit
         val t = formTrip()
         // Die GPS-Aufzeichnung einer beendeten Fahrt stoppt der TrackingService selbst (er beobachtet die Fahrt)
         Trips.save(ctx, t)
@@ -356,7 +361,7 @@ class TripEditFragment : Fragment(R.layout.fragment_trip_edit) {
         close()
     }
 
-    /** Verhindert Doppel-Tipps (sonst z.B. zwei nachgetragene Fahrten) */
+    /** Verhindert Doppel-Tipps (sonst z.B. zweimal dieselbe Fahrt beendet) */
     private fun setBusy(busy: Boolean) = listOf(b.buttonStart, b.buttonSave, b.buttonDiscard).forEach { it.isEnabled = !busy }
 
     /** Zeigt Feldfehler (leere Map = alle entfernen) und scrollt zum obersten */
