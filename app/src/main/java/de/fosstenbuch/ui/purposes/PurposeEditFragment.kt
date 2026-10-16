@@ -18,7 +18,7 @@ import de.fosstenbuch.ui.common.launch
 import de.fosstenbuch.ui.common.textOrNull
 
 /** Farbe neuer Kategorien (wie die Standard-Kategorie "Beruflich") */
-private const val DEFAULT_COLOR = "#6200EE"
+private const val DEFAULT_COLOR = "#0E8DBF"
 
 /**
  * Kategorie anlegen/bearbeiten ([argId], 0 = neu). Der Name ist Pflicht und eindeutig

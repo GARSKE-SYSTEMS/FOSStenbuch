@@ -1,13 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Dunkles Garske-Schema: hellere Stufen derselben Farbtöne für ausreichenden Kontrast auf dunklem Grund -->
 <resources>
-    <!-- Dunkles Farbschema: hellere Töne für ausreichenden Kontrast auf dunklem Grund -->
-    <color name="primary">#FFD0BCFF</color>
-    <color name="on_primary">#FF381E72</color>
-    <color name="primary_container">#FF4F378B</color>
-    <color name="on_primary_container">#FFEADDFF</color>
-    <color name="secondary">#FF80CBC4</color>
-    <color name="on_secondary">#FF003731</color>
-    <color name="secondary_container">#FF004D40</color>
-    <color name="on_secondary_container">#FFB2EBE9</color>
-    <color name="status_bar">#FF4F378B</color>
+    <color name="primary">#FF9DCAFF</color>
+    <color name="on_primary">#FF003258</color>
+    <color name="primary_container">#FF00497D</color>
+    <color name="on_primary_container">#FFD0E4FF</color>
+    <color name="secondary">#FF7FD0FF</color>
+    <color name="on_secondary">#FF00344A</color>
+    <color name="secondary_container">#FF004C6A</color>
+    <color name="on_secondary_container">#FFC5E7FF</color>
+    <color name="error">#FFFFB3B2</color>
+    <color name="on_error">#FF680014</color>
+    <color name="status_bar">#FF011B30</color>
 </resources>

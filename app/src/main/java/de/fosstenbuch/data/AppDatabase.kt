@@ -36,8 +36,8 @@ abstract class AppDatabase : RoomDatabase() {
 
         /** Die beiden Standard-Kategorien (neue Datenbank bzw. nach "Alle Daten löschen") */
         val DEFAULT_PURPOSES = listOf(
-            TripPurpose(name = "Beruflich", isBusinessRelevant = true, color = "#6200EE", isDefault = true),
-            TripPurpose(name = "Privat", isBusinessRelevant = false, color = "#018786", isDefault = true)
+            TripPurpose(name = "Beruflich", isBusinessRelevant = true, color = "#0E8DBF", isDefault = true),
+            TripPurpose(name = "Privat", isBusinessRelevant = false, color = "#559F5A", isDefault = true)
         )
 
         private fun seedPurposes(db: SupportSQLiteDatabase) = DEFAULT_PURPOSES.forEach {

@@ -81,7 +81,7 @@ data class TripPurpose(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val name: String,
     val isBusinessRelevant: Boolean,
-    val color: String = "#6200EE",
+    val color: String = "#0E8DBF",
     /** Standard-Kategorien können nicht gelöscht werden */
     val isDefault: Boolean = false
 )

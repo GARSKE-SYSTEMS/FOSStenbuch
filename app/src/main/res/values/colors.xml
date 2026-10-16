@@ -1,16 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Farbschema von Garske Systems (Logo: Navy #022948, Blau #0E8DBF, Gelb #FDBA26, Grün #559F5A, Rot #DF283A).
+     Helles Schema; das dunkle steht in values-night/colors.xml (gleiche Farbtöne, hellere Stufen). -->
 <resources>
-    <!-- Helles Farbschema (Dunkel: values-night/colors.xml) -->
-    <color name="primary">#FF6200EE</color>
+    <color name="primary">#FF022948</color>
     <color name="on_primary">#FFFFFFFF</color>
-    <color name="primary_container">#FFEADDFF</color>
-    <color name="on_primary_container">#FF21005D</color>
-    <color name="secondary">#FF018786</color>
+    <color name="primary_container">#FFD0E4FF</color>
+    <color name="on_primary_container">#FF001D36</color>
+    <color name="secondary">#FF0E8DBF</color>
     <color name="on_secondary">#FFFFFFFF</color>
-    <color name="secondary_container">#FFB2EBE9</color>
-    <color name="on_secondary_container">#FF004D40</color>
+    <color name="secondary_container">#FFC5E7FF</color>
+    <color name="on_secondary_container">#FF001E2E</color>
+    <color name="error">#FFDF283A</color>
+    <color name="on_error">#FFFFFFFF</color>
     <!-- Statusleiste: in beiden Modi dunkel, damit die weißen Symbole lesbar bleiben -->
-    <color name="status_bar">#FF3700B3</color>
-    <!-- Hintergrund des App-Icons -->
-    <color name="ic_background">#FFE3F2FD</color>
+    <color name="status_bar">#FF022948</color>
+    <!-- Hintergrund des App-Icons (Navy) -->
+    <color name="ic_background">#FF022948</color>
 </resources>
