@@ -14,6 +14,4 @@
     <color name="on_error">#FFFFFFFF</color>
     <!-- Statusleiste: in beiden Modi dunkel, damit die weißen Symbole lesbar bleiben -->
     <color name="status_bar">#FF022948</color>
-    <!-- Hintergrund des App-Icons (Navy) -->
-    <color name="ic_background">#FF022948</color>
 </resources>
