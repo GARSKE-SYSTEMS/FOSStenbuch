@@ -162,6 +162,12 @@ Beiträge sind herzlich willkommen! So kannst du mitmachen:
 
 Dieses Projekt ist unter der **MIT-Lizenz** lizenziert – siehe [LICENSE](LICENSE) für Details.
 
+### Drittinhalte
+
+- **Icons:** [Material Icons](https://github.com/google/material-design-icons) von Google, lizenziert unter der [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0).
+- **Adressdaten:** Adresssuche und Ortsnamen stammen von [OpenStreetMap](https://www.openstreetmap.org) über den Dienst [Nominatim](https://nominatim.org) – Daten © OpenStreetMap-Mitwirkende, lizenziert unter der [Open Database License (ODbL)](https://www.openstreetmap.org/copyright). Die App zeigt diese Quellenangabe in der Adresssuche und im Seitenmenü und hält die [Nominatim-Nutzungsbedingungen](https://operations.osmfoundation.org/policies/nominatim/) ein (eindeutiger User-Agent, höchstens eine Anfrage pro Sekunde).
+- **Bibliotheken:** AndroidX, Material Components, Room und Kotlin Coroutines (jeweils Apache License 2.0).
+
 ```
 MIT License
 
