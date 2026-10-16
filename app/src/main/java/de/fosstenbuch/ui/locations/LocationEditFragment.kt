@@ -22,6 +22,7 @@ import de.fosstenbuch.ui.common.doubleOrNull
 import de.fosstenbuch.ui.common.launch
 import de.fosstenbuch.ui.common.textOrNull
 import de.fosstenbuch.ui.common.toast
+import kotlinx.coroutines.Job
 import java.io.IOException
 import java.net.UnknownHostException
 import java.util.Locale
@@ -127,6 +128,9 @@ class LocationEditFragment : Fragment(R.layout.fragment_location_edit) {
             .setPositiveButton(R.string.masterdata_search, null) // Listener unten, damit der Dialog offen bleibt
             .setNegativeButton(R.string.cancel, null)
             .show()
+        // Schließt der Nutzer den Dialog, wird eine noch wartende Suche gar nicht erst gesendet
+        var job: Job? = null
+        dialog.setOnDismissListener { job?.cancel() }
         val button = dialog.getButton(DialogInterface.BUTTON_POSITIVE)
         button.setOnClickListener {
             val query = d.query.textOrNull() ?: return@setOnClickListener
@@ -135,13 +139,14 @@ class LocationEditFragment : Fragment(R.layout.fragment_location_edit) {
             button.isEnabled = false
             d.queryLayout.error = null
             d.queryLayout.helperText = getString(R.string.search_address_searching)
-            launch {
+            job = launch {
                 d.queryLayout.error = try {
                     val places = Geo.search(query)
                     when {
                         !dialog.isShowing -> return@launch // inzwischen abgebrochen
                         places.isEmpty() -> getString(R.string.search_address_no_results)
                         else -> {
+                            dialog.setOnDismissListener(null) // Erfolg: nicht sich selbst abbrechen
                             dialog.dismiss()
                             pick(places)
                             null

@@ -36,6 +36,7 @@
         android:layout_height="match_parent"
         android:layout_gravity="start"
         android:fitsSystemWindows="false"
+        app:itemMaxLines="2"
         app:headerLayout="@layout/nav_header"
         app:menu="@menu/drawer_menu" />
 

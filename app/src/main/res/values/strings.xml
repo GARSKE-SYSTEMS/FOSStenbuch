@@ -293,9 +293,9 @@
     <string name="info_developed_by">Entwickelt von Garske Systems</string>
     <string name="info_website">garske-systems.de</string>
     <!-- Pflichtangabe für Adressdaten aus OpenStreetMap (ODbL, Nominatim-Nutzungsbedingungen) -->
-    <string name="data_sources">Datenquellen</string>
-    <string name="osm_attribution">Adressdaten © OpenStreetMap-Mitwirkende (ODbL)</string>
-    <string name="osm_attribution_link">Adressdaten © OpenStreetMap-Mitwirkende, ODbL – openstreetmap.org/copyright</string>
+    <string name="data_sources">Datenquellen (Adressen)</string>
+    <string name="osm_attribution">© OpenStreetMap-Mitwirkende (ODbL)</string>
+    <string name="osm_attribution_link">Adressdaten © OpenStreetMap-Mitwirkende, ODbL – https://www.openstreetmap.org/copyright</string>
 
     <!-- Automatische Fahrterkennung (Bluetooth) -->
     <string name="bluetooth_tracking_section">Automatisches Tracking</string>

@@ -104,7 +104,7 @@ object Geo {
 
     /** Adresse zu Koordinaten als "Straße Nr, Ort", null bei Fehler */
     suspend fun reverse(lat: Double, lng: Double): String? = try {
-        val json = JSONObject(get(String.format(Locale.US, "reverse?format=json&lat=%f&lon=%f", lat, lng)))
+        val json = JSONObject(get(String.format(Locale.US, "reverse?format=json&lat=%.5f&lon=%.5f", lat, lng)))
         val a = json.optJSONObject("address")
         val street = listOf(a?.optString("road"), a?.optString("house_number")).filterNot { it.isNullOrEmpty() }.joinToString(" ")
         val city = listOf("city", "town", "village", "municipality").map { a?.optString(it).orEmpty() }.firstOrNull { it.isNotEmpty() }
@@ -117,22 +117,22 @@ object Geo {
         null
     }
 
-    /** Sorgt dafür, dass Anfragen nacheinander und mit mindestens 1 s Abstand laufen */
+    /** Taktet den Beginn der Anfragen auf mindestens 1 s Abstand */
     private val throttle = Mutex()
     private var lastRequestMs = 0L
 
     /**
      * GET-Anfrage an Nominatim. Die Nutzungsbedingungen verlangen einen eindeutigen User-Agent und
      * erlauben höchstens 1 Anfrage pro Sekunde – auch wenn z.B. Start- und Zielort direkt nacheinander
-     * aufgelöst werden oder der Nutzer mehrmals schnell sucht.
+     * aufgelöst werden oder der Nutzer mehrmals schnell sucht. Gesperrt wird nur das Warten, nicht die
+     * Anfrage selbst: Eine hängende Anfrage hält so keine spätere auf.
      */
-    private suspend fun get(path: String): String = throttle.withLock {
-        delay(lastRequestMs + 1_000 - System.nanoTime() / 1_000_000)
-        try {
-            request(path)
-        } finally {
+    private suspend fun get(path: String): String {
+        throttle.withLock {
+            delay(lastRequestMs + 1_000 - System.nanoTime() / 1_000_000)
             lastRequestMs = System.nanoTime() / 1_000_000
         }
+        return request(path)
     }
 
     private suspend fun request(path: String): String = withContext(Dispatchers.IO) {

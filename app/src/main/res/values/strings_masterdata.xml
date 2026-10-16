@@ -43,5 +43,5 @@
     <string name="masterdata_latitude_invalid">Bitte eine Zahl zwischen -90 und 90 eingeben</string>
     <string name="masterdata_longitude_invalid">Bitte eine Zahl zwischen -180 und 180 eingeben</string>
     <string name="masterdata_search">Suchen</string>
-    <string name="masterdata_search_pick">Ergebnis auswählen (© OpenStreetMap-Mitwirkende)</string>
+    <string name="masterdata_search_pick">Ergebnis auswählen</string>
 </resources>
