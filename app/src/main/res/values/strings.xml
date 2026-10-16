@@ -53,7 +53,7 @@
     <string name="vehicle_make">Hersteller</string>
     <string name="vehicle_model">Modell</string>
     <string name="license_plate">Kennzeichen</string>
-    <string name="license_plate_hint">z.B. B AB 1234</string>
+    <string name="license_plate_hint">z.B. B AB 1234 (DE) oder W 1234AB (AT)</string>
     <string name="fuel_type">Kraftstoffart</string>
     <string name="primary_vehicle">Primärfahrzeug</string>
     <string name="set_primary">Als Primärfahrzeug setzen</string>
