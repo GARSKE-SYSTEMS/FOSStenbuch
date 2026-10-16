@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Adresssuche (OpenStreetMap): nur das Suchfeld; Status und Fehler erscheinen als Hilfe-/Fehlertext darunter -->
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<!-- Adresssuche (OpenStreetMap): Suchfeld (Status/Fehler als Hilfe-/Fehlertext) und die Pflicht-Quellenangabe -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:orientation="vertical"
     android:paddingHorizontal="24dp"
     android:paddingTop="8dp">
 
@@ -20,4 +21,14 @@
             android:maxLength="300" />
     </com.google.android.material.textfield.TextInputLayout>
 
-</FrameLayout>
+    <!-- autoLink macht "openstreetmap.org/copyright" antippbar -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:autoLink="web"
+        android:text="@string/osm_attribution_link"
+        android:textAppearance="?attr/textAppearanceBodySmall"
+        android:textColor="?attr/colorOnSurfaceVariant" />
+
+</LinearLayout>

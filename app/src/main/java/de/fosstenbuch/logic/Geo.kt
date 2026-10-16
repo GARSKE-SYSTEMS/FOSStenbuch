@@ -12,7 +12,10 @@ import androidx.core.content.ContextCompat
 import de.fosstenbuch.data.SavedLocation
 import de.fosstenbuch.data.dao
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import org.json.JSONArray
@@ -114,8 +117,25 @@ object Geo {
         null
     }
 
-    /** GET-Anfrage an Nominatim (Nutzungsbedingungen verlangen einen eindeutigen User-Agent) */
-    private suspend fun get(path: String): String = withContext(Dispatchers.IO) {
+    /** Sorgt dafür, dass Anfragen nacheinander und mit mindestens 1 s Abstand laufen */
+    private val throttle = Mutex()
+    private var lastRequestMs = 0L
+
+    /**
+     * GET-Anfrage an Nominatim. Die Nutzungsbedingungen verlangen einen eindeutigen User-Agent und
+     * erlauben höchstens 1 Anfrage pro Sekunde – auch wenn z.B. Start- und Zielort direkt nacheinander
+     * aufgelöst werden oder der Nutzer mehrmals schnell sucht.
+     */
+    private suspend fun get(path: String): String = throttle.withLock {
+        delay(lastRequestMs + 1_000 - System.nanoTime() / 1_000_000)
+        try {
+            request(path)
+        } finally {
+            lastRequestMs = System.nanoTime() / 1_000_000
+        }
+    }
+
+    private suspend fun request(path: String): String = withContext(Dispatchers.IO) {
         val conn = URL("https://nominatim.openstreetmap.org/$path").openConnection() as HttpURLConnection
         try {
             conn.setRequestProperty("User-Agent", "FOSStenbuch-Android/1.0 (https://github.com/GARSKE-SYSTEMS/FOSStenbuch)")

@@ -51,6 +51,7 @@ class MainActivity : AppCompatActivity() {
             when (item.itemId) {
                 R.id.link_github -> openUrl("https://github.com/GARSKE-SYSTEMS/FOSStenbuch")
                 R.id.link_website -> openUrl("https://garske-systems.de")
+                R.id.link_osm -> openUrl("https://www.openstreetmap.org/copyright")
                 else -> NavigationUI.onNavDestinationSelected(item, navController)
             }
             binding.drawerLayout.close()

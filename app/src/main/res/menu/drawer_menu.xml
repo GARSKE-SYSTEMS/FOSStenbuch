@@ -56,4 +56,12 @@
                 android:title="@string/info_website" />
         </menu>
     </item>
+    <!-- Quellenangabe für Adressen und Ortsnamen aus OpenStreetMap (Pflicht laut ODbL) -->
+    <item android:title="@string/data_sources">
+        <menu>
+            <item
+                android:id="@+id/link_osm"
+                android:title="@string/osm_attribution" />
+        </menu>
+    </item>
 </menu>
