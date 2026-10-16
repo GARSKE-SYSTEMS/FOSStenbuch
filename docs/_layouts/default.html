@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<!-- Eigenes Layout statt Primer-Standard: ohne "Improve this page"-Link zum GitHub-Editor, mit Impressum -->
+<html lang="{{ site.lang }}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% if page.title and page.title != site.title %}{{ page.title }} | {% endif %}{{ site.title }}</title>
+  <link rel="stylesheet" href="{{ '/assets/css/style.css?v=' | append: site.github.build_revision | relative_url }}">
+</head>
+<body>
+  <div class="container-lg px-3 my-5 markdown-body">
+    {% if page.title != site.title %}<h1><a href="{{ '/' | relative_url }}">{{ site.title }}</a></h1>{% endif %}
+    {{ content }}
+    <div class="footer border-top border-gray-light mt-5 pt-3 text-right text-gray">
+      <a href="https://garske-systems.de/impressum">Impressum</a>
+    </div>
+  </div>
+</body>
+</html>

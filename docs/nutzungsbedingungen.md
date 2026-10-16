@@ -6,8 +6,8 @@ Stand: 16. Oktober 2026 · [English version below](#terms-of-use-for-the-fossten
 
 Anbieter der App „FOSStenbuch“ (Paketname `de.garsys.fosstenbuch`) ist:
 
-Garske Systems, Inh. Patrick M. Garske
-An der Bausenheide 55, 40474 Düsseldorf, Deutschland
+Garske Systems, Inh. Patrick M. Garske<br>
+An der Bausenheide 55, 40474 Düsseldorf, Deutschland<br>
 E-Mail: info@garske-systems.de · [Impressum](https://garske-systems.de/impressum)
 
 Diese Bedingungen gelten für die Nutzung der App, egal woher Sie sie beziehen (z. B. Google Play, F-Droid oder GitHub).

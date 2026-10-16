@@ -13,8 +13,8 @@ Stand: 16. Oktober 2026 · [English version below](#privacy-policy-for-the-fosst
 
 ## 1. Verantwortlicher
 
-Garske Systems, Inh. Patrick M. Garske
-An der Bausenheide 55, 40474 Düsseldorf, Deutschland
+Garske Systems, Inh. Patrick M. Garske<br>
+An der Bausenheide 55, 40474 Düsseldorf, Deutschland<br>
 E-Mail: info@garske-systems.de · [Impressum](https://garske-systems.de/impressum)
 
 Diese Erklärung gilt für die Android-App „FOSStenbuch“ (Paketname `de.garsys.fosstenbuch`), egal ob Sie sie über
