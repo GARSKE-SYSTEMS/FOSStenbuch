@@ -19,7 +19,7 @@ FOSStenbuch is a free and open source trip logbook for Android – for individua
 * Only online feature: address search and place names via OpenStreetMap (Nominatim). For this, your search term or the start and end coordinates of automatically detected trips are sent to the OpenStreetMap Foundation.
 * Free software under the MIT license: https://github.com/GARSKE-SYSTEMS/FOSStenbuch
 
-Privacy policy: https://github.com/GARSKE-SYSTEMS/FOSStenbuch/blob/main/docs/datenschutz.md#privacy-policy-for-the-fosstenbuch-app
-Terms of use apply: https://github.com/GARSKE-SYSTEMS/FOSStenbuch/blob/main/docs/nutzungsbedingungen.md#terms-of-use-for-the-fosstenbuch-app
+Privacy policy: https://garske-systems.github.io/FOSStenbuch/datenschutz.html#privacy-policy-for-the-fosstenbuch-app
+Terms of use apply: https://garske-systems.github.io/FOSStenbuch/nutzungsbedingungen.html#terms-of-use-for-the-fosstenbuch-app
 
 Address data © OpenStreetMap contributors (ODbL).

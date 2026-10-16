@@ -19,7 +19,7 @@ FOSStenbuch ist ein quelloffenes, digitales Fahrtenbuch für Android – für Pr
 * Einzige Online-Funktion: Adresssuche und Ortsnamen über OpenStreetMap (Nominatim). Dafür gehen Ihr Suchbegriff bzw. die Start- und Zielkoordinaten automatisch erkannter Fahrten an die OpenStreetMap Foundation.
 * Freie Software unter MIT-Lizenz: https://github.com/GARSKE-SYSTEMS/FOSStenbuch
 
-Datenschutzerklärung: https://github.com/GARSKE-SYSTEMS/FOSStenbuch/blob/main/docs/datenschutz.md
-Es gelten die Nutzungsbedingungen: https://github.com/GARSKE-SYSTEMS/FOSStenbuch/blob/main/docs/nutzungsbedingungen.md
+Datenschutzerklärung: https://garske-systems.github.io/FOSStenbuch/datenschutz.html
+Es gelten die Nutzungsbedingungen: https://garske-systems.github.io/FOSStenbuch/nutzungsbedingungen.html
 
 Adressdaten © OpenStreetMap-Mitwirkende (ODbL).

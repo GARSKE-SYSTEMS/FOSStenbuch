@@ -27,8 +27,8 @@ Wie die App mit Daten umgeht, steht in der [Datenschutzerklärung](datenschutz.m
 
 ## 3. Open-Source-Lizenz
 
-Der Quellcode ist unter der [MIT-Lizenz](../LICENSE) veröffentlicht. Sie regelt Ihre Rechte, den Code zu nutzen, zu
-verändern und weiterzugeben. Diese Nutzungsbedingungen schränken diese Rechte nicht ein. Für die Haftung gilt Ziffer 6. Für Inhalte Dritter gelten deren Lizenzen (siehe [README, Abschnitt „Drittinhalte“](../README.md#drittinhalte)),
+Der Quellcode ist unter der [MIT-Lizenz](https://github.com/GARSKE-SYSTEMS/FOSStenbuch/blob/main/LICENSE) veröffentlicht. Sie regelt Ihre Rechte, den Code zu nutzen, zu
+verändern und weiterzugeben. Diese Nutzungsbedingungen schränken diese Rechte nicht ein. Für die Haftung gilt Ziffer 6. Für Inhalte Dritter gelten deren Lizenzen (siehe [README, Abschnitt „Drittinhalte“](https://github.com/GARSKE-SYSTEMS/FOSStenbuch#drittinhalte)),
 insbesondere für Adressdaten: © OpenStreetMap-Mitwirkende,
 [Open Database License (ODbL)](https://www.openstreetmap.org/copyright).
 
@@ -70,8 +70,8 @@ zwingenden Vorschriften (z. B. Art. 82 DSGVO).
 Ändern wir diese Bedingungen, etwa bei neuen Funktionen oder einer geänderten Rechtslage, gilt die neue Fassung für
 künftige Vertragsschlüsse, etwa wenn Sie die App neu herunterladen. Für bisherige Nutzerinnen und Nutzer gilt sie nur,
 wenn sie ihr zustimmen. Die aktuelle Fassung steht immer unter
-<https://github.com/GARSKE-SYSTEMS/FOSStenbuch/blob/main/docs/nutzungsbedingungen.md>. Frühere Fassungen finden Sie in
-der Versionsgeschichte dieser Datei.
+<https://garske-systems.github.io/FOSStenbuch/nutzungsbedingungen.html>. Frühere Fassungen finden Sie in der
+[Versionsgeschichte](https://github.com/GARSKE-SYSTEMS/FOSStenbuch/commits/main/docs/nutzungsbedingungen.md).
 
 ## 8. Schlussbestimmungen
 
@@ -106,9 +106,9 @@ Play, F-Droid or GitHub). How the app handles data is described in the [privacy 
 
 ## 3. Open source licence
 
-The source code is published under the [MIT License](../LICENSE), which governs your rights to use, modify and share
+The source code is published under the [MIT License](https://github.com/GARSKE-SYSTEMS/FOSStenbuch/blob/main/LICENSE), which governs your rights to use, modify and share
 the code. These terms do not restrict those rights. Liability is governed by section 6. Third-party
-content is subject to its own licences (see the [README, section "Drittinhalte"](../README.md#drittinhalte)), in
+content is subject to its own licences (see the [README, section "Drittinhalte"](https://github.com/GARSKE-SYSTEMS/FOSStenbuch#drittinhalte)), in
 particular address data: © OpenStreetMap contributors,
 [Open Database License (ODbL)](https://www.openstreetmap.org/copyright).
 
@@ -146,8 +146,8 @@ GDPR).
 
 If we change these terms, for example for new features or changes in the law, the new version applies to future
 agreements, for example when you download the app anew. For existing users it only applies if they agree to it. The
-current version is always available at <https://github.com/GARSKE-SYSTEMS/FOSStenbuch/blob/main/docs/nutzungsbedingungen.md>.
-Earlier versions are in the version history of this file.
+current version is always available at <https://garske-systems.github.io/FOSStenbuch/nutzungsbedingungen.html>. Earlier versions are in the
+[version history](https://github.com/GARSKE-SYSTEMS/FOSStenbuch/commits/main/docs/nutzungsbedingungen.md).
 
 ## 8. Final provisions
 

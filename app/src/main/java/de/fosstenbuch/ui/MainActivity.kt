@@ -52,8 +52,8 @@ class MainActivity : AppCompatActivity() {
                 R.id.link_github -> openUrl("https://github.com/GARSKE-SYSTEMS/FOSStenbuch")
                 R.id.link_website -> openUrl("https://garske-systems.de")
                 R.id.link_osm -> openUrl("https://www.openstreetmap.org/copyright")
-                R.id.link_privacy -> openUrl("$DOCS/datenschutz.md")
-                R.id.link_terms -> openUrl("$DOCS/nutzungsbedingungen.md")
+                R.id.link_privacy -> openUrl("$DOCS/datenschutz.html")
+                R.id.link_terms -> openUrl("$DOCS/nutzungsbedingungen.html")
                 R.id.link_imprint -> openUrl("https://garske-systems.de/impressum")
                 else -> NavigationUI.onNavDestinationSelected(item, navController)
             }
@@ -71,7 +71,7 @@ class MainActivity : AppCompatActivity() {
     override fun onSupportNavigateUp() = navController.navigateUp(appBarConfig) || super.onSupportNavigateUp()
 
     private companion object {
-        /** Datenschutzerklärung und Nutzungsbedingungen liegen im Repository (dieselben Links wie in Google Play) */
-        const val DOCS = "https://github.com/GARSKE-SYSTEMS/FOSStenbuch/blob/main/docs"
+        /** Datenschutzerklärung und Nutzungsbedingungen: docs/ des Repositorys als GitHub Pages (dieselben Links wie in Google Play) */
+        const val DOCS = "https://garske-systems.github.io/FOSStenbuch"
     }
 }

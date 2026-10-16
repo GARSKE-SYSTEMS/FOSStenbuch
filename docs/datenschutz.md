@@ -174,8 +174,8 @@ mit einer Displaysperre, und bewahren Sie Exporte und Backups sicher auf.
 ## 13. Änderungen
 
 Wir passen diese Erklärung an, wenn sich die App oder die Rechtslage ändert. Die aktuelle Fassung steht immer unter
-<https://github.com/GARSKE-SYSTEMS/FOSStenbuch/blob/main/docs/datenschutz.md>. Frühere Fassungen finden Sie in der
-Versionsgeschichte dieser Datei.
+<https://garske-systems.github.io/FOSStenbuch/datenschutz.html>. Frühere Fassungen finden Sie in der
+[Versionsgeschichte](https://github.com/GARSKE-SYSTEMS/FOSStenbuch/commits/main/docs/datenschutz.md).
 
 ---
 
@@ -343,5 +343,5 @@ a screen lock and keep exports and backups safe.
 ## 13. Changes
 
 We update this policy when the app or the law changes. The current version is always available at
-<https://github.com/GARSKE-SYSTEMS/FOSStenbuch/blob/main/docs/datenschutz.md>. Earlier versions are in the version
-history of this file.
+<https://garske-systems.github.io/FOSStenbuch/datenschutz.html>. Earlier versions are in the
+[version history](https://github.com/GARSKE-SYSTEMS/FOSStenbuch/commits/main/docs/datenschutz.md).
