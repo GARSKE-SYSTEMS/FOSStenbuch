@@ -12,6 +12,21 @@
     <color name="on_secondary_container">#FF001E2E</color>
     <color name="error">#FFDF283A</color>
     <color name="on_error">#FFFFFFFF</color>
+    <!-- Flächen: neutral mit leichtem Navy-Stich (statt des lila getönten Material-Standards) -->
+    <color name="surface">#FFF8F9FC</color>
+    <color name="on_surface">#FF191C20</color>
+    <color name="surface_variant">#FFDFE3EB</color>
+    <color name="on_surface_variant">#FF43474E</color>
+    <color name="surface_lowest">#FFFFFFFF</color>
+    <color name="surface_low">#FFF2F4F8</color>
+    <color name="surface_container">#FFECEEF3</color>
+    <color name="surface_high">#FFE6E8ED</color>
+    <color name="surface_highest">#FFE0E2E7</color>
+    <color name="outline">#FF73777F</color>
+    <color name="outline_variant">#FFC3C7CF</color>
+    <!-- Kategorie-Art in Statistik & Co. – gleiche Töne wie die Standard-Kategorien -->
+    <color name="business">#FF0E8DBF</color>
+    <color name="private_trip">#FF559F5A</color>
     <!-- Statusleiste: in beiden Modi dunkel, damit die weißen Symbole lesbar bleiben -->
     <color name="status_bar">#FF022948</color>
 </resources>

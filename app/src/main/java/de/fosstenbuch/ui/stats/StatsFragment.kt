@@ -2,10 +2,11 @@ package de.fosstenbuch.ui.stats
 
 import android.content.res.ColorStateList
 import android.os.Bundle
+import androidx.annotation.ColorRes
+import androidx.core.content.ContextCompat
 import android.view.View
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
-import com.google.android.material.color.MaterialColors
 import de.fosstenbuch.R
 import de.fosstenbuch.data.dao
 import de.fosstenbuch.databinding.FragmentStatsBinding
@@ -82,9 +83,9 @@ class StatsFragment : Fragment(R.layout.fragment_stats) {
         }
 
         b.cardTotal.setup(R.string.stats_total_distance)
-        b.cardBusiness.setup(R.string.stats_business_distance, androidx.appcompat.R.attr.colorPrimary)
-        b.cardPrivate.setup(R.string.stats_private_distance, com.google.android.material.R.attr.colorSecondary)
-        b.cardShare.setup(R.string.stats_business_percentage, androidx.appcompat.R.attr.colorPrimary)
+        b.cardBusiness.setup(R.string.stats_business_distance, R.color.business)
+        b.cardPrivate.setup(R.string.stats_private_distance, R.color.private_trip)
+        b.cardShare.setup(R.string.stats_business_percentage, R.color.business)
         b.cardCount.setup(R.string.stats_total_trips)
         b.cardAverage.setup(R.string.stats_average_distance)
 
@@ -112,13 +113,13 @@ class StatsFragment : Fragment(R.layout.fragment_stats) {
         }
     }
 
-    /** Feste Beschriftung und optionaler Farbbalken (Farbe als Theme-Attribut, passt so zum Dunkelmodus) */
-    private fun StatsCardBinding.setup(label: Int, accentColor: Int? = null) {
+    /** Feste Beschriftung und optionaler Farbbalken in der Farbe der Kategorie-Art (Beruflich/Privat) */
+    private fun StatsCardBinding.setup(label: Int, @ColorRes accentColor: Int? = null) {
         this.label.setText(label)
         accent.isVisible = accentColor != null
         // Tönen statt GradientDrawable.setColor(): setColor() ändert den mit allen Nutzern von
         // rounded_accent geteilten Drawable-Zustand, dann hätten alle Balken dieselbe Farbe.
-        if (accentColor != null) accent.backgroundTintList = ColorStateList.valueOf(MaterialColors.getColor(accent, accentColor))
+        if (accentColor != null) accent.backgroundTintList = ContextCompat.getColorStateList(root.context, accentColor)
     }
 
     private companion object {

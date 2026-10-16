@@ -100,11 +100,12 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="8dp"
-                android:hint="@string/start_location"
-                app:startIconDrawable="@drawable/ic_location">
+                android:hint="@string/start_location">
 
+                <!-- Stil nötig: Ohne ihn hat das Autovervollständigungs-Feld im umrandeten Kasten keinen Innenabstand -->
                 <com.google.android.material.textfield.MaterialAutoCompleteTextView
                     android:id="@+id/edit_start"
+                    style="@style/Widget.Material3.AutoCompleteTextView.OutlinedBox"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:completionThreshold="1"
@@ -117,11 +118,12 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="8dp"
-                android:hint="@string/end_location"
-                app:startIconDrawable="@drawable/ic_location">
+                android:hint="@string/end_location">
 
+                <!-- Stil nötig: Ohne ihn hat das Autovervollständigungs-Feld im umrandeten Kasten keinen Innenabstand -->
                 <com.google.android.material.textfield.MaterialAutoCompleteTextView
                     android:id="@+id/edit_end"
+                    style="@style/Widget.Material3.AutoCompleteTextView.OutlinedBox"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:completionThreshold="1"

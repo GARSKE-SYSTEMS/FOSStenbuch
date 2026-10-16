@@ -11,5 +11,16 @@
     <color name="on_secondary_container">#FFC5E7FF</color>
     <color name="error">#FFFFB3B2</color>
     <color name="on_error">#FF680014</color>
+    <color name="surface">#FF111418</color>
+    <color name="on_surface">#FFE1E2E8</color>
+    <color name="surface_variant">#FF43474E</color>
+    <color name="on_surface_variant">#FFC3C7CF</color>
+    <color name="surface_lowest">#FF0C0E12</color>
+    <color name="surface_low">#FF191C20</color>
+    <color name="surface_container">#FF1D2024</color>
+    <color name="surface_high">#FF272A2F</color>
+    <color name="surface_highest">#FF32353A</color>
+    <color name="outline">#FF8D9199</color>
+    <color name="outline_variant">#FF43474E</color>
     <color name="status_bar">#FF011B30</color>
 </resources>

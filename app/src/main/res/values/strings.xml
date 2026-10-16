@@ -8,14 +8,14 @@
 
     <!-- Fahrtenliste -->
     <string name="filter_all">Alle</string>
-    <string name="filter_business">Geschäftlich</string>
+    <string name="filter_business">Beruflich</string>
     <string name="filter_private">Privat</string>
     <string name="sort_by">Sortierung</string>
     <string name="no_trips">Keine Fahrten vorhanden</string>
     <string name="add_first_trip">Tippen Sie auf +, um eine Fahrt hinzuzufügen</string>
     <string name="add_trip">Fahrt hinzufügen</string>
     <string name="trip_route_format">%1$s → %2$s</string>
-    <string name="business">Geschäftlich</string>
+    <string name="business">Beruflich</string>
     <string name="private_trip">Privat</string>
     <string name="trip_cancelled">Storniert</string>
     <string name="cancel_trip_title">Fahrt stornieren?</string>
@@ -32,10 +32,10 @@
     <string name="vehicle">Fahrzeug</string>
     <string name="notes">Notizen</string>
     <string name="business_partner">Geschäftspartner / Kunde</string>
-    <string name="business_partner_hint">z.B. Firma Müller GmbH</string>
+    <string name="business_partner_hint">z. B. Firma Müller GmbH</string>
     <string name="location_business_partner_hint">Wird automatisch beim Auswählen dieses Ortes eingetragen</string>
     <string name="route_description">Route / Umweg</string>
-    <string name="route_description_hint">z.B. über A9, Umweg wegen Baustelle</string>
+    <string name="route_description_hint">z. B. über A9, Umweg wegen Baustelle</string>
     <string name="save">Speichern</string>
 
     <!-- Löschen -->
@@ -53,7 +53,7 @@
     <string name="vehicle_make">Hersteller</string>
     <string name="vehicle_model">Modell</string>
     <string name="license_plate">Kennzeichen</string>
-    <string name="license_plate_hint">z.B. B AB 1234 (DE) oder W 1234AB (AT)</string>
+    <string name="license_plate_hint">z. B. B AB 1234 (DE) oder W 1234AB (AT)</string>
     <string name="fuel_type">Kraftstoffart</string>
     <string name="primary_vehicle">Primärfahrzeug</string>
     <string name="set_primary">Als Primärfahrzeug setzen</string>
@@ -111,7 +111,7 @@
     <string name="purpose_category">Kategorie</string>
     <string name="purpose_color">Farbe (Hex)</string>
     <string name="purpose_color_hint">#FF5722</string>
-    <string name="business_relevant">Geschäftsrelevant</string>
+    <string name="business_relevant">Beruflich</string>
     <string name="default_purpose">Standard</string>
     <string name="delete_purpose_title">Kategorie löschen?</string>
     <string name="delete_purpose_message">Möchten Sie diese Kategorie wirklich löschen?</string>
@@ -121,11 +121,11 @@
 
     <!-- Statistik -->
     <string name="stats_total_distance">Gesamtstrecke</string>
-    <string name="stats_business_distance">Geschäftliche Strecke</string>
+    <string name="stats_business_distance">Berufliche Strecke</string>
     <string name="stats_private_distance">Private Strecke</string>
     <string name="stats_total_trips">Gesamtzahl Fahrten</string>
     <string name="stats_average_distance">Durchschnittliche Distanz</string>
-    <string name="stats_business_percentage">Geschäftsanteil</string>
+    <string name="stats_business_percentage">Anteil beruflich</string>
     <string name="stats_no_data">Noch keine Statistiken verfügbar</string>
     <string name="stats_add_trips_hint">Fügen Sie Fahrten hinzu, um Statistiken zu sehen</string>
     <string name="stats_percent_format">%.0f %%</string>
@@ -242,7 +242,7 @@
 
     <!-- Kilometerpauschale -->
     <string name="title_mileage_calculator">Kilometerpauschale</string>
-    <string name="mileage_business_km">Geschäftliche Kilometer</string>
+    <string name="mileage_business_km">Berufliche Kilometer</string>
     <string name="mileage_rate_standard">Pauschale (erste 20 km)</string>
     <string name="mileage_rate_extended">Pauschale (ab 21. km)</string>
     <string name="mileage_result">Steuerlich absetzbar</string>
