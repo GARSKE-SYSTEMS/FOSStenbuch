@@ -60,6 +60,12 @@ android {
     buildFeatures {
         viewBinding = true
     }
+
+    // Keinen (mit Googles Schlüssel verschlüsselten) Abhängigkeits-Block in APK/AAB – für F-Droid/IzzyOnDroid
+    dependenciesInfo {
+        includeInApk = false
+        includeInBundle = false
+    }
 }
 
 dependencies {

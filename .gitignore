@@ -8,6 +8,10 @@ out/
 # Gradle
 .gradle/
 build/
+.kotlin/
+
+# Lokale Werkzeug-Ordner (z.B. Claude Code)
+.claude/
 
 # Local properties
 local.properties
