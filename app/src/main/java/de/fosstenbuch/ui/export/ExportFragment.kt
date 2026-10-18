@@ -32,7 +32,7 @@ import java.time.ZoneId
 import java.util.Date
 
 /**
- * Datenexport: Filter wählen, Datei (CSV, PDF, Finanzamt-PDF) im Hintergrund erzeugen und teilen.
+ * Datenexport: Filter wählen, Datei (CSV, PDF, ausführliches PDF) im Hintergrund erzeugen und teilen.
  * Der Zustand liegt im [ExportViewModel]; die Ansicht zeigt ihn nur an und meldet Änderungen zurück.
  */
 class ExportFragment : Fragment(R.layout.fragment_export) {
@@ -48,7 +48,7 @@ class ExportFragment : Fragment(R.layout.fragment_export) {
         // Format und Firma erst aus dem ViewModel setzen, dann die Listener – sonst meldeten diese den
         // Startwert als Nutzeränderung. Stellt Android danach eigene Zustände wieder her (Drehen),
         // sind das dieselben Werte wie im ViewModel.
-        val radios = listOf(b.radioCsv, b.radioPdf, b.radioFinanzamt)
+        val radios = listOf(b.radioCsv, b.radioPdf, b.radioDetailed)
         radios[initial.format.ordinal].isChecked = true
         b.radioFormat.setOnCheckedChangeListener { _, id ->
             val format = Format.entries[radios.indexOfFirst { it.id == id }]
@@ -79,12 +79,15 @@ class ExportFragment : Fragment(R.layout.fragment_export) {
         collect(vm.options) { o ->
             b.editFrom.setText(Fmt.date(o.from.toDate()))
             b.editTo.setText(Fmt.date(o.to.toDate()))
-            val finanzamt = o.format == Format.FINANZAMT_PDF
-            b.textFinanzamtHint.isVisible = finanzamt
-            b.layoutCompany.isVisible = finanzamt
-            // Das Finanzamt-PDF enthält das Änderungsprotokoll immer: Der Schalter zeigt dann "an",
+            val detailed = o.format == Format.DETAILED_PDF
+            b.textDetailedHint.isVisible = detailed
+            b.layoutCompany.isVisible = detailed
+            b.layoutVehicle.error = if (o.needsVehicle) getString(R.string.export_choose_vehicle) else null
+            // Das ausführliche PDF enthält immer alle Kategorien – die Auswahl gilt nur für CSV und PDF
+            b.chipsPurposes.isVisible = !detailed
+            // Das ausführliche PDF enthält das Änderungsprotokoll immer: Der Schalter zeigt dann "an",
             // die eigene Wahl (includeAudit) für CSV/PDF bleibt unverändert erhalten
-            b.switchAudit.isEnabled = !finanzamt
+            b.switchAudit.isEnabled = !detailed
             b.switchAudit.show(o.withAudit) { c -> vm.options.update { it.copy(includeAudit = c) } }
             b.switchOnlyNew.show(o.onlyNew) { c -> vm.options.update { it.copy(onlyNew = c) } }
             b.switchMark.show(o.markExported) { c -> vm.options.update { it.copy(markExported = c) } }
@@ -113,20 +116,21 @@ class ExportFragment : Fragment(R.layout.fragment_export) {
             }
         }
 
-        val excludedCount = combine(vm.purposes, vm.options) { purposes, o -> purposes.count { it.id in o.excludedPurposes } to purposes.size }
-        collect(excludedCount.distinctUntilChanged()) { (excluded, all) ->
-            b.textPurposeHint.setText(
-                when (excluded) {
-                    0 -> R.string.export_purpose_filter_hint
-                    all -> R.string.export_purposes_none
-                    else -> R.string.export_purposes_some
-                }
-            )
+        val purposeHint = combine(vm.purposes, vm.options) { purposes, o ->
+            val excluded = purposes.count { it.id in o.excludedPurposes }
+            when {
+                o.format == Format.DETAILED_PDF -> R.string.export_purposes_all_detailed
+                excluded == 0 -> R.string.export_purpose_filter_hint
+                excluded == purposes.size -> R.string.export_purposes_none
+                else -> R.string.export_purposes_some
+            }
         }
+        collect(purposeHint.distinctUntilChanged()) { b.textPurposeHint.setText(it) }
 
-        collect(combine(vm.trips, vm.busy, ::Pair)) { (trips, busy) ->
+        val needsVehicle = vm.options.map { it.needsVehicle }.distinctUntilChanged()
+        collect(combine(vm.trips, vm.busy, needsVehicle, ::Triple)) { (trips, busy, noVehicle) ->
             b.textCount.text = resources.getQuantityString(R.plurals.export_count, trips.size, trips.size)
-            b.buttonExport.isEnabled = !busy && trips.isNotEmpty()
+            b.buttonExport.isEnabled = !busy && trips.isNotEmpty() && !noVehicle
             b.progress.isVisible = busy
         }
 

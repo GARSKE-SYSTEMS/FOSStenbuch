@@ -1,9 +1,12 @@
 package de.fosstenbuch.logic
 
 import de.fosstenbuch.data.Trip
+import de.fosstenbuch.data.Vehicle
 import de.fosstenbuch.logic.Trips.Field
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.util.Date
@@ -66,11 +69,56 @@ class TripsTest {
             purposeId = 1, startOdometer = 100, endOdometer = 150, vehicleId = 1
         )
         assertTrue(Trips.validate(ok, now).isEmpty())
-        assertEquals(setOf(Field.ODOMETER), Trips.validate(ok.copy(endOdometer = 100), now).keys)
+        assertEquals(setOf(Field.ODOMETER), Trips.validate(ok.copy(endOdometer = 99), now).keys)
+        // 0 km: gestartet, aber nicht gefahren – beenden und stornieren muss möglich sein
+        assertTrue(Trips.validate(ok.copy(endOdometer = 100), now).isEmpty())
         assertEquals(setOf(Field.END_TIME), Trips.validate(ok.copy(endTime = Date(999_000L)), now).keys)
         assertEquals(setOf(Field.DATE), Trips.validate(ok.copy(date = Date(3_000_000L), endTime = null), now).keys)
         assertEquals(setOf(Field.PURPOSE, Field.END_LOCATION), Trips.validate(ok.copy(purposeId = null, endLocation = ""), now).keys)
         assertEquals(setOf(Field.DISTANCE), Trips.validate(ok.copy(endOdometer = 200_000), now).keys)
+        // Ankunft höchstens eine Minute nach jetzt (Uhr- und Bedienungsspielraum)
+        assertTrue(Trips.validate(ok.copy(endTime = Date(2_060_000L)), now).isEmpty())
+        assertEquals("Ankunft darf nicht in der Zukunft liegen", Trips.validate(ok.copy(endTime = Date(2_061_000L)), now)[Field.END_TIME])
+    }
+
+    @Test
+    fun `berufliche Fahrt braucht Geschäftspartner oder Notiz`() {
+        val now = Date(2_000_000L)
+        val ok = Trip(
+            date = Date(1_000_000L), startLocation = "A", endLocation = "B", purposeId = 1, startOdometer = 100, endOdometer = 150, vehicleId = 1
+        )
+        assertTrue(Trips.validate(ok, now).isEmpty()) // privat
+        assertEquals(setOf(Field.PARTNER), Trips.validate(ok.copy(businessPartner = " ", notes = ""), now, business = true).keys)
+        assertTrue(Trips.validate(ok.copy(businessPartner = "ACME"), now, business = true).isEmpty())
+        assertTrue(Trips.validate(ok.copy(notes = "Messe"), now, business = true).isEmpty())
+    }
+
+    @Test
+    fun `nur automatische und gerade erst gestartete Fahrten lassen sich löschen`() {
+        val now = Date(10 * 60_000L)
+        val completed = t1.copy()
+        assertEquals("Abgeschlossene Fahrten lassen sich nur stornieren", assertThrows(Trips.Rejected::class.java) { Trips.checkDelete(completed, now) }.message)
+        assertThrows(Trips.Rejected::class.java) { Trips.checkDelete(t2, now) } // auch storniert nicht
+        Trips.checkDelete(t1.copy(isGhost = true, endTime = null), now)
+        val running = Trip(date = Date(now.time - Trips.DISCARD_MS), startLocation = "A", isActive = true)
+        assertTrue(Trips.canDiscard(running, now))
+        Trips.checkDelete(running, now)
+        val old = running.copy(date = Date(now.time - Trips.DISCARD_MS - 1))
+        assertFalse(Trips.canDiscard(old, now))
+        assertEquals("Laufende Fahrt bitte beenden und dann stornieren", assertThrows(Trips.Rejected::class.java) { Trips.checkDelete(old, now) }.message)
+        assertFalse(Trips.canDiscard(completed, now))
+    }
+
+    @Test
+    fun `Fahrzeugwechsel erscheint im Protokoll mit Kennzeichen`() {
+        val names = mapOf(2L to "B-AB 123", 3L to "M-X 1")
+        val log = Trips.auditDiff(t1, t1.copy(vehicleId = 3)) { names[it] }
+        assertEquals(listOf("Fahrzeug"), log.map { it.fieldName })
+        assertEquals("B-AB 123", log[0].oldValue)
+        assertEquals("M-X 1", log[0].newValue)
+        assertEquals("3", Trips.auditDiff(t1, t1.copy(vehicleId = 3))[0].newValue) // ohne Namen: die ID
+        assertEquals("VW Golf", Trips.vehicleName(Vehicle(id = 4, make = "VW", model = "Golf", licensePlate = " ", fuelType = "")))
+        assertEquals("4", Trips.vehicleName(Vehicle(id = 4, make = "", model = "", licensePlate = "", fuelType = "")))
     }
 
     @Test

@@ -1,5 +1,5 @@
 Completely reworked: more stable and battery-friendly.
-• Trips are started and ended (no more back-dated entries); every change is logged
+• Trips are started and ended instead of being added afterwards; changes to completed trips are logged
 • Automatic trip detection via car Bluetooth without a permanent service
 • Many fixes for recording, export, backup and statistics
 • Austrian licence plates (e.g. W 1234AB)

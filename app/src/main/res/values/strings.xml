@@ -19,7 +19,7 @@
     <string name="private_trip">Privat</string>
     <string name="trip_cancelled">Storniert</string>
     <string name="cancel_trip_title">Fahrt stornieren?</string>
-    <string name="cancel_trip_message">Bitte geben Sie einen Stornogrund an (optional):</string>
+    <string name="cancel_trip_message">Stornogrund (Pflichtangabe)</string>
     <string name="cancel_trip_action">Stornieren</string>
     <string name="cancel_trip_reason_format">Storno: %s</string>
 
@@ -42,8 +42,6 @@
     <string name="delete">Löschen</string>
     <string name="cancel">Abbrechen</string>
     <string name="ok">OK</string>
-    <string name="delete_trip_title">Fahrt löschen?</string>
-    <string name="delete_trip_message">Möchten Sie diese Fahrt wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.</string>
 
     <!-- Fahrzeuge -->
     <string name="no_vehicles">Keine Fahrzeuge vorhanden</string>
@@ -60,13 +58,13 @@
     <string name="delete_vehicle_title">Fahrzeug löschen?</string>
     <string name="delete_vehicle_message">Möchten Sie dieses Fahrzeug wirklich löschen?</string>
 
-    <!-- Änderungssicherheit -->
-    <string name="audit_protection">Änderungssichere Protokollierung (Finanzamt)</string>
-    <string name="audit_protection_hint">Wenn aktiviert, lassen sich abgeschlossene Fahrten dieses Fahrzeugs weder bearbeiten noch löschen, nur noch stornieren (wird protokolliert). Diese Einstellung kann nicht rückgängig gemacht werden.</string>
-    <string name="audit_protection_active">Änderungssichere Protokollierung ist aktiv und kann nicht deaktiviert werden.</string>
-    <string name="audit_protection_warning_title">Änderungssichere Protokollierung aktivieren?</string>
-    <string name="audit_protection_warning_message">Diese Einstellung kann nicht rückgängig gemacht werden!\n\nWenn aktiviert:\n• Abgeschlossene Fahrten können nicht mehr bearbeitet oder gelöscht, nur noch storniert werden (wird protokolliert)\n• Hersteller, Modell, Kennzeichen und Kraftstoff sind gesperrt\n• Das Fahrzeug kann nicht gelöscht werden, solange Fahrten existieren</string>
-    <string name="audit_protected">Änderungssicher</string>
+    <!-- Bearbeitungssperre (Vehicle.auditProtected) -->
+    <string name="audit_protection">Bearbeitungssperre (nicht umkehrbar)</string>
+    <string name="audit_protection_hint">Empfohlen, wenn Sie das Fahrtenbuch beim Finanzamt vorlegen wollen. Am besten vor der ersten Fahrt einschalten. Sperrt das Bearbeiten abgeschlossener Fahrten und die Fahrzeugdaten; Wiederherstellen eines Backups und „Alle Daten löschen“ bleiben möglich und werden im ausführlichen PDF vermerkt.</string>
+    <string name="audit_protection_active">Die Bearbeitungssperre ist aktiv und lässt sich nicht ausschalten. Abgeschlossene Fahrten lassen sich nur noch stornieren.</string>
+    <string name="audit_protection_warning_title">Bearbeitungssperre einschalten?</string>
+    <string name="audit_protection_warning_message">Das lässt sich nicht rückgängig machen!\n\nDanach:\n• Abgeschlossene Fahrten dieses Fahrzeugs lassen sich nicht mehr bearbeiten, nur noch stornieren (wird protokolliert)\n• Hersteller, Modell, Kennzeichen und Kraftstoff sind gesperrt\n• Abgeschlossene Fahrten anderer Fahrzeuge lassen sich nicht hierher verschieben\n\nWiederherstellen eines Backups und „Alle Daten löschen“ bleiben möglich und werden im ausführlichen PDF vermerkt.</string>
+    <string name="audit_protected">Bearbeitungssperre</string>
     <string name="enable">Aktivieren</string>
 
     <!-- Einstellungen -->
@@ -173,7 +171,7 @@
     <string name="export_format">Format</string>
     <string name="export_format_csv">CSV (Excel)</string>
     <string name="export_format_pdf">PDF</string>
-    <string name="export_format_finanzamt_pdf">PDF (Finanzamt)</string>
+    <string name="export_format_detailed_pdf">PDF (ausführlich, mit Änderungsprotokoll)</string>
     <string name="export_include_audit_log">Änderungsprotokoll einschließen</string>
     <string name="export_tracking_title">Exportverlauf</string>
     <string name="export_only_new">Nur neue Fahrten exportieren</string>
@@ -188,8 +186,8 @@
     <string name="export_confirm_message">Hiermit bestätige ich, dass alle Einträge in diesem Fahrtenbuch der Wahrheit entsprechen.</string>
     <string name="export_confirm_yes">Bestätigen &amp; Exportieren</string>
     <string name="export_company_name">Firma / Betrieb</string>
-    <string name="export_company_name_hint">Wird im Finanzamt-PDF angezeigt</string>
-    <string name="export_finanzamt_hint">Enthält alle gem. § 6 Abs. 1 Nr. 4 EStG erforderlichen Angaben</string>
+    <string name="export_company_name_hint">Wird im ausführlichen PDF angezeigt</string>
+    <string name="export_detailed_hint">Für genau ein Fahrzeug und immer alle Kategorien – mit Km-Ständen, Änderungsprotokoll und Siegeln</string>
 
     <!-- Einstellungen: Daten -->
     <string name="settings_appearance">Darstellung</string>
@@ -206,10 +204,10 @@
     <string name="settings_restore_subtitle">Daten aus JSON-Backup laden</string>
     <string name="settings_delete_all">Alle Daten löschen</string>
     <string name="settings_delete_all_title">Alle Daten löschen?</string>
-    <string name="settings_delete_all_message">Möchten Sie wirklich alle Daten unwiderruflich löschen? Es werden alle Fahrten, Fahrzeuge, Standorte, Kategorien und der Fahrername entfernt.\n\nDiese Aktion kann nicht rückgängig gemacht werden!</string>
+    <string name="settings_delete_all_message">Möchten Sie wirklich alle Daten unwiderruflich löschen? Es werden alle Fahrten, Fahrzeuge, Standorte, Kategorien und der Fahrername entfernt.\n\nDer Verlauf von Wiederherstellungen und Löschungen bleibt erhalten und wird mit diesem Löschen vermerkt. Auch der Signaturschlüssel und die übrigen Einstellungen bleiben.\n\nDiese Aktion kann nicht rückgängig gemacht werden!</string>
     <string name="restore_success">Daten erfolgreich wiederhergestellt</string>
     <string name="restore_warning_title">Backup wiederherstellen?</string>
-    <string name="restore_warning_message">Alle vorhandenen Daten werden durch die Backup-Daten ersetzt.\n\nMöchten Sie fortfahren?</string>
+    <string name="restore_warning_message">Alle vorhandenen Daten werden durch die Backup-Daten ersetzt. Das Einspielen wird im Verlauf vermerkt.\n\nMöchten Sie fortfahren?</string>
     <string name="delete_all_success">Alle Daten wurden gelöscht</string>
     <string name="backup_error">Fehler beim Backup: %s</string>
     <string name="restore_error">Fehler beim Wiederherstellen: %s</string>
@@ -241,14 +239,14 @@
     <string name="cd_next_year">Nächstes Jahr</string>
 
     <!-- Kilometerpauschale -->
-    <string name="title_mileage_calculator">Kilometerpauschale</string>
+    <string name="title_mileage_calculator">Kilometerpauschale (DE)</string>
     <string name="mileage_business_km">Berufliche Kilometer</string>
     <string name="mileage_rate_standard">Pauschale (erste 20 km)</string>
     <string name="mileage_rate_extended">Pauschale (ab 21. km)</string>
-    <string name="mileage_result">Steuerlich absetzbar</string>
+    <string name="mileage_result">Pauschale (Orientierung)</string>
     <string name="mileage_use_stats">Aus Statistik übernehmen</string>
     <string name="mileage_no_data">Keine geschäftlichen Fahrten im gewählten Jahr</string>
-    <string name="mileage_disclaimer">Hinweis: Diese Berechnung dient nur zur Orientierung. Für die genaue steuerliche Berechnung konsultieren Sie bitte Ihren Steuerberater.</string>
+    <string name="mileage_disclaimer">Hinweis: Berechnet nach deutschem Steuerrecht (gilt z. B. nicht für Österreich) und nur zur Orientierung. Für die genaue steuerliche Berechnung konsultieren Sie bitte Ihren Steuerberater.</string>
     <string name="mileage_one_way_distance">Einfache Entfernung (km)</string>
     <string name="mileage_working_days">Arbeitstage</string>
     <string name="mileage_working_days_hint">Standard: 230</string>
@@ -278,7 +276,7 @@
     <string name="trip_in_progress">Fahrt läuft…</string>
     <string name="trip_start_time">Startzeit</string>
     <string name="trip_end_time">Ankunftszeit</string>
-    <string name="estimated_odometer">Geschätzter Km-Stand (GPS)</string>
+    <string name="estimated_odometer">GPS-Schätzung – bitte Km-Stand vom Tacho ablesen</string>
     <string name="active_trip_banner_text">%1$s — seit %2$s</string>
     <string name="tracking_channel_name">Fahrt-Aufzeichnung</string>
     <string name="tracking_channel_desc">Benachrichtigung während eine Fahrt aufgezeichnet wird</string>
@@ -286,7 +284,7 @@
     <string name="trip_active">Aktiv</string>
 
     <!-- Bearbeitungssperre -->
-    <string name="audit_locked_hint">Änderungssicher — Bearbeitung gesperrt</string>
+    <string name="audit_locked_hint">Bearbeitungssperre – abgeschlossene Fahrten lassen sich nur stornieren</string>
 
     <!-- Links im Seitenmenü -->
     <string name="info_github_url">github.com/GARSKE-SYSTEMS/FOSStenbuch</string>
@@ -322,7 +320,7 @@
     <string name="ghost_trips_empty_hint">Verbinden Sie ein Bluetooth-Gerät mit Ihrem Fahrzeug, um automatisch Fahrten aufzuzeichnen.</string>
     <string name="ghost_no_distance">Distanz unbekannt</string>
     <string name="ghost_duration_format">bis %s</string>
-    <string name="ghost_detail_hint">Diese Fahrt wurde automatisch erkannt. Bitte prüfen Sie die Angaben und übernehmen Sie die Fahrt ins Fahrtenbuch.</string>
+    <string name="ghost_detail_hint">Diese Fahrt wurde automatisch erkannt. Bitte prüfen Sie die Angaben, lesen Sie den Km-Stand vom Tacho ab und übernehmen Sie die Fahrt ins Fahrtenbuch.</string>
     <string name="ghost_accept">Fahrt übernehmen</string>
     <string name="ghost_discard">Verwerfen</string>
     <string name="ghost_discard_title">Fahrt verwerfen?</string>

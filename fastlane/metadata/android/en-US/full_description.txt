@@ -2,24 +2,29 @@ FOSStenbuch is a free and open source trip logbook for Android – for individua
 
 <b>Features</b>
 
-* Start and end trips – start and destination, odometer readings, category (business/private), business partner, route and vehicle; every later change is logged
-* GPS distance – measures the distance driven during the trip
+* Start and end trips – start and destination, odometer readings, category (business/private), business partner, route and vehicle. New trips are recorded while you drive, not added afterwards; changes to completed trips are logged, and completed trips cannot be deleted, only cancelled
+* GPS distance – measures the distance driven during the trip (as an estimate; the odometer reading counts)
 * Automatic trip detection – when your phone connects to the car's Bluetooth, the trip is recorded; you review and accept it later. For this the app uses location in the background, even when it is closed (only if you set up detection)
 * Multiple vehicles, custom categories, saved locations and templates for recurring trips
-* Change-protected – completed trips can only be cancelled (logged); a hash chain checks backups on restore
-* Statistics and a calculator for the German mileage allowance
-* Export as PDF or CSV, backup and restore
+* Edit lock ("Bearbeitungssperre") per vehicle, cannot be undone – completed trips can only be cancelled; a hash chain checks backups on restore
+* A seal for every trip that is ended, accepted, edited or cancelled – optionally signed with your own key and confirmed by a timestamp from an independent service; signed PDFs and backups can be checked in the browser on our verification page
+* Export as CSV, PDF or detailed PDF per vehicle with odometer readings, change log and seals; backup and restore
+* Statistics and a calculator for the German commuting allowance (German tax law, for guidance only)
 * Daily reminder to log your trips
 * Austrian and German licence plates
 * Light and dark theme
 
+Whether the tax office accepts a logbook depends on how you keep it. The app gives no guarantee and is no substitute for tax advice. Tips on correct use (in German): https://github.com/GARSKE-SYSTEMS/FOSStenbuch#f%C3%BCr-das-finanzamt
+
 <b>Privacy</b>
 
 * No account, no ads, no analytics or tracking services
-* Only online feature: address search and place names via OpenStreetMap (Nominatim). For this, your search term or the start and end coordinates of automatically detected trips are sent to the OpenStreetMap Foundation.
+* Online features: address search and place names via OpenStreetMap (Nominatim) – your search term or the start and end coordinates of automatically detected trips are sent to the OpenStreetMap Foundation. Optional timestamps (off by default) – only a SHA-256 fingerprint per seal is sent to the selected timestamp service.
+* Your signing key stays encrypted on the device; the app never sends it anywhere
 * Free software under the MIT license: https://github.com/GARSKE-SYSTEMS/FOSStenbuch
 
 Privacy policy: https://garske-systems.github.io/FOSStenbuch/datenschutz.html#privacy-policy-for-the-fosstenbuch-app
 Terms of use apply: https://garske-systems.github.io/FOSStenbuch/nutzungsbedingungen.html#terms-of-use-for-the-fosstenbuch-app
+Verification page (in German): https://garske-systems.github.io/FOSStenbuch/pruefen.html
 
 Address data © OpenStreetMap contributors (ODbL).

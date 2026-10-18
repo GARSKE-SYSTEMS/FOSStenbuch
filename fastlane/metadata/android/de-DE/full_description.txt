@@ -2,24 +2,29 @@ FOSStenbuch ist ein quelloffenes, digitales Fahrtenbuch für Android – für Pr
 
 <b>Funktionen</b>
 
-* Fahrten starten und beenden – Start- und Zielort, Kilometerstände, Kategorie (beruflich/privat), Geschäftspartner, Route und Fahrzeug; jede spätere Änderung wird protokolliert
-* GPS-Strecke – misst während der Fahrt die gefahrene Strecke
+* Fahrten starten und beenden – Start- und Zielort, Kilometerstände, Kategorie (beruflich/privat), Geschäftspartner, Route und Fahrzeug. Neue Fahrten werden während der Fahrt erfasst, nicht nachträglich angelegt; Änderungen an abgeschlossenen Fahrten werden protokolliert, löschen lassen sie sich nicht, nur stornieren
+* GPS-Strecke – misst während der Fahrt die gefahrene Strecke (als Schätzung, maßgeblich ist der Km-Stand)
 * Automatische Fahrterkennung – verbindet sich das Handy mit dem Bluetooth des Autos, wird die Fahrt aufgezeichnet; Sie prüfen und übernehmen sie später. Dafür nutzt die App den Standort auch im Hintergrund, wenn sie geschlossen ist (nur wenn Sie die Erkennung einrichten)
 * Mehrere Fahrzeuge, eigene Kategorien, gespeicherte Standorte und Vorlagen für wiederkehrende Fahrten
-* Änderungssicher – abgeschlossene Fahrten lassen sich nur noch stornieren (protokolliert); eine Hash-Kette prüft Backups beim Wiederherstellen
-* Statistik und Rechner für die Kilometerpauschale
-* Export als PDF oder CSV, Backup und Wiederherstellung
+* Bearbeitungssperre je Fahrzeug (nicht umkehrbar) – abgeschlossene Fahrten lassen sich nur noch stornieren; eine Hash-Kette prüft Backups beim Wiederherstellen
+* Siegel für jede Fahrt, die beendet, übernommen, geändert oder storniert wird – optional signiert mit Ihrem eigenen Schlüssel und mit Zeitstempel eines unabhängigen Dienstes; signierte PDFs und Backups lassen sich auf unserer Prüfseite im Browser prüfen
+* Export als CSV, PDF oder ausführliches PDF je Fahrzeug mit Km-Ständen, Änderungsprotokoll und Siegeln; Backup und Wiederherstellung
+* Statistik und Rechner für die Entfernungspauschale (deutsches Steuerrecht, zur Orientierung)
 * Tägliche Erinnerung, Fahrten einzutragen
 * Österreichische und deutsche Kennzeichen
 * Helles und dunkles Design
 
+Ob das Finanzamt ein Fahrtenbuch anerkennt, hängt davon ab, wie Sie es führen. Die App gibt dafür keine Garantie und ersetzt keine Steuerberatung. Hinweise zur richtigen Nutzung: https://github.com/GARSKE-SYSTEMS/FOSStenbuch#f%C3%BCr-das-finanzamt
+
 <b>Datenschutz</b>
 
 * Kein Konto, keine Werbung, keine Analyse- oder Tracking-Dienste
-* Einzige Online-Funktion: Adresssuche und Ortsnamen über OpenStreetMap (Nominatim). Dafür gehen Ihr Suchbegriff bzw. die Start- und Zielkoordinaten automatisch erkannter Fahrten an die OpenStreetMap Foundation.
+* Online-Funktionen: Adresssuche und Ortsnamen über OpenStreetMap (Nominatim) – dafür gehen Ihr Suchbegriff bzw. die Start- und Zielkoordinaten automatisch erkannter Fahrten an die OpenStreetMap Foundation. Optional (standardmäßig aus) Zeitstempel – dafür geht nur ein SHA-256-Fingerabdruck je Siegel an den gewählten Zeitstempeldienst.
+* Ihr Signaturschlüssel bleibt verschlüsselt auf dem Gerät; die App sendet ihn nirgendwohin
 * Freie Software unter MIT-Lizenz: https://github.com/GARSKE-SYSTEMS/FOSStenbuch
 
 Datenschutzerklärung: https://garske-systems.github.io/FOSStenbuch/datenschutz.html
 Es gelten die Nutzungsbedingungen: https://garske-systems.github.io/FOSStenbuch/nutzungsbedingungen.html
+Prüfseite: https://garske-systems.github.io/FOSStenbuch/pruefen.html
 
 Adressdaten © OpenStreetMap-Mitwirkende (ODbL).

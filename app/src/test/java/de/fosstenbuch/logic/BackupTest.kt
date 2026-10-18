@@ -22,7 +22,7 @@ class BackupTest {
 
     private val protectedCar = Vehicle(
         id = 2, make = "VW", model = "Golf", licensePlate = "B-AB 123", fuelType = "Diesel", isPrimary = true,
-        auditProtected = true, bluetoothDeviceAddress = "AA:BB:CC:DD:EE:FF", bluetoothDeviceName = "Golf BT"
+        auditProtected = true, bluetoothDeviceAddress = "AA:BB:CC:DD:EE:FF", bluetoothDeviceName = "Golf BT", protectedSince = 1690000000000L
     )
     private val otherCar = Vehicle(id = 3, make = "Opel", model = "Corsa", licensePlate = "M-X 1", fuelType = "Benzin", notes = "Zweitwagen")
 
@@ -49,7 +49,11 @@ class BackupTest {
         locations = listOf(SavedLocation(id = 7, name = "Büro", latitude = 52.0, longitude = 13.4, address = "Hauptstr. 1", usageCount = 0)),
         trips = chained(trip1, trip2) + Trip(id = 9, date = Date(1700200000000L), startLocation = "A", vehicleId = 3, isActive = true) + ghost,
         templates = listOf(TripTemplate(id = 5, name = "Kunde", startLocation = "Berlin", endLocation = "Potsdam", distanceKm = 35.0, purpose = "Beruflich", purposeId = 1, vehicleId = 2, route = "B1")),
-        auditLogs = listOf(TripAuditLog(id = 1, tripId = 1, fieldName = "Zielort", oldValue = null, newValue = "Hamburg", changedAt = Date(1700020000000L)))
+        auditLogs = listOf(TripAuditLog(id = 1, tripId = 1, fieldName = "Zielort", oldValue = null, newValue = "Hamburg", changedAt = Date(1700020000000L))),
+        seals = listOf(
+            Seals.create(trip1, Seals.ENDED, 1700010000000L).copy(id = 1),
+            Seals.create(trip2, Seals.CANCELLED, 1700200000000L).copy(id = 2, signature = "c2ln", publicKey = "a2V5", tsToken = "dG9rZW4=", tsTime = 1700200001000L, tsUrl = "https://tsa.example/")
+        )
     )
 
     /** Wie org.json: Ganzzahlige Werte stehen ohne Nachkommastelle in der Datei (280.0 -> 280) und kommen als Integer bzw. Long zurück */
@@ -67,8 +71,35 @@ class BackupTest {
     private fun roundTrip(c: Backup.Content) = Backup.decode(asParsed(Backup.encode(c, 1L)) as Map<String, Any?>)
 
     @Test
-    fun `Rundreise erhält alle Felder inklusive Vorlagen, Bluetooth, Export-Status und automatischer Fahrten`() {
+    fun `Rundreise erhält alle Felder inklusive Vorlagen, Bluetooth, Export-Status, automatischer Fahrten und Siegel`() {
         assertEquals(full, roundTrip(full))
+        assertEquals(1, Backup.encode(full, 1L)["version"]) // neue Daten nur als zusätzliche Keys
+    }
+
+    @Test
+    fun `Siegelprüfung nach dem Einspielen zählt veränderte Fahrten`() {
+        val plain = full.copy(seals = full.seals.take(1))
+        assertEquals(emptyList<Long>(), Seals.mismatches(plain.trips, plain.seals))
+        val tampered = plain.trips.map { if (it.id == 1L) it.copy(endLocation = "Bremen") else it }
+        assertEquals(listOf(1L), Seals.mismatches(tampered, plain.seals))
+    }
+
+    @Test
+    fun `Warnung, wenn eine Bearbeitungssperre beim Einspielen verloren ginge`() {
+        val device = listOf(protectedCar, otherCar, otherCar.copy(id = 5, licensePlate = "K-Z 9", auditProtected = true))
+        // Gleiches Kennzeichen (anders geschrieben) und gesperrt: keine Warnung; K-Z 9 fehlt im Backup
+        val backup = full.copy(vehicles = listOf(protectedCar.copy(id = 1, licensePlate = "b-ab123")))
+        assertEquals(listOf(5L), Backup.unprotectedIn(backup, device).map { it.id })
+        val unlocked = full.copy(vehicles = listOf(protectedCar.copy(auditProtected = false)))
+        assertEquals(listOf(2L, 5L), Backup.unprotectedIn(unlocked, device).map { it.id })
+    }
+
+    @Test
+    fun `Verlauf wird zeilenweise gespeichert und verträgt kaputte Zeilen`() {
+        val events = listOf(Backup.Event(1L, Backup.RESTORED_FORCED, 3), Backup.Event(2L, Backup.DELETED_ALL))
+        assertEquals(events, Backup.parseHistory(events.joinToString("") { Backup.historyLine(it) }))
+        assertEquals(events.take(1), Backup.parseHistory(Backup.historyLine(events[0]) + "kaputt\nx\ty\tz\n"))
+        assertTrue(Backup.parseHistory("").isEmpty())
     }
 
     @Test
@@ -105,7 +136,7 @@ class BackupTest {
                     "gpsDistanceKm" to 10000000, "businessPartner" to null, "route" to null, "chainHash" to expected.chainHash
                 )
             )
-            // kein "auditLogs", "templates", "ghostTrips" (gab es früher nicht bzw. optional)
+            // kein "auditLogs", "templates", "ghostTrips", "seals" (gab es früher nicht bzw. optional)
         )
         val c = Backup.decode(old)
         assertEquals(listOf(expected), c.trips)
@@ -114,7 +145,8 @@ class BackupTest {
         assertFalse(c.trips[0].isGhost)
         assertNull(c.vehicles[0].bluetoothDeviceAddress)
         assertEquals(13.0, c.locations[0].longitude, 0.0)
-        assertTrue(c.templates.isEmpty() && c.auditLogs.isEmpty())
+        assertTrue(c.templates.isEmpty() && c.auditLogs.isEmpty() && c.seals.isEmpty())
+        assertNull(c.vehicles[0].protectedSince)
         Backup.checkChains(c) // Kette passt weiterhin
     }
 
@@ -125,6 +157,11 @@ class BackupTest {
         assertThrows(IllegalArgumentException::class.java) { Backup.decode(mapOf("version" to 1, "vehicles" to emptyList<Any>())) }
         val noName = Backup.encode(full, 1L) + ("purposes" to listOf(mapOf("id" to 1, "isBusinessRelevant" to true)))
         assertThrows(IllegalArgumentException::class.java) { Backup.decode(noName) }
+        // Kaputte Siegel (Hash, base64) würden sonst nach dem Einspielen das ausführliche PDF dauerhaft verhindern
+        for (bad in listOf(full.seals[0].copy(hash = "xyz"), full.seals[1].copy(publicKey = "kein base64!"), full.seals[1].copy(tsToken = "%"))) {
+            val e = assertThrows(IllegalArgumentException::class.java) { roundTrip(full.copy(seals = listOf(bad))) }
+            assertEquals("Ungültiges Backup: Siegel ${bad.id}", e.message)
+        }
     }
 
     @Test
@@ -140,6 +177,6 @@ class BackupTest {
 
         val missing = full.copy(trips = full.trips.map { if (it.id == 1L) it.copy(chainHash = null) else it })
         val e2 = assertThrows(Backup.BrokenChain::class.java) { Backup.checkChains(missing) }
-        assertTrue(e2.message!!, e2.message!!.startsWith("Fehlende Hash-Kette für änderungssicheres Fahrzeug VW Golf (B-AB 123) bei Fahrt #1"))
+        assertTrue(e2.message!!, e2.message!!.startsWith("Fehlende Hash-Kette für Fahrzeug mit Bearbeitungssperre VW Golf (B-AB 123) bei Fahrt #1"))
     }
 }

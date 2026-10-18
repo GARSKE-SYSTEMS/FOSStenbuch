@@ -5,14 +5,17 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Typeface
 import android.graphics.pdf.PdfDocument
+import de.fosstenbuch.data.Seal
 import de.fosstenbuch.data.Trip
 import de.fosstenbuch.logic.Fmt
+import de.fosstenbuch.logic.Seals
 import java.io.OutputStream
+import java.net.URI
+import java.util.Date
 import java.util.Locale
 
-// PDF-Ausgabe für "PDF" und "PDF (Finanzamt)": A4 quer, Maße in Punkt (1/72 Zoll).
-// Alle Texte werden umbrochen statt gekürzt – Ort, Zweck, Geschäftspartner und Route sind
-// gesetzlich geforderte Angaben (§ 6 Abs. 1 Nr. 4 EStG) und dürfen nicht abgeschnitten werden.
+// PDF-Ausgabe für "PDF" und "PDF (ausführlich, mit Änderungsprotokoll)": A4 quer, Maße in Punkt (1/72 Zoll).
+// Alle Texte werden umbrochen statt gekürzt – Orte, Zweck, Geschäftspartner und Route bleiben vollständig lesbar.
 
 private const val W = 842
 private const val H = 595
@@ -50,14 +53,14 @@ private fun odo(km: Int?) = km?.toString() ?: "-"
 
 /** Schreibt beide PDF-Formate; Format, Fahrten usw. stehen in [d] */
 internal fun writePdf(d: ExportData, out: OutputStream) {
-    val finanzamt = d.options.format == Format.FINANZAMT_PDF
+    val detailed = d.options.format == Format.DETAILED_PDF
     val w = PdfWriter(
-        footer = if (finanzamt) "FOSStenbuch — Fahrtenbuch gem. § 6 Abs. 1 Nr. 4 EStG" else "FOSStenbuch",
+        footer = if (detailed) "FOSStenbuch — Fahrtenbuch" else "FOSStenbuch",
         created = "Erstellt: ${Fmt.date(d.created)}",
-        headerColor = if (finanzamt) Color.rgb(0x37, 0x47, 0x4F) else Color.rgb(0x62, 0x00, 0xEE)
+        headerColor = if (detailed) Color.rgb(0x37, 0x47, 0x4F) else Color.rgb(0x62, 0x00, 0xEE)
     )
     try {
-        if (finanzamt) finanzamt(w, d) else standard(w, d)
+        if (detailed) detailed(w, d) else standard(w, d)
         w.finish(out)
     } finally {
         w.close()
@@ -102,30 +105,86 @@ private fun standard(w: PdfWriter, d: ExportData) {
         w.text(d.driver)
         w.text(Fmt.date(d.created), small)
     }
+    d.publicKey?.let {
+        w.y += 8f
+        w.text("Schlüssel-Fingerabdruck: ${Seals.fingerprint(it)} · Dieses PDF ist digital signiert. Prüfen: ${Export.VERIFY_URL}", small)
+    }
 }
 
 /**
- * Finanzamt-PDF (§ 6 Abs. 1 Nr. 4 EStG): Deckblatt mit Stammdaten, Übersicht, Monatssummen und
- * Hinweisen; danach Einzelnachweise mit Monats-Zwischensummen, Änderungsprotokoll und Unterschrift.
+ * Ausführliches PDF (genau ein Fahrzeug, alle Kategorien): Deckblatt mit Stammdaten, Km-Ständen, Hinweisen,
+ * Verlauf und Schlüssel, Übersicht und Monatssummen; danach Einzelnachweise mit Monats-Zwischensummen,
+ * Änderungsprotokoll, Siegel-Anhang, Richtigkeitserklärung und Schlussvermerk.
  */
-private fun finanzamt(w: PdfWriter, d: ExportData) {
+private fun detailed(w: PdfWriter, d: ExportData) {
     val s = d.summary()
     val months = Export.months(d.trips)
     w.text("Fahrtenbuch", title)
-    w.text("gemäß § 6 Abs. 1 Nr. 4 Satz 3 EStG", italic)
+    w.text("Einzelnachweis aller Fahrten", italic)
     w.y += 10f
 
     // Stammdaten: Bezeichnung links, Wert daneben
-    val meta = floatArrayOf(120f, TEXT_W - 120f)
+    val meta = floatArrayOf(160f, TEXT_W - 160f)
+    val v = d.usedVehicles.firstOrNull() // genau eins, siehe Options.needsVehicle
     if (d.options.company.isNotEmpty()) w.row(listOf("Firma/Betrieb:", d.options.company), meta)
-    if (d.driver.isNotEmpty()) w.row(listOf("Fahrer/in:", d.driver), meta)
+    if (v != null) {
+        w.row(listOf("Fahrzeug:", v.label), meta)
+        w.row(listOf("Kraftstoff:", v.fuelType), meta)
+    }
     w.row(listOf("Zeitraum:", Export.range(d.options)), meta)
-    val vehicles = d.usedVehicles
-    if (vehicles.size == 1) {
-        w.row(listOf("Fahrzeug:", vehicles[0].label), meta)
-        w.row(listOf("Kraftstoff:", vehicles[0].fuelType), meta)
-    } else {
-        vehicles.forEachIndexed { i, v -> w.row(listOf(if (i == 0) "Fahrzeuge:" else "", "• ${v.label} — ${v.fuelType}"), meta) }
+    w.row(listOf("Fahrer laut Einstellung beim Export:", d.driver.ifEmpty { "nicht angegeben" }), meta)
+    val (startKm, endKm) = Export.odometerRange(d.trips)
+    w.row(listOf("Km-Stand zu Beginn:", "${odo(startKm)} (Start der ersten Fahrt im Zeitraum)"), meta)
+    w.row(listOf("Km-Stand am Ende:", "${odo(endKm)} (Ende der letzten Fahrt im Zeitraum)"), meta)
+    if (startKm != null && endKm != null) {
+        val diff = (endKm - startKm).toDouble()
+        w.row(listOf("Nicht erfasste km:", "${Fmt.km(diff - s.km)} (Differenz der Km-Stände ${Fmt.km(diff)} minus Summe der Fahrten ${Fmt.km(s.km)})"), meta)
+    }
+    if (v != null) {
+        w.y += 6f
+        w.text(Export.lockStatus(v), if (v.auditProtected) green else body)
+    }
+
+    // Hinweise auf Lücken – das Fahrtenbuch zeigt sie offen, statt sie zu verschweigen
+    val gaps = Export.odometerGaps(d.trips)
+    val noReason = d.trips.count { !it.isCancelled && d.isBusiness(it) && it.businessPartner.isNullOrBlank() && it.notes.isNullOrBlank() }
+    val broken = d.sealMarks.values.count { it == "!" }
+    if (gaps.isNotEmpty() || noReason > 0 || broken > 0 || d.pendingGhosts > 0) w.y += 6f
+    if (gaps.isNotEmpty()) {
+        w.text("⚠ Km-Lücken (Nr. = Nummer in den Einzelnachweisen):", orange)
+        gaps.forEach { w.text("• $it", orange, indent = 12f) }
+    }
+    if (d.pendingGhosts > 0) {
+        w.text("⚠ ${d.pendingGhosts} automatisch erkannte Fahrt(en) im Zeitraum noch nicht übernommen – sie fehlen in diesem Fahrtenbuch.", orange)
+    }
+    if (noReason > 0) w.text("⚠ $noReason geschäftliche Fahrt(en) ohne Geschäftspartner und Anlass.", orange)
+    if (broken > 0) w.text("⚠ $broken Fahrt(en) passen nicht zu ihrem Siegel (nach dem Siegeln verändert, Spalte „Siegel“: !).", orange)
+
+    // Verlauf aus den Einstellungen: übersteht "Alle Daten löschen" und das Einspielen eines Backups
+    w.y += 14f
+    w.text("Wiederherstellungen und Löschungen in der App", heading)
+    w.text("Alle erfassten Einträge, unabhängig vom Zeitraum", small)
+    if (d.history.isEmpty()) w.text("Keine erfasst.")
+    for (e in d.history) {
+        val mismatch = if (e.sealMismatches > 0) " – ${e.sealMismatches} Fahrt(en) passten nicht zu ihrem Siegel" else ""
+        w.text("${Fmt.dateTime(Date(e.time))}  ${e.kind}$mismatch")
+    }
+
+    w.y += 14f
+    w.text("Digitale Prüfung", heading)
+    val stamped = d.seals.values.any { list -> list.any { it.tsTime != null } }
+    w.text(
+        when {
+            d.seals.isEmpty() -> "Die Fahrten dieses Zeitraums haben keine Siegel (erfasst vor Einführung der Siegel)."
+            stamped -> "Die PDF-Datei enthält die Siegel und Zeitstempel der Fahrten (siehe Anhang)."
+            else -> "Die PDF-Datei enthält die Siegel der Fahrten (siehe Anhang), aber keine Zeitstempel."
+        } + (if (d.publicKey != null) " Die Datei ist digital signiert." else "") +
+            " Prüfen: die unveränderte Datei aus der App auf ${Export.VERIFY_URL} öffnen – im Browser, ohne Hochladen. " +
+            "Ausgedruckt oder in einem PDF-Programm neu gespeichert ist das nicht prüfbar."
+    )
+    d.publicKey?.let { pub ->
+        w.row(listOf("Schlüssel-Fingerabdruck:", Seals.fingerprint(pub)), meta)
+        w.row(listOf("Öffentlicher Schlüssel:", pub), meta)
     }
 
     w.y += 14f
@@ -156,33 +215,35 @@ private fun finanzamt(w: PdfWriter, d: ExportData) {
         }
     }
 
-    auditNotice(w, d)
-    val noPartner = d.trips.count { !it.isCancelled && d.isBusiness(it) && it.businessPartner.isNullOrBlank() }
-    val gaps = Export.odometerGaps(d.trips)
-    if (noPartner > 0 || gaps > 0) w.y += 6f
-    if (noPartner > 0) w.text("⚠ $noPartner geschäftliche Fahrt(en) ohne Geschäftspartner — ggf. nachtragen.", orange)
-    if (gaps > 0) w.text("⚠ $gaps Fahrt(en) ohne lückenlose Km-Stände (Stand fehlt oder Lücke zur vorherigen Fahrt).", orange)
-
     // Einzelnachweise immer ab einer neuen Seite
     w.newPage()
     w.text("Einzelnachweise", heading)
+    w.text(
+        "Nr. mit * = nach dem Abschluss geändert oder storniert (siehe Änderungsprotokoll; bei Fahrten aus der Zeit vor den " +
+            "Siegeln auch Korrekturen beim Beenden/Übernehmen) · Zweck: gespeicherte Kategorie, (G) geschäftlich (darunter die Notiz), (P) privat · " +
+            "Siegel: ✓ TT.MM. HH:MM mit Zeitstempel, ✓ sig. signiert, ✓ gesiegelt, – kein Siegel, ! nach dem Siegeln verändert (Signatur siehe Anhang)",
+        small
+    )
     w.y += 2f
-    val cw = floatArrayOf(22f, 44f, 28f, 28f, 54f, 81f, 81f, 81f, 81f, 56f, 56f, 40f, 40f, 46f, 32f)
-    val headers = listOf("Nr.", "Datum", "Start", "Ende", "Kennzeichen", "Startort", "Zielort", "Geschäftspartner",
-        "Zweck", "Route", "Kategorie", "Km-Start", "Km-Ende", "Distanz", "Storno")
+    // Kein Kennzeichen (ein Fahrzeug, steht auf dem Deckblatt) und keine Kategorie (steckt im Zweck)
+    val cw = floatArrayOf(24f, 44f, 28f, 28f, 90f, 90f, 80f, 100f, 70f, 40f, 40f, 46f, 32f, 58f)
+    val headers = listOf("Nr.", "Datum", "Start", "Ende", "Startort", "Zielort", "Geschäftspartner", "Zweck", "Route",
+        "Km-Start", "Km-Ende", "Distanz", "Storno", "Siegel")
     w.table(headers, cw) {
         var nr = 0
         for ((month, list) in months) {
             for (t in list) {
                 nr++
+                val business = d.isBusiness(t)
+                val purpose = if (business) "${t.purpose} (G)" + t.notes?.takeIf { it.isNotBlank() }?.let { "\n$it" }.orEmpty() else "${t.purpose} (P)"
                 w.tripRow(
                     t, nr, cw, listOf(
-                        "$nr", Fmt.date(t.date), Fmt.time(t.date), t.endTime?.let(Fmt::time) ?: "-",
-                        d.vehicle(t)?.licensePlate ?: "-", t.startLocation, t.endLocation,
-                        if (d.isBusiness(t)) t.businessPartner.orEmpty() else "-", t.purpose, t.route.orEmpty(),
-                        d.purpose(t)?.name ?: "-", odo(t.startOdometer), odo(t.endOdometer), Fmt.km(t.distanceKm),
-                        if (t.isCancelled) "Ja" else ""
-                    )
+                        if (d.changes(t) > 0) "$nr*" else "$nr", Fmt.date(t.date), Fmt.time(t.date), t.endTime?.let(Fmt::time) ?: "-",
+                        t.startLocation, t.endLocation, if (business) t.businessPartner.orEmpty() else "-", purpose, t.route.orEmpty(),
+                        odo(t.startOdometer), odo(t.endOdometer), Fmt.km(t.distanceKm), if (t.isCancelled) "Ja" else "",
+                        d.sealMarks[t.id] ?: "–"
+                    ),
+                    keep = 2
                 )
             }
             val m = d.summary(list)
@@ -195,11 +256,12 @@ private fun finanzamt(w: PdfWriter, d: ExportData) {
             )
         }
     }
-    auditLog(w, d)
+    auditLog(w, d, numbered = true)
+    sealAppendix(w, d)
 
-    // Richtigkeitserklärung als Block zusammenhalten
+    // Richtigkeitserklärung und Schlussvermerk als Block zusammenhalten
     w.y += 20f
-    w.ensure(110f)
+    w.ensure(145f)
     w.canvas.drawLine(M, w.y, W - M, w.y, grid)
     w.y += 8f
     w.text("Richtigkeitserklärung", heading)
@@ -212,27 +274,32 @@ private fun finanzamt(w: PdfWriter, d: ExportData) {
         w.canvas.drawText(label, x, w.y + 10f, small)
     }
     if (d.driver.isNotEmpty()) w.canvas.drawText("Name: ${d.driver}", signX, w.y + 24f, body)
+    d.publicKey?.let { w.canvas.drawText("Schlüssel-Fingerabdruck: ${Seals.fingerprint(it)}", signX, w.y + 36f, body) }
+    w.y += 52f
+
+    // Schlussvermerk auf der letzten Seite: So fällt eine fehlende letzte Seite auf
+    w.text("Ende des Fahrtenbuchs – ${d.trips.size} ${if (d.trips.size == 1) "Fahrt" else "Fahrten"}", bold)
 }
 
-/** Hinweis auf änderungssicher geführte Fahrzeuge – nur die, deren Fahrten exportiert werden */
+/** Hinweis auf Fahrzeuge mit Bearbeitungssperre – nur die, deren Fahrten exportiert werden */
 private fun auditNotice(w: PdfWriter, d: ExportData) {
     val protected = d.usedVehicles.filter { it.auditProtected }
     if (protected.isEmpty()) return
     w.y += 6f
-    w.text("✓ Änderungssichere Protokollierung aktiv für:", green)
+    w.text("✓ Bearbeitungssperre aktiv für:", green)
     protected.forEach { w.text("• ${it.label}", green, indent = 12f) }
 }
 
-/** Änderungsprotokoll je Fahrt; die Fahrt wird über Datum und Strecke eindeutig benannt */
-private fun auditLog(w: PdfWriter, d: ExportData) {
-    if (d.auditLogs.isEmpty()) return
+/** Änderungsprotokoll je Fahrt; die Fahrt wird über Datum und Strecke (mit [numbered] auch die Nr.) eindeutig benannt */
+private fun auditLog(w: PdfWriter, d: ExportData, numbered: Boolean = false) {
+    if (!d.options.withAudit || d.auditLogs.isEmpty()) return
     w.y += 12f
     w.ensure(40f)
     w.text("Änderungsprotokoll", heading)
-    for (t in d.trips) {
-        val logs = d.auditLogs[t.id] ?: continue
+    d.trips.forEachIndexed { i, t ->
+        val logs = d.auditLogs[t.id] ?: return@forEachIndexed
         w.y += 3f
-        w.text("Fahrt ${Export.tripLabel(t)}", bold)
+        w.text((if (numbered) "Nr. ${i + 1} · " else "") + "Fahrt ${Export.tripLabel(t)}", bold)
         for (log in logs) {
             w.text(
                 "${Fmt.dateTime(log.changedAt)}  ${log.fieldName}: „${log.oldValue ?: "-"}“ → „${log.newValue ?: "-"}“",
@@ -242,10 +309,61 @@ private fun auditLog(w: PdfWriter, d: ExportData) {
     }
 }
 
-/** Zeile einer Fahrt; stornierte rot und durchgestrichen, mit Stornogrund in einer eigenen Zeile darunter */
-private fun PdfWriter.tripRow(t: Trip, index: Int, widths: FloatArray, cells: List<String>) {
+/**
+ * Anhang "Siegel": je Fahrt alle Siegel. Prüfbar ist nur das jüngste (gegen die heutigen Daten der Fahrt);
+ * frühere gehören zu einem früheren Stand, den das Änderungsprotokoll zeigt.
+ */
+private fun sealAppendix(w: PdfWriter, d: ExportData) {
+    if (d.seals.isEmpty()) return
+    w.y += 12f
+    w.ensure(60f)
+    w.text("Anhang: Siegel", heading)
+    w.text(
+        "Ein Siegel ist ein SHA-256-Fingerabdruck der Fahrtdaten beim Beenden, Übernehmen, Ändern und Stornieren. Daten: ob die " +
+            "heutigen Fahrtdaten noch zum jüngsten Siegel passen (ältere gehören zu einem früheren Stand). Signatur: Schlüssel, mit dem " +
+            "gesiegelt wurde – „keine“, wenn beim Siegeln kein Schlüssel eingerichtet war. Zeitstempel: Zeitpunkt laut Dienst – er " +
+            "belegt, dass es die Daten da schon so gab; ohne Zeitstempel erkennt ein Siegel nur versehentliche oder einfache " +
+            "Änderungen, denn die Formel ist öffentlich. Alles prüft " +
+            "die Prüfseite mit dieser PDF-Datei – bis auf Privatfahrten mit Notiz oder Geschäftspartner (diese Angaben stehen nicht in " +
+            "den Prüfdaten) und Siegel früherer Stände: Die sind nur mit dem Backup prüfbar.",
+        small
+    )
+    w.y += 2f
+    val cw = floatArrayOf(30f, 60f, 80f, 190f, 110f, 70f)
+    w.table(listOf("Nr.", "Art", "Gerätezeit", "Zeitstempel", "Signatur", "Daten"), cw) {
+        d.trips.forEachIndexed { i, t ->
+            val seals = d.seals[t.id] ?: return@forEachIndexed
+            val latest = seals.maxBy { it.id }
+            for (s in seals) {
+                val current = s === latest && Seals.dataMatches(t, s)
+                val data = if (s !== latest) "früherer Stand" else if (current) "unverändert" else "verändert"
+                // Gültig/ungültig nur, wo sich die Signatur gegen die heutigen Daten prüfen lässt
+                val signature = when {
+                    s.signature == null -> "keine"
+                    s.publicKey == null -> "ungültig"
+                    !current -> Seals.fingerprint(s.publicKey).take(9)
+                    else -> Seals.fingerprint(s.publicKey).take(9) + if (Seals.matches(t, s)) " gültig" else " ungültig"
+                }
+                w.row(listOf("${i + 1}", s.kind, Fmt.dateTime(Date(s.createdAt)), stamp(s), signature, data), cw, bg = if (i % 2 == 0) STRIPE else null)
+            }
+        }
+    }
+}
+
+/** Zeit laut Zeitstempel und Rechnername des Dienstes, z.B. "05.02.2024 09:01 (freetsa.org)" */
+private fun stamp(s: Seal): String {
+    val time = s.tsTime ?: return "keiner"
+    val host = s.tsUrl?.let { runCatching { URI(it).host }.getOrNull() ?: it }
+    return Fmt.dateTime(Date(time)) + (host?.let { " ($it)" } ?: "")
+}
+
+/**
+ * Zeile einer Fahrt; stornierte rot und durchgestrichen (bis auf die letzten [keep] Zellen: Storno, ggf. Siegel),
+ * mit Stornogrund in einer eigenen Zeile darunter
+ */
+private fun PdfWriter.tripRow(t: Trip, index: Int, widths: FloatArray, cells: List<String>, keep: Int = 1) {
     val bg = if (index % 2 == 0) STRIPE else null
-    row(cells, widths, if (t.isCancelled) red else body, bg, strike = t.isCancelled)
+    row(cells, widths, if (t.isCancelled) red else body, bg, strike = if (t.isCancelled) cells.size - keep else 0)
     val reason = t.cancellationReason
     if (t.isCancelled && !reason.isNullOrBlank()) row(listOf("Stornogrund: $reason"), floatArrayOf(widths.sum()), red, bg)
 }
@@ -295,14 +413,12 @@ private class PdfWriter(private val footer: String, private val created: String,
         onNewPage?.invoke()
     }
 
-    /** Fußzeile (Programm, Erstellungsdatum, Seitenzahl) zeichnen und Seite abschließen */
+    /** Fußzeile (Programm und Seitenzahl links, Erstellungsdatum rechts) zeichnen und Seite abschließen */
     private fun finishPage() {
         val p = page ?: return
         val baseline = H - 14f
-        p.canvas.drawText(footer, M, baseline, small)
-        p.canvas.drawText(created, W / 2f - small.measureText(created) / 2f, baseline, small)
-        val number = "Seite $pageNo"
-        p.canvas.drawText(number, W - M - small.measureText(number), baseline, small)
+        p.canvas.drawText("$footer · Seite $pageNo", M, baseline, small)
+        p.canvas.drawText(created, W - M - small.measureText(created), baseline, small)
         doc.finishPage(p)
         page = null
     }
@@ -319,9 +435,9 @@ private class PdfWriter(private val footer: String, private val created: String,
     /**
      * Tabellenzeile: Jede Zelle wird auf ihre Spaltenbreite umgebrochen, die Zeile ist so hoch wie die
      * längste Zelle. Genau diese Höhe zählt für den Seitenumbruch – eine Zeile wird nie zerteilt.
-     * [strike] streicht alle Zellen außer der letzten (Storno-Spalte) durch.
+     * Die ersten [strike] Zellen werden durchgestrichen.
      */
-    fun row(cells: List<String>, widths: FloatArray, paint: Paint = body, bg: Int? = null, strike: Boolean = false) {
+    fun row(cells: List<String>, widths: FloatArray, paint: Paint = body, bg: Int? = null, strike: Int = 0) {
         val lines = cells.mapIndexed { i, c -> wrap(c, paint, widths[i] - 2 * PAD) }
         val height = lines.maxOf { it.size } * lineHeight(paint) + 2 * PAD
         ensure(height)
@@ -332,7 +448,7 @@ private class PdfWriter(private val footer: String, private val created: String,
             cellLines.forEachIndexed { j, line ->
                 val baseline = y + PAD + paint.textSize + j * lineHeight(paint)
                 canvas.drawText(line, x + PAD, baseline, paint)
-                if (strike && i < cells.lastIndex) {
+                if (i < strike) {
                     val strikeY = baseline - paint.textSize / 3
                     canvas.drawLine(x + PAD, strikeY, x + PAD + paint.measureText(line), strikeY, paint)
                 }

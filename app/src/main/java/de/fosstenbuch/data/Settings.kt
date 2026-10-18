@@ -35,6 +35,12 @@ object Settings {
     val REMINDER_TIME = stringPreferencesKey("reminder_time")
     /** Fahrername für Export-Kopfzeilen */
     val DRIVER_NAME = stringPreferencesKey("driver_name")
+    /** Verlauf "Backup eingespielt" / "Alle Daten gelöscht" (siehe Backup.history) – überlebt "Alle Daten löschen" */
+    val DATA_HISTORY = stringPreferencesKey("data_history")
+    /** Zeitstempel (online) für Siegel, siehe logic/Tsa – standardmäßig aus */
+    val TSA_ENABLED = booleanPreferencesKey("tsa_enabled")
+    /** Adresse des Zeitstempeldienstes (Tsa.PROVIDERS oder eigene URL; "" = ungültige Eingabe) */
+    val TSA_URL = stringPreferencesKey("tsa_url")
 
     /** Liefert den Wert bei jeder Änderung neu (für die UI) */
     fun <T> flow(context: Context, key: Preferences.Key<T>, default: T): Flow<T> =
@@ -42,6 +48,11 @@ object Settings {
 
     suspend fun <T> get(context: Context, key: Preferences.Key<T>, default: T): T =
         flow(context, key, default).first()
+
+    /** Ändert einen Wert in einem Schritt (Lesen und Schreiben ohne Lücke dazwischen) */
+    suspend fun <T> update(context: Context, key: Preferences.Key<T>, default: T, change: (T) -> T) {
+        context.dataStore.edit { it[key] = change(it[key] ?: default) }
+    }
 
     /** null entfernt den Eintrag (zurück zum Standardwert) */
     suspend fun <T> set(context: Context, key: Preferences.Key<T>, value: T?) {

@@ -9,8 +9,11 @@ import de.fosstenbuch.R
 import de.fosstenbuch.data.Settings
 import de.fosstenbuch.data.dao
 import de.fosstenbuch.data.db
+import de.fosstenbuch.logic.Backup
+import de.fosstenbuch.logic.Keys
 import de.fosstenbuch.logic.export.Export
 import de.fosstenbuch.logic.export.ExportData
+import de.fosstenbuch.logic.export.Format
 import de.fosstenbuch.logic.export.Options
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -19,6 +22,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -83,6 +87,7 @@ class ExportViewModel(private val app: Application, private val state: SavedStat
         val o = options.value
         viewModelScope.launch {
             result.value = try {
+                check(!o.needsVehicle) { app.getString(R.string.export_choose_vehicle) }
                 Result.success(withContext(Dispatchers.IO) {
                     // Die Vorversion legte Exporte direkt im Cache ab, wo sie über den FileProvider
                     // weiter teilbar blieben – diese Altdateien mit personenbezogenen Daten wegräumen
@@ -93,13 +98,24 @@ class ExportViewModel(private val app: Application, private val state: SavedStat
                     val trips = Export.filter(dao.allTrips(), o, purposes.map { it.id })
                     check(trips.isNotEmpty()) { app.getString(R.string.export_no_trips) }
                     val ids = trips.map { it.id }
-                    val logs = if (o.withAudit) {
-                        val wanted = ids.toSet()
-                        dao.allAuditLogs().filter { it.tripId in wanted }.groupBy { it.tripId }
-                    } else emptyMap()
+                    val wanted = ids.toSet()
+                    // Immer laden: Die Zahl der Änderungen (CSV, "*" im PDF) gilt auch ohne gedrucktes Protokoll
+                    val logs = dao.allAuditLogs().filter { it.tripId in wanted }.groupBy { it.tripId }
                     val driver = Settings.get(app, Settings.DRIVER_NAME, "").trim()
-                    val data = ExportData(o, trips, purposes, dao.allVehicles(), logs, driver)
+                    // PDFs werden signiert, falls ein nutzbarer Schlüssel existiert (siehe Export.pdfTrailer)
+                    val key = if (o.format != Format.CSV) Keys.load(app) else null
+                    val detailed = o.format == Format.DETAILED_PDF
+                    val data = ExportData(
+                        o, trips, purposes, dao.allVehicles(), logs, driver,
+                        // Immer laden: Der Abschluss-Zeitpunkt entscheidet, welche Änderungen zählen
+                        seals = dao.allSeals().filter { it.tripId in wanted }.groupBy { it.tripId },
+                        history = if (detailed) Backup.history(app) else emptyList(),
+                        publicKey = key?.publicKey,
+                        pendingGhosts = if (detailed) Export.pendingGhosts(dao.ghostTrips().first(), o) else 0
+                    )
                     val file = Export.write(File(app.cacheDir, "exports"), data)
+                    // Prüfdaten (nur ausführliches PDF) und Signatur anhängen
+                    if (o.format != Format.CSV) Export.finishPdf(file, if (detailed) Export.proofData(data) else null, key)
                     Done(file, o.format.mime, if (o.incremental && o.markExported) ids.toLongArray() else LongArray(0))
                 })
             } catch (e: CancellationException) {

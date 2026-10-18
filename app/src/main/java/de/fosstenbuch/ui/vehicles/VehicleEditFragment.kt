@@ -14,15 +14,21 @@ import androidx.core.net.toUri
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.room.withTransaction
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import com.google.android.material.button.MaterialButton
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import de.fosstenbuch.R
 import de.fosstenbuch.data.Vehicle
+import de.fosstenbuch.data.Settings as AppSettings
 import de.fosstenbuch.data.dao
 import de.fosstenbuch.data.db
 import de.fosstenbuch.databinding.FragmentVehicleEditBinding
 import de.fosstenbuch.logic.Geo
+import de.fosstenbuch.logic.Keys
 import de.fosstenbuch.logic.Trips
+import de.fosstenbuch.logic.Tsa
 import de.fosstenbuch.tracking.Ghosts
 import de.fosstenbuch.ui.common.clearErrorsOnEdit
 import de.fosstenbuch.ui.common.argId
@@ -38,7 +44,7 @@ import de.fosstenbuch.ui.common.toast
 /**
  * Fahrzeug anlegen/bearbeiten ([argId], 0 = neu).
  *
- * - Änderungssicherheit ist nicht umkehrbar. Bei geschützten Fahrzeugen sind Hersteller, Modell,
+ * - Die Bearbeitungssperre ist nicht umkehrbar. Bei geschützten Fahrzeugen sind Hersteller, Modell,
  *   Kennzeichen und Kraftstoff gesperrt, weil sie in den Exporten der bestehenden Fahrten erscheinen.
  * - Bluetooth-Gerät für die automatische Fahrterkennung. Die Erkennung selbst läuft über einen
  *   Manifest-Receiver (tracking/SystemReceiver); hier werden nur das Gerät und die nötigen
@@ -50,7 +56,7 @@ class VehicleEditFragment : Fragment(R.layout.fragment_vehicle_edit) {
 
     /** Formular schon befüllt? Danach stellt Android die Eingaben selbst wieder her. */
     private var loaded = false
-    /** War das Fahrzeug schon beim Öffnen änderungssicher? (aus der Datenbank) */
+    /** War das Fahrzeug schon beim Öffnen gesperrt? (aus der Datenbank) */
     private var wasProtected = false
     private var btAddress: String? = null
     private var btName: String? = null
@@ -87,6 +93,45 @@ class VehicleEditFragment : Fragment(R.layout.fragment_vehicle_edit) {
         outState.putString("btName", btName)
     }
 
+    /**
+     * Nach dem Einschalten der Bearbeitungssperre: Signaturschlüssel und Zeitstempel anbieten, soweit noch nicht
+     * eingerichtet. Beides ist freiwillig und macht Änderungen nachweisbar (wer gesiegelt hat, wann).
+     */
+    private fun offerProof() = launch {
+        val app = requireContext().applicationContext
+        val hasKey = withContext(Dispatchers.IO) { Keys.load(app) != null }
+        val tsaOn = AppSettings.get(app, AppSettings.TSA_ENABLED, false)
+        val url = AppSettings.get(app, AppSettings.TSA_URL, Tsa.DEFAULT_URL)
+        val offerTsa = {
+            val name = Tsa.PROVIDERS.firstOrNull { it.url == url }?.let { "${it.name}, ${it.country}" } ?: url
+            if (!tsaOn && _b != null) ask(R.string.proof_tsa_title, getString(R.string.proof_tsa_message, name), R.string.proof_tsa_enable) {
+                launch {
+                    AppSettings.set(app, AppSettings.TSA_ENABLED, true)
+                    Tsa.stampPending(app)
+                }
+            }
+        }
+        if (hasKey) offerTsa()
+        else ask(R.string.proof_key_title, getString(R.string.proof_key_message), R.string.settings_key_create, onNo = offerTsa) {
+            launch {
+                runCatching { withContext(Dispatchers.IO) { Keys.save(app, Keys.generate()) } }
+                    .onSuccess { toast(R.string.proof_key_created) }
+                    .onFailure { toast(getString(R.string.key_error, it.message)) }
+                offerTsa()
+            }
+        }
+    }
+
+    /** Ja/Nein-Frage; „Nicht jetzt“ führt [onNo] aus */
+    private fun ask(title: Int, message: String, yes: Int, onNo: () -> Unit = {}, onYes: () -> Unit) {
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle(title)
+            .setMessage(message)
+            .setPositiveButton(yes) { _, _ -> onYes() }
+            .setNegativeButton(R.string.proof_not_now) { _, _ -> onNo() }
+            .show()
+    }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val b = FragmentVehicleEditBinding.bind(view).also { _b = it }
         view.clearErrorsOnEdit()
@@ -99,6 +144,7 @@ class VehicleEditFragment : Fragment(R.layout.fragment_vehicle_edit) {
             b.audit.isChecked = false // erst nach Bestätigung einschalten
             confirm(getString(R.string.audit_protection_warning_title), getString(R.string.audit_protection_warning_message), getString(R.string.enable)) {
                 _b?.audit?.isChecked = true
+                offerProof()
             }
         }
 
@@ -178,7 +224,7 @@ class VehicleEditFragment : Fragment(R.layout.fragment_vehicle_edit) {
     }
 
     /**
-     * Prüft die Pflichtfelder und speichert. Bei einem änderungssicheren Fahrzeug bleiben Hersteller,
+     * Prüft die Pflichtfelder und speichert. Bei einem Fahrzeug mit Bearbeitungssperre bleiben Hersteller,
      * Modell, Kennzeichen und Kraftstoff wie in der Datenbank – unabhängig vom (gesperrten) Formular.
      */
     private fun save(b: FragmentVehicleEditBinding) {
@@ -208,12 +254,14 @@ class VehicleEditFragment : Fragment(R.layout.fragment_vehicle_edit) {
             ctx.db.withTransaction {
                 val old = ctx.dao.vehicle(argId)
                 val v = if (old?.auditProtected == true) {
-                    // Einmal änderungssicher, immer änderungssicher – samt der Angaben aus den Exporten
+                    // Einmal gesperrt, immer gesperrt – samt der Angaben aus den Exporten
                     old.copy(isPrimary = primary, notes = notes, bluetoothDeviceAddress = btAddress, bluetoothDeviceName = btName)
                 } else {
+                    // Zeitpunkt des Einschaltens für das ausführliche PDF ("Bearbeitungssperre aktiv seit …")
                     Vehicle(
                         id = argId, make = make, model = model, licensePlate = plate, fuelType = fuel, isPrimary = primary,
-                        notes = notes, auditProtected = audit, bluetoothDeviceAddress = btAddress, bluetoothDeviceName = btName
+                        notes = notes, auditProtected = audit, bluetoothDeviceAddress = btAddress, bluetoothDeviceName = btName,
+                        protectedSince = if (audit) System.currentTimeMillis() else null
                     )
                 }
                 // Upsert liefert beim Aktualisieren -1 statt der ID

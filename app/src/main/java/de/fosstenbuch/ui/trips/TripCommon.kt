@@ -85,16 +85,12 @@ fun bindTrip(b: ItemTripBinding, trip: Trip, purpose: TripPurpose?) {
 }
 
 /**
- * Löscht eine Fahrt nach Rückfrage. Laufende und automatische Fahrten heißen dabei "verwerfen".
- * Regelverstöße (z.B. änderungssicheres Fahrzeug) erscheinen als Meldung; [onDone] läuft nach Erfolg.
+ * Verwirft eine automatische oder gerade erst gestartete Fahrt nach Rückfrage (abgeschlossene Fahrten werden
+ * nur storniert). Regelverstöße (z.B. Fahrt läuft schon länger) erscheinen als Meldung; [onDone] läuft nach Erfolg.
  */
 fun Fragment.confirmDelete(trip: Trip, onDone: () -> Unit = {}) {
-    val (title, message, positive) = when {
-        trip.isGhost -> Triple(R.string.ghost_discard_title, R.string.ghost_discard_message, R.string.ghost_discard)
-        trip.isActive -> Triple(R.string.ghost_discard_title, R.string.trips_discard_active_message, R.string.ghost_discard)
-        else -> Triple(R.string.delete_trip_title, R.string.delete_trip_message, R.string.delete)
-    }
-    confirm(getString(title), getString(message), getString(positive)) {
+    val message = if (trip.isGhost) R.string.ghost_discard_message else R.string.trips_discard_active_message
+    confirm(getString(R.string.ghost_discard_title), getString(message), getString(R.string.ghost_discard)) {
         launch {
             try {
                 Trips.delete(requireContext(), trip)

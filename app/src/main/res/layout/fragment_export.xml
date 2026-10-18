@@ -66,6 +66,7 @@
             android:textAppearance="?attr/textAppearanceTitleSmall" />
 
         <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/layout_vehicle"
             style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -106,41 +107,38 @@
             android:text="@string/export_format"
             android:textAppearance="?attr/textAppearanceTitleSmall" />
 
-        <!-- Reihenfolge der Knöpfe = Reihenfolge von Format (CSV, PDF, FINANZAMT_PDF) -->
+        <!-- Reihenfolge der Knöpfe = Reihenfolge von Format (CSV, PDF, DETAILED_PDF); untereinander, die Namen sind lang -->
         <RadioGroup
             android:id="@+id/radio_format"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal">
+            android:orientation="vertical">
 
             <RadioButton
                 android:id="@+id/radio_csv"
-                android:layout_width="0dp"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
                 android:text="@string/export_format_csv" />
 
             <RadioButton
                 android:id="@+id/radio_pdf"
-                android:layout_width="0dp"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
                 android:text="@string/export_format_pdf" />
 
             <RadioButton
-                android:id="@+id/radio_finanzamt"
-                android:layout_width="0dp"
+                android:id="@+id/radio_detailed"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="@string/export_format_finanzamt_pdf" />
+                android:text="@string/export_format_detailed_pdf" />
         </RadioGroup>
 
         <TextView
-            android:id="@+id/text_finanzamt_hint"
+            android:id="@+id/text_detailed_hint"
             android:visibility="gone"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/export_finanzamt_hint"
+            android:text="@string/export_detailed_hint"
             android:textAppearance="?attr/textAppearanceBodySmall"
             android:textColor="?attr/colorOnSurfaceVariant" />
 

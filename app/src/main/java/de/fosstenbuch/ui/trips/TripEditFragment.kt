@@ -48,13 +48,17 @@ import de.fosstenbuch.ui.common.textOrNull
 import de.fosstenbuch.ui.common.toast
 import de.fosstenbuch.ui.locations.LocationEditFragment
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flow
 import java.util.Date
 
 /**
  * Formular für eine Fahrt. Was es anbietet, ergibt sich allein aus der geladenen Fahrt ([Mode]):
- * neue Fahrt starten (Nachtragen gibt es bewusst nicht), laufende Fahrt beenden oder verwerfen, automatisch
- * erkannte Fahrt übernehmen oder verwerfen, laufende automatische Aufzeichnung beenden, abgeschlossene Fahrt
- * bearbeiten (jede Änderung wird protokolliert, siehe Trips.auditDiff).
+ * neue Fahrt starten (Nachtragen gibt es bewusst nicht), laufende Fahrt beenden oder in den ersten Minuten
+ * verwerfen, automatisch erkannte Fahrt übernehmen oder verwerfen, laufende automatische Aufzeichnung beenden,
+ * abgeschlossene Fahrt bearbeiten (jede Änderung wird protokolliert, siehe Trips.auditDiff).
  *
  * Zustand: Feldtexte stellt Android nach Rotation und nach der Rückkehr aus "Neuen Standort
  * speichern" selbst wieder her. Alles andere (Zeiten, gewählte IDs, Km-Vorschläge) steht in Feldern
@@ -240,7 +244,7 @@ class TripEditFragment : Fragment(R.layout.fragment_trip_edit) {
         if ((mode == Mode.NEW || mode == Mode.ACTIVE) && Geo.hasPermission(ctx)) suggestLocation()
     }
 
-    /** Hinweis und Knöpfe passend zum Modus; Fahrten änderungssicherer Fahrzeuge sind komplett gesperrt */
+    /** Hinweis und Knöpfe passend zum Modus; Fahrten von Fahrzeugen mit Bearbeitungssperre sind komplett gesperrt */
     private fun render(ctx: Context) {
         val t = trip
         val locked = mode == Mode.EDIT && vehicles.any { it.id == t?.vehicleId && it.auditProtected }
@@ -250,7 +254,7 @@ class TripEditFragment : Fragment(R.layout.fragment_trip_edit) {
         // Eine neue Fahrt beginnt jetzt (Startzeit beim Tippen auf "Fahrt starten"); Ankunft und
         // Km-Stand Ende folgen beim Beenden
         val starting = mode == Mode.NEW
-        for (v in listOf(b.layoutDate, b.layoutEndTime, b.layoutEndKm, b.textDistance)) v.isVisible = !starting
+        for (v in listOf(b.layoutDate, b.layoutEndTime, b.layoutEnd, b.layoutEndKm, b.textDistance)) v.isVisible = !starting
         b.buttonStart.isVisible = starting
         b.buttonSave.isVisible = !locked && !starting
         b.buttonSave.setText(
@@ -261,13 +265,12 @@ class TripEditFragment : Fragment(R.layout.fragment_trip_edit) {
                 Mode.NEW, Mode.EDIT -> R.string.save
             }
         )
-        // Laufende Fahrt verwerfen (z.B. versehentlich gestartet) – Trips.delete erlaubt das auch bei
-        // änderungssicheren Fahrzeugen und beendet die GPS-Aufzeichnung selbst
-        b.buttonDiscard.isVisible = mode == Mode.GHOST || mode == Mode.ACTIVE
+        // Automatische Fahrt verwerfen; eine laufende nur kurz nach dem Start (siehe ACTIVE unten).
+        // Trips.delete beendet die GPS-Aufzeichnung selbst.
+        b.buttonDiscard.isVisible = mode == Mode.GHOST || (t != null && Trips.canDiscard(t))
         showHint(
             when {
                 locked -> getString(R.string.audit_locked_hint)
-                mode == Mode.NEW -> getString(R.string.trips_new_hint)
                 mode == Mode.RECORDING -> getString(R.string.trips_recording_hint)
                 // GPS-Strecke als Anhaltspunkt, falls die Km-Stände erst noch eingetragen werden müssen
                 mode == Mode.GHOST -> listOfNotNull(
@@ -279,10 +282,22 @@ class TripEditFragment : Fragment(R.layout.fragment_trip_edit) {
                 else -> null
             }
         )
-        if (mode == Mode.ACTIVE) collect(TrackingService.live) { live ->
-            val km = live?.takeIf { it.tripId == t?.id }?.km
-            showHint(listOfNotNull(getString(R.string.trip_in_progress), km?.let { getString(R.string.trips_gps_live, Fmt.km(it)) }).joinToString("\n"))
-            if (suggestEndKm(km)) b.layoutEndKm.helperText = getString(R.string.estimated_odometer)
+        // Laufende Fahrt: GPS-Strecke und Km-Vorschlag. Der Takt blendet "Verwerfen" nach Ablauf der Frist aus,
+        // distinctUntilChanged: sonst liefe der Km-Vorschlag bei jedem Takt erneut.
+        if (mode == Mode.ACTIVE && t != null) {
+            val tick = flow { while (true) { emit(Unit); delay(15_000) } }
+            collect(combine(TrackingService.live, tick) { live, _ -> live to Trips.canDiscard(t) }.distinctUntilChanged()) { (live, discardable) ->
+                val km = live?.takeIf { it.tripId == t.id }?.km
+                b.buttonDiscard.isVisible = discardable
+                showHint(
+                    listOfNotNull(
+                        getString(R.string.trip_in_progress),
+                        km?.let { getString(R.string.trips_gps_live, Fmt.km(it)) },
+                        getString(R.string.trips_discard_expired).takeIf { !discardable }
+                    ).joinToString("\n")
+                )
+                if (suggestEndKm(km)) b.layoutEndKm.helperText = getString(R.string.estimated_odometer)
+            }
         }
         if (mode == Mode.EDIT && t != null) collect(ctx.dao.auditLog(t.id)) { logs ->
             b.groupAudit.isVisible = logs.isNotEmpty()
@@ -381,6 +396,7 @@ class TripEditFragment : Fragment(R.layout.fragment_trip_edit) {
         Trips.Field.ODOMETER, Trips.Field.DISTANCE -> b.layoutEndKm
         Trips.Field.PURPOSE -> b.layoutPurpose
         Trips.Field.VEHICLE -> b.layoutVehicle
+        Trips.Field.PARTNER -> b.layoutPartner
     }
 
     private fun showHint(text: String?) {
@@ -428,7 +444,10 @@ class TripEditFragment : Fragment(R.layout.fragment_trip_edit) {
             b.editStartKm.setText(start)
             suggestedKm = start
         }
-        if (mode == Mode.GHOST && !suggestEndKm(ghost?.gpsDistanceKm) && isReplaceable(b.editEndKm.text.toString(), suggestedEndKm)) {
+        if (mode != Mode.GHOST) return
+        if (suggestEndKm(ghost?.gpsDistanceKm)) {
+            b.layoutEndKm.helperText = getString(R.string.estimated_odometer)
+        } else if (isReplaceable(b.editEndKm.text.toString(), suggestedEndKm)) {
             b.editEndKm.setText(null)
             suggestedEndKm = null
         }
@@ -499,7 +518,8 @@ class TripEditFragment : Fragment(R.layout.fragment_trip_edit) {
      */
     private fun applyTemplate(t: TripTemplate) = launch {
         t.startLocation.takeIf { it.isNotBlank() }?.let { b.editStart.setText(it, false) }
-        t.endLocation.takeIf { it.isNotBlank() }?.let { b.editEnd.setText(it, false) }
+        // Beim Starten gibt es noch kein Ziel – das wird bei der Ankunft eingetragen
+        t.endLocation.takeIf { it.isNotBlank() && mode != Mode.NEW }?.let { b.editEnd.setText(it, false) }
         t.businessPartner?.let { b.editPartner.setText(it) }
         t.route?.let { b.editRoute.setText(it) }
         t.notes?.let { b.editNotes.setText(it) }

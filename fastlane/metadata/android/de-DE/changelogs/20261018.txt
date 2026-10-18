@@ -1,0 +1,5 @@
+Nachvollziehbarer führen:
+• Siegel für jede beendete, übernommene, geänderte oder stornierte Fahrt – optional mit Zeitstempel und eigenem Signaturschlüssel
+• Abgeschlossene Fahrten lassen sich nicht mehr löschen, nur stornieren (mit Grund)
+• Bearbeitungssperre klarer beschrieben, Zeitpunkt des Einschaltens wird erfasst
+• Ausführliches PDF je Fahrzeug mit Km-Ständen, Lücken, Änderungsprotokoll und Siegeln – auf der Prüfseite im Browser prüfbar

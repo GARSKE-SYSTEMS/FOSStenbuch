@@ -86,7 +86,7 @@ interface AppDao {
     /**
      * Zwischenstand einer automatischen Aufzeichnung; die erste Position wird zum Startpunkt.
      * Wirkt nur, solange die Aufzeichnung läuft – eine verspätete Position kann eine
-     * abgeschlossene oder übernommene (evtl. änderungssichere) Fahrt nicht mehr verändern.
+     * abgeschlossene oder übernommene (evtl. gesperrte) Fahrt nicht mehr verändern.
      */
     @Query(
         """UPDATE trips SET gpsDistanceKm = :km,
@@ -122,6 +122,28 @@ interface AppDao {
 
     @Insert
     suspend fun insertAuditLogs(logs: List<TripAuditLog>)
+
+    // ── Siegel ───────────────────────────────────────────────────────────────
+
+    @Query("SELECT * FROM seals ORDER BY id")
+    suspend fun allSeals(): List<Seal>
+
+    @Insert
+    suspend fun insertSeal(seal: Seal): Long
+
+    /** Ältestes Siegel ohne Zeitstempel (zum Nachholen, siehe Tsa) */
+    @Query("SELECT * FROM seals WHERE tsToken IS NULL ORDER BY id LIMIT 1")
+    suspend fun nextUnstampedSeal(): Seal?
+
+    @Query("SELECT COUNT(*) FROM seals WHERE tsToken IS NULL")
+    fun unstampedSealCount(): Flow<Int>
+
+    /** Trägt den Zeitstempel ein – nur wenn das Siegel noch dasselbe ist (inzwischen ein Backup eingespielt?) */
+    @Query(
+        """UPDATE seals SET tsToken = :token, tsTime = :time, tsUrl = :url
+           WHERE id = :id AND hash = :hash AND signature IS :signature AND tsToken IS NULL"""
+    )
+    suspend fun setTimestamp(id: Long, hash: String, signature: String?, token: String, time: Long, url: String)
 
     // ── Fahrzeuge ────────────────────────────────────────────────────────────
 
@@ -211,6 +233,7 @@ interface AppDao {
 
     // ── Backup-Wiederherstellung (immer innerhalb einer Transaktion aufrufen) ─
 
+    @Query("DELETE FROM seals") suspend fun deleteAllSeals()
     @Query("DELETE FROM trip_audit_log") suspend fun deleteAllAuditLogs()
     @Query("DELETE FROM trips") suspend fun deleteAllTrips()
     @Query("DELETE FROM trip_templates") suspend fun deleteAllTemplates()
@@ -223,4 +246,5 @@ interface AppDao {
     @Insert suspend fun insertLocations(items: List<SavedLocation>)
     @Insert suspend fun insertTrips(items: List<Trip>)
     @Insert suspend fun insertTemplates(items: List<TripTemplate>)
+    @Insert suspend fun insertSeals(items: List<Seal>)
 }

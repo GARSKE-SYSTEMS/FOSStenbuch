@@ -5,7 +5,9 @@
     <string name="export_purpose_private">%s (P)</string>
     <string name="export_purposes_some">Nur Fahrten der ausgewählten Kategorien</string>
     <string name="export_purposes_none">Keine Kategorie ausgewählt – es werden keine Fahrten exportiert</string>
-    <string name="export_pdf_all_trips">PDF-Exporte enthalten immer alle Fahrten des Zeitraums und markieren nichts als exportiert.</string>
+    <string name="export_pdf_all_trips">PDF-Exporte enthalten auch bereits exportierte Fahrten und markieren nichts als exportiert.</string>
+    <string name="export_purposes_all_detailed">Das ausführliche PDF enthält immer alle Kategorien</string>
+    <string name="export_choose_vehicle">Bitte ein Fahrzeug wählen</string>
     <!-- Als Plural, damit es "1 Fahrt" heißt und nicht "1 Fahrten" -->
     <plurals name="export_count">
         <item quantity="one">%d Fahrt wird exportiert</item>

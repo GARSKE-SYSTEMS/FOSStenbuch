@@ -3,13 +3,14 @@ package de.fosstenbuch
 import android.app.Application
 import androidx.appcompat.app.AppCompatDelegate
 import de.fosstenbuch.data.Settings
+import de.fosstenbuch.logic.Tsa
 import de.fosstenbuch.tracking.Reminder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
-/** Application: setzt den Dunkelmodus vor der ersten Activity und plant die Erinnerung neu */
+/** Application: setzt den Dunkelmodus vor der ersten Activity, plant die Erinnerung neu und holt Zeitstempel nach */
 class App : Application() {
 
     override fun onCreate() {
@@ -19,6 +20,8 @@ class App : Application() {
         applyDarkMode(runBlocking { Settings.get(this@App, Settings.DARK_MODE, "SYSTEM") })
         // Erinnerung neu planen: "Beenden erzwingen" löscht alle Alarme der App
         CoroutineScope(Dispatchers.IO).launch { Reminder.sync(this@App) }
+        // Zeitstempel nachholen, die offline oder wegen eines Fehlers ausblieben (nur falls eingeschaltet)
+        Tsa.stampPending(this)
     }
 
     companion object {

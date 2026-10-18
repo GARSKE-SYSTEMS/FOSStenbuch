@@ -1,0 +1,76 @@
+---
+layout: default
+title: PDF und Backup prüfen
+---
+<style>
+  .ok { color: #1a7f37; font-weight: 600; }
+  .bad { color: #cf222e; font-weight: 600; }
+  .warn { color: #9a6700; font-weight: 600; }
+  .trips { list-style: none; padding-left: 0; }
+  .result { margin-bottom: 1em; }
+  .result code { overflow-wrap: anywhere; } /* lange Fingerabdrücke umbrechen statt die Seite zu verbreitern */
+  pre code { white-space: pre-wrap; overflow-wrap: anywhere; }
+</style>
+
+<h2>PDF und Backup prüfen</h2>
+
+<p>Diese Seite prüft Signaturen, Siegel und Zeitstempel aus FOSStenbuch <strong>nur in Ihrem Browser</strong>:
+Die Dateien werden nicht hochgeladen, die Seite stellt keine Netzwerkanfragen und lädt keine fremden Skripte
+(<a href="https://github.com/GARSKE-SYSTEMS/FOSStenbuch/blob/main/docs/pruefen.js">Quelltext</a>).</p>
+
+<h3>PDF prüfen</h3>
+
+<p>Das ausführliche PDF aus FOSStenbuch enthält die Siegel seiner Fahrten samt Zeitstempeln. Die Seite rechnet damit
+jede Fahrt nach, prüft die Zeitstempel und – falls in der App ein Signaturschlüssel eingerichtet war – die Signatur
+des PDFs. Nötig ist die unveränderte PDF-Datei aus der App – ein Ausdruck oder eine in einem PDF-Programm neu
+gespeicherte Datei (z. B. zum Unterschreiben) lässt sich nicht prüfen.</p>
+
+<p><input type="file" id="pdf" accept=".pdf,application/pdf"></p>
+<div id="pdf-result" class="result" aria-live="polite"></div>
+
+<h3>Backup prüfen</h3>
+
+<p>Ein Backup (JSON, aus Einstellungen › Backup erstellen) enthält die Siegel aller Fahrten aller Fahrzeuge – auch
+die Angaben, die das PDF bei Privatfahrten weglässt. Für jede Fahrt wird das jüngste Siegel aus den Fahrtdaten neu
+berechnet, seine Signatur geprüft und jeder Zeitstempel samt der Signatur des Zeitstempeldienstes kontrolliert.</p>
+
+<p><input type="file" id="backup" accept=".json,application/json"></p>
+<div id="backup-result" class="result" aria-live="polite"></div>
+
+<h3>Was die Prüfung aussagt</h3>
+
+<ul>
+  <li><strong>Siegel:</strong> ein SHA-256-Fingerabdruck der Fahrtdaten beim Beenden, Übernehmen, Ändern und
+    Stornieren einer Fahrt. Für sich allein erkennt es nur versehentliche oder einfache Änderungen – die Formel
+    ist öffentlich, zu veränderten Daten lässt sich ein passendes Siegel neu berechnen. Beweiskraft bekommt es
+    durch einen Zeitstempel.</li>
+  <li><strong>Signatur:</strong> belegt, dass Siegel bzw. PDF mit dem Schlüssel dieses Fingerabdrucks erstellt
+    und danach nicht verändert wurden – nicht aber, wann. Vergleichen Sie den Fingerabdruck mit dem, den Ihnen
+    der Fahrtenbuchführer auf anderem Weg genannt hat: Wer ein PDF fälscht, kann es auch mit einem eigenen
+    Schlüssel signieren und dessen Fingerabdruck hineindrucken. Ist das jüngste Siegel einer Fahrt unsigniert
+    oder mit einem anderen Schlüssel signiert als das vorige, warnt die Seite: Ein unsigniertes Siegel kann jeder
+    neu berechnen.</li>
+  <li><strong>Zeitstempel:</strong> Ein Zeitstempeldienst (RFC 3161) bestätigt mit seiner Signatur, dass es
+    das Siegel zu dieser Zeit schon gab. Beweiswert hat das nur bei einem unabhängigen Dienst; ein selbst
+    betriebener belegt gegenüber Dritten nichts. Diese Seite prüft die Signatur mit dem Zertifikat aus dem
+    Zeitstempel und führt es auf die bekannten Zertifizierungsstellen der in der App vorgegebenen Dienste
+    zurück (FreeTSA, Sectigo); bei jedem anderen Dienst warnt sie. Sie zeigt auch, wie lange nach der Ankunft
+    der erste Zeitstempel einer Fahrt entstand, und warnt, wenn er mehr als 7 Tage nach der Abfahrt oder vor der
+    Ankunft entstand; dafür zählen nur Siegel, die zu den heutigen Daten passen (oder zum Stand vor dem Stornieren). Gültigkeitszeiträume und
+    Sperrlisten der Zertifikate prüft sie nicht – das und die Kette anderer Dienste lässt sich mit OpenSSL
+    prüfen: Zeitstempel über den Link beim Siegel speichern, Fingerabdruck aus dem Ergebnis oben übernehmen
+    (das Wurzelzertifikat veröffentlicht der Dienst, bei FreeTSA unter
+    <code>https://freetsa.org/files/cacert.pem</code>):
+    <pre><code>openssl ts -verify -token_in -in siegel-NUMMER.der -digest FINGERABDRUCK -CAfile wurzelzertifikat.pem</code></pre></li>
+  <li><strong>PDF:</strong> Geprüft werden die maschinenlesbaren Daten in der PDF-Datei, nicht der gedruckte
+    Text – die Zahl der Fahrten muss zum Schlussvermerk des PDFs passen, und einige Fahrten (Nr., Datum, Km)
+    sollten Sie vergleichen. Notiz und Geschäftspartner von Privatfahrten stehen nicht darin; hat eine
+    Privatfahrt welche, ist sie nur mit dem Backup prüfbar – solche Fahrten müssen im PDF als privat (P) stehen.
+    Siegel früherer Stände einer Fahrt stehen nur im Anhang des PDFs.</li>
+  <li><strong>Nicht prüfbar:</strong> ob alle Fahrten erfasst wurden, ob die Uhr des Geräts stimmte und was vor
+    dem ersten Siegel einer Fahrt geschah. Ältere Siegel einer Fahrt gehören meist zu einem früheren Stand;
+    gegen die Fahrtdaten geprüft wird das jüngste (und eines vom Stand vor dem Stornieren). Fahrten aus der Zeit
+    vor den Siegeln haben keins. Das Kennzeichen im Backup ist nicht gesiegelt, nur die Nummer des Fahrzeugs.</li>
+</ul>
+
+<script src="pruefen.js"></script>

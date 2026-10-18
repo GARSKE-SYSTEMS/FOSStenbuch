@@ -57,7 +57,7 @@ class VehiclesFragment : Fragment(R.layout.fragment_masterdata_list) {
             if (options[i] != R.string.delete) {
                 launch { requireContext().dao.setPrimaryVehicle(v.id) }
             } else {
-                // Gilt auch für änderungssichere Fahrzeuge: ohne Fahrten gibt es nichts zu schützen
+                // Gilt auch bei Bearbeitungssperre: ohne Fahrten gibt es nichts zu schützen
                 deleteUnused(
                     R.string.delete_vehicle_title, R.string.delete_vehicle_message, R.plurals.masterdata_vehicle_in_use,
                     count = { tripCountForVehicle(v.id) },

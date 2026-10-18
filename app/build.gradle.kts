@@ -12,8 +12,8 @@ android {
         applicationId = "de.garsys.fosstenbuch"
         minSdk = 26
         targetSdk = 36
-        versionCode = 20261016
-        versionName = "2026.10.16"
+        versionCode = 20261018
+        versionName = "2026.10.18"
     }
 
     signingConfigs {

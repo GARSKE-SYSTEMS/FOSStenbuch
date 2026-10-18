@@ -62,7 +62,7 @@ class PurposeEditFragment : Fragment(R.layout.fragment_purpose_edit) {
             }
             b.nameLayout.isEnabled = p?.isDefault != true
             // Die Einstufung gilt für alle Fahrten dieser Kategorie – eine Änderung würde
-            // bestehende (auch änderungssichere) Fahrten unbemerkt umklassifizieren
+            // bestehende (auch gesperrte) Fahrten unbemerkt umklassifizieren
             val used = dao.tripCountForPurpose(argId)
             b.business.isEnabled = used == 0
             b.businessHint.isVisible = used > 0

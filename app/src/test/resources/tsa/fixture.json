@@ -1,0 +1,18 @@
+{
+  "text": "FOSStenbuch-Test",
+  "digest": "c9cd1b8d8d40db17250cb3d29fd18dee6e546ff88e48bc00f1598a8872e274f9",
+  "nonce": "5066359723715880290",
+  "nonceHex": "464f5353746e6562",
+  "genTime": "2026-10-18T09:18:19Z",
+  "genTimeMillis": 1792315099000,
+  "url": "https://freetsa.org/tsr",
+  "request": "request.der",
+  "response": "response.der",
+  "status": 0,
+  "tokenOffset": 9,
+  "tokenLength": 4633,
+  "tokenSha256": "7f477a4b1e4849a67e8386442ca763ab7c98c003e41c0d538875e27b6bfec080",
+  "signerDigest": "SHA-512",
+  "signerSignature": "ecdsa-with-SHA512 (P-384)",
+  "tsaCertSha256": "32e841a95cc1164101ffde41298ef2fc75c1c4372ef095e88a6bbd47dfb191fc"
+}

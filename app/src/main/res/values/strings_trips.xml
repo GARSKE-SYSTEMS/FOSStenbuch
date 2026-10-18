@@ -2,9 +2,9 @@
 <!-- Texte der Fahrten-Bildschirme (Liste, Formular, automatische Fahrten). Kilometer (%s) kommen fertig aus Fmt.km. -->
 <resources>
     <string name="trips_no_match">Keine Fahrten für diesen Filter</string>
-    <string name="trips_new_hint">Startort, Km-Stand und Fahrzeug genügen – Ziel, Ankunft und Km-Stand Ende tragen Sie beim Beenden ein. Spätere Änderungen an der Fahrt werden protokolliert.</string>
     <string name="trips_recording_hint">Diese Fahrt wird gerade automatisch aufgezeichnet. Nach dem Ende der Aufzeichnung können Sie sie prüfen und übernehmen.</string>
     <string name="trips_end_recording">Aufzeichnung beenden</string>
+    <string name="trips_discard_expired">Läuft über 5 Minuten: bitte beenden (nicht gefahren: Km-Stand Ende = Start), dann stornieren</string>
     <string name="trips_discard_active_message">Möchten Sie die laufende Fahrt wirklich verwerfen? Sie wird dauerhaft gelöscht.</string>
     <!-- Typografische Anführungszeichen: gerade " würden von aapt entfernt -->
     <string name="trips_add_location">„%s“ als neuen Standort speichern…</string>

@@ -1,0 +1,5 @@
+Easier to verify:
+• A seal for every trip that is ended, accepted, edited or cancelled – optionally with a timestamp and your own signing key
+• Completed trips can no longer be deleted, only cancelled (with a reason)
+• Edit lock described more clearly; the time it was switched on is recorded
+• Detailed PDF per vehicle with odometer readings, gaps, change log and seals – checkable in the browser on the verification page

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Klartext-HTTP ist nur erlaubt, weil Nutzer einen eigenen Zeitstempeldienst per http-URL oder IP eintragen
+  dürfen (logic/Tsa) – ein Zeitstempel ist vom Dienst signiert und bleibt auch unverschlüsselt fälschungssicher.
+  Die vorgegebenen Dienste sind HTTPS; die Adresssuche (Nominatim) bleibt fest auf HTTPS.
+-->
+<network-security-config xmlns:tools="http://schemas.android.com/tools">
+    <base-config
+        cleartextTrafficPermitted="true"
+        tools:ignore="InsecureBaseConfiguration" />
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">openstreetmap.org</domain>
+    </domain-config>
+</network-security-config>

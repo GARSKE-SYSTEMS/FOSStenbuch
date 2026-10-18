@@ -45,7 +45,7 @@ data class Trip(
     val isExported: Boolean = false,
     val businessPartner: String? = null,
     val route: String? = null,
-    /** Glied der Hash-Kette bei änderungssicheren Fahrzeugen (siehe Trips.chainHashes) */
+    /** Glied der Hash-Kette bei Fahrzeugen mit Bearbeitungssperre (siehe Trips.chainHashes) */
     val chainHash: String? = null,
     /** Per Bluetooth automatisch erkannt und noch nicht vom Nutzer übernommen */
     val isGhost: Boolean = false,
@@ -65,11 +65,13 @@ data class Vehicle(
     /** Wird bei neuen Fahrten vorausgewählt */
     val isPrimary: Boolean = false,
     val notes: String? = null,
-    /** Änderungssicher: Fahrten sind gesperrt und per Hash-Kette gesichert. Nicht umkehrbar. */
+    /** Bearbeitungssperre: abgeschlossene Fahrten und Fahrzeugdaten gesperrt, Fahrten per Hash-Kette gesichert. Nicht umkehrbar. */
     val auditProtected: Boolean = false,
     /** MAC-Adresse des Auto-Bluetooth für die automatische Fahrterkennung */
     val bluetoothDeviceAddress: String? = null,
-    val bluetoothDeviceName: String? = null
+    val bluetoothDeviceName: String? = null,
+    /** Einschaltzeitpunkt der Bearbeitungssperre (epoch ms); null = aus oder vor Version 12 eingeschaltet (unbekannt) */
+    val protectedSince: Long? = null
 ) {
     /** Anzeigename, z.B. "VW Golf (B-AB 123)" */
     val label: String get() = "$make $model ($licensePlate)"
@@ -128,6 +130,38 @@ data class TripAuditLog(
     val oldValue: String?,
     val newValue: String?,
     val changedAt: Date = Date()
+)
+
+/**
+ * Siegel einer abgeschlossenen Fahrt: SHA-256 über ihre gespeicherten Daten (logic/Seals), optional signiert
+ * und mit Zeitstempel. Bei jedem Beenden, Übernehmen, Ändern und Stornieren kommt ein neues hinzu.
+ */
+@Entity(
+    tableName = "seals",
+    foreignKeys = [
+        ForeignKey(entity = Trip::class, parentColumns = ["id"], childColumns = ["tripId"], onDelete = ForeignKey.CASCADE)
+    ],
+    indices = [Index("tripId")]
+)
+data class Seal(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val tripId: Long,
+    /** Anlass: Seals.ENDED, ACCEPTED, EDITED oder CANCELLED */
+    val kind: String,
+    /** Gerätezeit (epoch ms) – Teil der gesiegelten Daten */
+    val createdAt: Long,
+    /** SHA-256 der Nutzdaten (Seals.payload), hex klein */
+    val hash: String,
+    /** ECDSA-Signatur der Nutzdaten (DER, base64) */
+    val signature: String? = null,
+    /** Öffentlicher Schlüssel zur Signatur (X.509 SubjectPublicKeyInfo, DER, base64) */
+    val publicKey: String? = null,
+    /** RFC-3161-Zeitstempel (TimeStampToken, DER, base64) */
+    val tsToken: String? = null,
+    /** Zeit laut Zeitstempel (epoch ms) */
+    val tsTime: Long? = null,
+    /** Adresse des Zeitstempeldienstes */
+    val tsUrl: String? = null
 )
 
 /** Room speichert Datumswerte als Epoch-Millisekunden */

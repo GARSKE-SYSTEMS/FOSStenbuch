@@ -125,6 +125,9 @@ object Geo {
         null
     }
 
+    /** Kennung der App bei Online-Anfragen (statt des Android-Standards mit Gerätemodell und Android-Version) */
+    const val USER_AGENT = "FOSStenbuch-Android/1.0 (https://github.com/GARSKE-SYSTEMS/FOSStenbuch)"
+
     /** Taktet den Beginn der Anfragen auf mindestens 1 s Abstand */
     private val throttle = Mutex()
     private var lastRequestMs = 0L
@@ -146,7 +149,7 @@ object Geo {
     private suspend fun request(path: String): String = withContext(Dispatchers.IO) {
         val conn = URL("https://nominatim.openstreetmap.org/$path").openConnection() as HttpURLConnection
         try {
-            conn.setRequestProperty("User-Agent", "FOSStenbuch-Android/1.0 (https://github.com/GARSKE-SYSTEMS/FOSStenbuch)")
+            conn.setRequestProperty("User-Agent", USER_AGENT)
             conn.connectTimeout = 8_000
             conn.readTimeout = 8_000
             if (conn.responseCode != HttpURLConnection.HTTP_OK) throw IOException("Adresssuche fehlgeschlagen (HTTP ${conn.responseCode})")

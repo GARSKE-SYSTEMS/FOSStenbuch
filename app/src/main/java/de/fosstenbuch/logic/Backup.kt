@@ -6,12 +6,14 @@ import androidx.room.withTransaction
 import de.fosstenbuch.data.AppDatabase
 import de.fosstenbuch.data.AppDao
 import de.fosstenbuch.data.SavedLocation
+import de.fosstenbuch.data.Seal
 import de.fosstenbuch.data.Settings
 import de.fosstenbuch.data.Trip
 import de.fosstenbuch.data.TripAuditLog
 import de.fosstenbuch.data.TripPurpose
 import de.fosstenbuch.data.TripTemplate
 import de.fosstenbuch.data.Vehicle
+import de.fosstenbuch.data.dao
 import de.fosstenbuch.data.db
 import de.fosstenbuch.tracking.TrackingService
 import kotlinx.coroutines.Dispatchers
@@ -20,6 +22,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
 import java.text.SimpleDateFormat
+import java.util.Base64
 import java.util.Date
 import java.util.Locale
 
@@ -27,12 +30,12 @@ import java.util.Locale
 private typealias Row = Map<String, Any?>
 
 /**
- * Datensicherung als JSON-Datei, Wiederherstellung und "Alle Daten löschen".
+ * Datensicherung als JSON-Datei, Wiederherstellung und "Alle Daten löschen" samt Verlauf ([history]).
  *
  * Format "version": 1 – bleibt kompatibel zu allen bisherigen Backups: ein Objekt mit
  * "exportedAt" und je einem Array pro Tabelle. Später hinzugekommene Daten (Vorlagen,
- * Bluetooth-Kopplung, Export-Status, Koordinaten, automatische Fahrten) sind zusätzliche Keys:
- * Alte Backups ohne sie bleiben lesbar, alte App-Versionen ignorieren sie.
+ * Bluetooth-Kopplung, Export-Status, Koordinaten, automatische Fahrten, Siegel, Sperrzeitpunkt)
+ * sind zusätzliche Keys: Alte Backups ohne sie bleiben lesbar, alte App-Versionen ignorieren sie.
  *
  * Entities <-> JSON läuft über einfache Maps und Listen ([encode]/[decode]), damit es ohne
  * Android testbar ist (org.json gibt es in JVM-Unit-Tests nur als Attrappe).
@@ -48,10 +51,18 @@ object Backup {
         /** Inklusive automatisch erkannter Fahrten (isGhost) */
         val trips: List<Trip> = emptyList(),
         val templates: List<TripTemplate> = emptyList(),
-        val auditLogs: List<TripAuditLog> = emptyList()
+        val auditLogs: List<TripAuditLog> = emptyList(),
+        val seals: List<Seal> = emptyList()
     )
 
-    /** Die Hash-Kette eines änderungssicheren Fahrzeugs passt nicht zum Backup-Inhalt */
+    /** Eintrag im Verlauf: [kind] = RESTORED, RESTORED_FORCED oder DELETED_ALL; [sealMismatches] siehe Seals.mismatches */
+    data class Event(val time: Long, val kind: String, val sealMismatches: Int = 0)
+
+    const val RESTORED = "Backup eingespielt"
+    const val RESTORED_FORCED = "Backup eingespielt (Prüfung übergangen)"
+    const val DELETED_ALL = "Alle Daten gelöscht"
+
+    /** Die Hash-Kette eines Fahrzeugs mit Bearbeitungssperre passt nicht zum Backup-Inhalt */
     class BrokenChain(message: String) : Exception(message)
 
     private const val FILE_PREFIX = "fosstenbuch_backup_"
@@ -73,7 +84,7 @@ object Backup {
             vehicles.filter { it.auditProtected }.forEach { Trips.recomputeChain(context, it.id) }
             // Eine laufende Aufzeichnung ist noch keine Fahrt und fehlt deshalb (backupTrips):
             // Wiederhergestellt würde sie als Dauer-Aufzeichnung die Bluetooth-Erkennung blockieren.
-            Content(vehicles, dao.allPurposes(), dao.allLocations(), dao.backupTrips(), dao.allTemplates(), dao.allAuditLogs())
+            Content(vehicles, dao.allPurposes(), dao.allLocations(), dao.backupTrips(), dao.allTemplates(), dao.allAuditLogs(), dao.allSeals())
         }
         return withContext(Dispatchers.IO) {
             val text = toText(encode(content, System.currentTimeMillis()))
@@ -86,26 +97,35 @@ object Backup {
         }
     }
 
+    /** Liest und prüft das Backup in [uri] (Format, Pflichtfelder), ohne etwas zu ändern */
+    suspend fun read(context: Context, uri: Uri): Content = withContext(Dispatchers.IO) {
+        val text = context.contentResolver.openInputStream(uri)?.use { it.reader().readText() }
+            ?: throw IllegalArgumentException("Backup-Datei konnte nicht gelesen werden")
+        decode(fromText(text))
+    }
+
     /**
      * Ersetzt ALLE Daten durch das Backup in [uri]. Die Datei wird zuerst komplett gelesen und
      * geprüft, erst danach wird in einer Transaktion geleert und eingefügt. Jeder Fehler – auch
      * ein Abbruch mittendrin – lässt die bisherigen Daten unverändert. Die Standard-Kategorie
      * wird schon vor dem Einspielen abgewählt und bleibt es auch, falls das Einspielen scheitert.
+     * Danach steht das Einspielen im Verlauf ([history]).
      * @param force trotz [BrokenChain] wiederherstellen (nur nach Rückfrage beim Nutzer)
+     * @return Anzahl Fahrten, deren Siegel nicht zu ihren Daten passt (Seals.mismatches)
      * @throws IllegalStateException während einer GPS-Aufzeichnung
      */
-    suspend fun restore(context: Context, uri: Uri, force: Boolean) {
+    suspend fun restore(context: Context, uri: Uri, force: Boolean): Int {
         // Nicht während einer Aufzeichnung: Der Dienst schreibt bis zu seinem (asynchronen) Stopp
         // GPS-Stände per Fahrt-ID – nach dem Einspielen träfe das eine fremde, wiederhergestellte
         // Fahrt (verfälschte Daten, gebrochene Hash-Kette). Vorher stoppen hilft nicht, weil das
         // Beenden der Aufzeichnung die alte Fahrt danach über die neue Zeile schreiben könnte.
         check(TrackingService.live.value == null) { "Bitte zuerst die laufende Fahrt-Aufzeichnung beenden" }
-        val content = withContext(Dispatchers.IO) {
-            val text = context.contentResolver.openInputStream(uri)?.use { it.reader().readText() }
-                ?: throw IllegalArgumentException("Backup-Datei konnte nicht gelesen werden")
-            // Auch die Kettenprüfung (SHA-256 je Fahrt) dauert bei Tausenden Fahrten spürbar –
-            // daher hier im Hintergrund statt im Main-Thread des Aufrufers (viewModelScope)
-            decode(fromText(text)).also { if (!force) checkChains(it) }
+        val content = read(context, uri)
+        // Ketten- und Siegelprüfung (SHA-256 bzw. Signatur je Fahrt) dauern bei Tausenden Fahrten spürbar –
+        // daher im Hintergrund statt im Main-Thread des Aufrufers (viewModelScope)
+        val mismatches = withContext(Dispatchers.Default) {
+            if (!force) checkChains(content)
+            Seals.mismatches(content.trips, content.seals).size
         }
         // Vorher zurücksetzen: Die Kategorie-IDs stammen aus dem Backup und können dort eine ganz
         // andere Kategorie bezeichnen. Danach gesetzt, entfiele das, wenn der Aufrufer abbricht,
@@ -122,12 +142,30 @@ object Backup {
             dao.insertTrips(content.trips)
             dao.insertTemplates(content.templates)
             dao.insertAuditLogs(content.auditLogs)
+            // Siegel ohne ihre Fahrt (von Hand bearbeitete Datei) würden am Fremdschlüssel scheitern
+            val ids = content.trips.map { it.id }.toSet()
+            dao.insertSeals(content.seals.filter { it.tripId in ids })
         }
+        log(context, Event(System.currentTimeMillis(), if (force) RESTORED_FORCED else RESTORED, mismatches))
+        return mismatches
     }
 
     /**
+     * Fahrzeuge mit Bearbeitungssperre auf diesem Gerät, die im Backup fehlen oder dort nicht gesperrt sind
+     * (Abgleich über das Kennzeichen) – davor warnt die App vor dem Einspielen
+     */
+    fun unprotectedIn(c: Content, current: List<Vehicle>): List<Vehicle> {
+        fun plate(v: Vehicle) = v.licensePlate.filterNot(Char::isWhitespace).uppercase()
+        val locked = c.vehicles.filter { it.auditProtected }.map(::plate).toSet()
+        return current.filter { it.auditProtected && plate(it) !in locked }
+    }
+
+    /** [unprotectedIn] für das Backup in [uri] und die Fahrzeuge auf diesem Gerät */
+    suspend fun unprotectedIn(context: Context, uri: Uri): List<Vehicle> = unprotectedIn(read(context, uri), context.dao.allVehicles())
+
+    /**
      * Löscht alle Daten: die Datenbank in einer Transaktion (danach wieder mit den zwei Standard-Kategorien),
-     * anschließend Fahrername und Cache-Dateien
+     * anschließend Fahrername und Cache-Dateien. Der Verlauf ([history]) bleibt und bekommt einen Eintrag.
      */
     suspend fun deleteAll(context: Context) {
         val db = context.db
@@ -145,10 +183,28 @@ object Backup {
         // Die aufgezeichnete Fahrt ist gelöscht. Nachzügler-Schreibzugriffe des Dienstes laufen ins
         // Leere, denn gelöschte IDs vergibt SQLite (AUTOINCREMENT) nie erneut.
         if (TrackingService.live.value != null) TrackingService.stop(context)
+        log(context, Event(System.currentTimeMillis(), DELETED_ALL))
+    }
+
+    // ── Verlauf (Einstellungen statt Datenbank: überlebt "Alle Daten löschen" und das Einspielen) ──
+
+    /** Alle Einträge, älteste zuerst */
+    suspend fun history(context: Context): List<Event> = parseHistory(Settings.get(context, Settings.DATA_HISTORY, ""))
+
+    private suspend fun log(context: Context, e: Event) =
+        Settings.update(context, Settings.DATA_HISTORY, "") { it + historyLine(e) }
+
+    /** Eine Zeile je Eintrag: Zeit, Art und Anzahl abweichender Siegel, durch Tabulatoren getrennt */
+    fun historyLine(e: Event) = "${e.time}\t${e.kind}\t${e.sealMismatches}\n"
+
+    fun parseHistory(text: String): List<Event> = text.lines().mapNotNull { line ->
+        val (time, kind, mismatches) = line.split('\t').takeIf { it.size == 3 } ?: return@mapNotNull null
+        Event(time.toLongOrNull() ?: return@mapNotNull null, kind, mismatches.toIntOrNull() ?: 0)
     }
 
     /** Leert alle Tabellen; Reihenfolge so, dass keine Fremdschlüssel-Aktionen nötig sind */
     private suspend fun clear(dao: AppDao) {
+        dao.deleteAllSeals()
         dao.deleteAllAuditLogs()
         dao.deleteAllTrips()
         dao.deleteAllTemplates()
@@ -160,9 +216,9 @@ object Backup {
     // ── Prüfung ──────────────────────────────────────────────────────────────
 
     /**
-     * Prüft je änderungssicherem Fahrzeug die Hash-Kette seiner Fahrten (ohne automatische,
+     * Prüft je Fahrzeug mit Bearbeitungssperre die Hash-Kette seiner Fahrten (ohne automatische,
      * nach ID sortiert, siehe Trips.chainHashes) und wirft [BrokenChain] beim ersten Bruch.
-     * Die Kette erkennt versehentliche oder naive Änderungen an der Datei; ein echter
+     * Die Kette erkennt versehentliche oder einfache Änderungen an der Datei; ein echter
      * Manipulationsschutz ist sie nicht (die Formel ist öffentlich).
      */
     fun checkChains(c: Content) {
@@ -171,7 +227,7 @@ object Backup {
             val broken = Trips.firstBrokenLink(chain) ?: continue
             throw BrokenChain(
                 if (broken.chainHash == null) {
-                    "Fehlende Hash-Kette für änderungssicheres Fahrzeug ${v.label} bei Fahrt #${broken.id}. " +
+                    "Fehlende Hash-Kette für Fahrzeug mit Bearbeitungssperre ${v.label} bei Fahrt #${broken.id}. " +
                         "Alle Fahrten müssen verifizierbare Chain-Hashes besitzen."
                 } else {
                     "Hash-Kette für Fahrzeug ${v.label} ist beschädigt bei Fahrt #${broken.id}. " +
@@ -211,7 +267,8 @@ object Backup {
                 "id" to it.id, "make" to it.make, "model" to it.model, "licensePlate" to it.licensePlate,
                 "fuelType" to it.fuelType, "isPrimary" to it.isPrimary, "notes" to it.notes,
                 "auditProtected" to it.auditProtected,
-                "bluetoothDeviceAddress" to it.bluetoothDeviceAddress, "bluetoothDeviceName" to it.bluetoothDeviceName
+                "bluetoothDeviceAddress" to it.bluetoothDeviceAddress, "bluetoothDeviceName" to it.bluetoothDeviceName,
+                "protectedSince" to it.protectedSince
             )
         },
         "purposes" to c.purposes.map {
@@ -237,7 +294,15 @@ object Backup {
                 "id" to it.id, "tripId" to it.tripId, "fieldName" to it.fieldName, "oldValue" to it.oldValue,
                 "newValue" to it.newValue, "changedAt" to it.changedAt.time
             )
-        }
+        },
+        "seals" to c.seals.map(::encodeSeal)
+    )
+
+    /** Siegel wie im Backup – auch in den Prüfdaten des ausführlichen PDFs (Export.proofData) */
+    fun encodeSeal(s: Seal): Row = mapOf(
+        "id" to s.id, "tripId" to s.tripId, "kind" to s.kind, "createdAt" to s.createdAt, "hash" to s.hash,
+        "signature" to s.signature, "publicKey" to s.publicKey,
+        "tsToken" to s.tsToken, "tsTime" to s.tsTime, "tsUrl" to s.tsUrl
     )
 
     private fun encodeTrip(t: Trip): Row = mapOf(
@@ -269,7 +334,8 @@ object Backup {
                     isPrimary = it.flag("isPrimary"), notes = it.stringOrNull("notes"),
                     auditProtected = it.flag("auditProtected"),
                     bluetoothDeviceAddress = it.stringOrNull("bluetoothDeviceAddress"),
-                    bluetoothDeviceName = it.stringOrNull("bluetoothDeviceName")
+                    bluetoothDeviceName = it.stringOrNull("bluetoothDeviceName"),
+                    protectedSince = it.numberOrNull("protectedSince")?.toLong()
                 )
             },
             purposes = root.rows("purposes").map {
@@ -301,9 +367,20 @@ object Backup {
                     oldValue = it.stringOrNull("oldValue"), newValue = it.stringOrNull("newValue"),
                     changedAt = Date(it.long("changedAt"))
                 )
+            },
+            seals = root.rows("seals", required = false).map {
+                Seal(
+                    id = it.long("id"), tripId = it.long("tripId"), kind = it.string("kind"), createdAt = it.long("createdAt"),
+                    hash = it.string("hash"), signature = it.stringOrNull("signature"), publicKey = it.stringOrNull("publicKey"),
+                    tsToken = it.stringOrNull("tsToken"), tsTime = it.numberOrNull("tsTime")?.toLong(), tsUrl = it.stringOrNull("tsUrl")
+                ).also { s -> require(validSeal(s)) { "Ungültiges Backup: Siegel ${s.id}" } }
             }
         )
     }
+
+    /** Hash als 64 Hex-Zeichen, Signatur, Schlüssel und Zeitstempel als base64 – sonst scheiterten später PDF und Zeitstempel */
+    private fun validSeal(s: Seal) = Regex("[0-9a-f]{64}").matches(s.hash) &&
+        listOfNotNull(s.signature, s.publicKey, s.tsToken).all { runCatching { Base64.getDecoder().decode(it) }.isSuccess }
 
     private fun decodeTrip(o: Row) = Trip(
         id = o.long("id"), date = Date(o.long("date")), startLocation = o.string("startLocation"),

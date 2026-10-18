@@ -9,8 +9,8 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
 @Database(
-    entities = [Trip::class, Vehicle::class, TripAuditLog::class, SavedLocation::class, TripPurpose::class, TripTemplate::class],
-    version = 11,
+    entities = [Trip::class, Vehicle::class, TripAuditLog::class, SavedLocation::class, TripPurpose::class, TripTemplate::class, Seal::class],
+    version = 12,
     exportSchema = false
 )
 @TypeConverters(DateConverters::class)
@@ -73,6 +73,14 @@ abstract class AppDatabase : RoomDatabase() {
                 10,
                 "ALTER TABLE vehicles ADD COLUMN bluetoothDeviceAddress TEXT DEFAULT NULL",
                 "ALTER TABLE vehicles ADD COLUMN bluetoothDeviceName TEXT DEFAULT NULL"
+            ),
+            // SQL wie von Room erzeugt (AppDatabase_Impl), sonst scheitert die Schema-Prüfung beim Öffnen
+            migration(
+                11,
+                "CREATE TABLE IF NOT EXISTS `seals` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `tripId` INTEGER NOT NULL, `kind` TEXT NOT NULL, `createdAt` INTEGER NOT NULL, `hash` TEXT NOT NULL, " +
+                    "`signature` TEXT, `publicKey` TEXT, `tsToken` TEXT, `tsTime` INTEGER, `tsUrl` TEXT, FOREIGN KEY(`tripId`) REFERENCES `trips`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+                "CREATE INDEX IF NOT EXISTS `index_seals_tripId` ON `seals` (`tripId`)",
+                "ALTER TABLE vehicles ADD COLUMN protectedSince INTEGER DEFAULT NULL"
             )
         )
     }

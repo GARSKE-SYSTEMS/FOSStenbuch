@@ -1,5 +1,5 @@
 Komplett überarbeitet: stabiler und sparsamer.
-• Fahrten werden gestartet und beendet (kein Nachtragen mehr); jede Änderung wird protokolliert
+• Fahrten werden gestartet und beendet statt nachträglich angelegt; Änderungen an abgeschlossenen Fahrten werden protokolliert
 • Automatische Fahrterkennung per Auto-Bluetooth ohne Dauerdienst
 • Viele Fehler bei Aufzeichnung, Export, Backup und Statistik behoben
 • Österreichische Kennzeichen (z. B. W 1234AB)
